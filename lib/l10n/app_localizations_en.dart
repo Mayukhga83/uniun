@@ -95,6 +95,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brahmaTitle => 'Brahma';
 
   @override
+  String get brahmaTagline => 'Write & publish to Nostr';
+
+  @override
   String get brahmaHintText => 'Write a new note...';
 
   @override
@@ -688,4 +691,79 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get termsNoWarrantyBody =>
       'UNIUN is provided as-is. We make no guarantees about relay uptime, third-party server availability, or persistence of content on external relays.';
+
+  @override
+  String get shivName => 'SHIV';
+
+  @override
+  String get shivTagline => 'Think in threads';
+
+  @override
+  String get shivLandingBody => 'Your on-device AI.\nThink in threads.';
+
+  @override
+  String get shivNewConversation => 'New Conversation';
+
+  @override
+  String shivViewConversations(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'View $count conversations',
+      one: 'View 1 conversation',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shivConversations => 'Conversations';
+
+  @override
+  String get shivNewConversationTooltip => 'New conversation';
+
+  @override
+  String get shivConversationsTooltip => 'Conversations';
+
+  @override
+  String get shivBranchTreeTooltip => 'Branch tree';
+
+  @override
+  String get shivBranchTreeComingSoon => 'Branch tree — coming in Phase 4';
+
+  @override
+  String get shivDefaultConversationTitle => 'New conversation';
+
+  @override
+  String get shivEmptyTitle => 'Start a conversation';
+
+  @override
+  String get shivEmptyBody =>
+      'Ask Shiv anything — your saved notes\ngive it context about what you know.';
+
+  @override
+  String get shivInputHint => 'Ask Shiv anything…';
+
+  @override
+  String get shivNoConversations => 'No conversations yet';
+
+  @override
+  String get shivActiveLabel => 'Active';
+
+  @override
+  String get shivTimeJustNow => 'Just now';
+
+  @override
+  String shivTimeMinutesAgo(int count) {
+    return '${count}m ago';
+  }
+
+  @override
+  String shivTimeHoursAgo(int count) {
+    return '${count}h ago';
+  }
+
+  @override
+  String shivTimeDaysAgo(int count) {
+    return '${count}d ago';
+  }
 }

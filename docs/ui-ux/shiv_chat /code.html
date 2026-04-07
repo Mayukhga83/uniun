@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#191c1e",
+                    "inverse-on-surface": "#f0f1f3",
+                    "on-tertiary-fixed-variant": "#733600",
+                    "secondary-fixed": "#d7e3ff",
+                    "on-secondary-container": "#415882",
+                    "surface-container-highest": "#e1e2e4",
+                    "tertiary-fixed-dim": "#ffb688",
+                    "tertiary": "#934700",
+                    "surface-bright": "#f8f9fb",
+                    "surface": "#f8f9fb",
+                    "inverse-primary": "#abc7ff",
+                    "tertiary-fixed": "#ffdbc7",
+                    "on-secondary-fixed": "#001b3f",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#edeef0",
+                    "secondary-fixed-dim": "#afc7f7",
+                    "on-primary-container": "#fefcff",
+                    "surface-container-high": "#e7e8ea",
+                    "outline": "#727785",
+                    "surface-dim": "#d9dadc",
+                    "inverse-surface": "#2e3132",
+                    "primary-fixed-dim": "#abc7ff",
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary-container": "#fffbff",
+                    "on-secondary-fixed-variant": "#2f476f",
+                    "outline-variant": "#c1c6d5",
+                    "primary-fixed": "#d7e3ff",
+                    "surface-tint": "#005cba",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#b8cfff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#311300",
+                    "error-container": "#ffdad6",
+                    "on-background": "#191c1e",
+                    "surface-variant": "#e1e2e4",
+                    "on-surface-variant": "#414753",
+                    "on-primary-fixed": "#001b3f",
+                    "secondary": "#475f89",
+                    "on-primary-fixed-variant": "#00458e",
+                    "tertiary-container": "#b85a00",
+                    "background": "#f8f9fb",
+                    "primary": "#005ab6",
+                    "error": "#ba1a1a",
+                    "primary-container": "#1672df",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .message-bubble-user {
+            background: linear-gradient(135deg, #005ab6 0%, #1672df 100%);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0px_12px_32px_rgba(47,128,237,0.06)] flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400" data-icon="account_circle">account_circle</span>
+<div class="flex flex-col">
+<h1 class="text-lg font-bold tracking-widest text-blue-600 dark:text-blue-400 leading-none">SHIV</h1>
+<p class="text-[10px] text-on-surface-variant tracking-wider uppercase opacity-70">Think in threads</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
+<span class="material-symbols-outlined text-slate-400" data-icon="search">search</span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
+<span class="material-symbols-outlined text-blue-600" data-icon="add_circle">add_circle</span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
+<span class="material-symbols-outlined text-slate-400" data-icon="account_tree">account_tree</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-32 max-w-4xl mx-auto px-6 min-h-screen flex flex-col gap-8">
+<!-- Thread Status Indicator -->
+<div class="flex justify-center">
+<div class="bg-surface-container-low px-4 py-2 rounded-full border-0 text-on-surface-variant text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="history">history</span>
+                Current Thread: Architectural Planning
+            </div>
+</div>
+<!-- Conversation Stream -->
+<div class="flex flex-col gap-10">
+<!-- User Message -->
+<div class="flex flex-col items-end gap-2 max-w-[85%] ml-auto">
+<div class="message-bubble-user text-on-primary px-6 py-4 rounded-[1.5rem] rounded-tr-none shadow-sm">
+<p class="body-lg leading-relaxed">Could you help me outline the structure for a new microservices-based e-commerce platform? I'm particularly interested in handling distributed transactions.</p>
+</div>
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium px-2">10:42 AM</span>
+</div>
+<!-- Shiv Response -->
+<div class="flex flex-col items-start gap-4 max-w-[90%]">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="smart_toy">smart_toy</span>
+</div>
+<span class="font-bold text-sm tracking-tight">SHIV</span>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-[1.5rem] rounded-tl-none shadow-[0px_12px_32px_rgba(0,90,182,0.06)] flex flex-col gap-4">
+<p class="text-on-surface leading-relaxed">Handling distributed transactions requires a robust strategy. For a microservices architecture, I recommend exploring the <strong>Saga Pattern</strong>. This manages data consistency through a sequence of local transactions.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+<div class="bg-surface-container-low p-4 rounded-xl">
+<h4 class="font-semibold text-sm text-primary mb-2">Choreography</h4>
+<p class="text-sm text-on-surface-variant">Each service produces and listens to events from other services to decide if an action should take place.</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<h4 class="font-semibold text-sm text-primary mb-2">Orchestration</h4>
+<p class="text-sm text-on-surface-variant">A central controller tells the participants what local transactions to execute.</p>
+</div>
+</div>
+<!-- Contextual Actions -->
+<div class="flex gap-3 mt-4 border-t border-outline-variant/15 pt-6">
+<button class="flex items-center gap-2 text-primary bg-surface-container-high px-4 py-2 rounded-xl text-xs font-semibold hover:bg-secondary-container transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="account_tree">account_tree</span>
+                            Branch from this
+                        </button>
+<button class="flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-4 py-2 rounded-xl text-xs font-semibold hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="play_arrow">play_arrow</span>
+                            Continue from here
+                        </button>
+</div>
+</div>
+</div>
+<!-- User Message 2 -->
+<div class="flex flex-col items-end gap-2 max-w-[85%] ml-auto">
+<div class="message-bubble-user text-on-primary px-6 py-4 rounded-[1.5rem] rounded-tr-none shadow-sm">
+<p class="body-lg leading-relaxed">Let's branch into the Orchestration approach. What are the best tools for implementing the orchestrator in a Kubernetes environment?</p>
+</div>
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium px-2">10:45 AM</span>
+</div>
+<!-- Shiv Response 2 -->
+<div class="flex flex-col items-start gap-4 max-w-[90%]">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="smart_toy">smart_toy</span>
+</div>
+<span class="font-bold text-sm tracking-tight">SHIV</span>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-[1.5rem] rounded-tl-none shadow-[0px_12px_32px_rgba(0,90,182,0.06)] flex flex-col gap-4">
+<p class="text-on-surface leading-relaxed">For Kubernetes, <strong>Temporal.io</strong> is currently the industry leader for reliable workflow orchestration. Alternatively, you might consider <strong>Camunda Cloud</strong> or native solutions like <strong>Argo Workflows</strong> if your logic is primarily data-pipeline oriented.</p>
+<!-- Content Halo Visualizer -->
+<div class="relative mt-4 p-6 bg-surface-container rounded-2xl overflow-hidden">
+<div class="absolute inset-0 bg-secondary-container/30 blur-3xl rounded-full translate-y-1/2"></div>
+<div class="relative z-10 flex items-center justify-between">
+<div>
+<h3 class="font-bold text-on-surface">Temporal.io Architecture</h3>
+<p class="text-sm text-on-surface-variant">Scalable, fault-tolerant state management.</p>
+</div>
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="developer_board">developer_board</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Input Composer Shell -->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl pb-8 pt-4 px-6 md:px-12">
+<div class="max-w-4xl mx-auto relative group">
+<div class="flex items-center bg-surface-container-low rounded-[1.5rem] p-2 pr-3 transition-all focus-within:shadow-lg focus-within:bg-white border border-transparent focus-within:border-primary/20">
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="attach_file">attach_file</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-on-surface px-2 placeholder:text-outline-variant font-medium" placeholder="Type your message..." type="text"/>
+<button class="bg-primary text-on-primary w-12 h-12 rounded-2xl flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+<!-- Quick Suggestion Pill -->
+<div class="absolute -top-10 left-0 flex gap-2 overflow-x-auto hide-scrollbar w-full px-2">
+<button class="whitespace-nowrap bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/10 px-4 py-1.5 rounded-full text-xs text-on-surface-variant font-medium hover:bg-white transition-all">Show diagrams</button>
+<button class="whitespace-nowrap bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/10 px-4 py-1.5 rounded-full text-xs text-on-surface-variant font-medium hover:bg-white transition-all">Compare with Choreography</button>
+<button class="whitespace-nowrap bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/10 px-4 py-1.5 rounded-full text-xs text-on-surface-variant font-medium hover:bg-white transition-all">Security implications</button>
+</div>
+</div>
+</div>
+<!-- Hidden Bottom Nav for Mobile Consistency as per protocol -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-8 py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-t-[2rem] pb-safe shadow-[0px_-8px_24px_rgba(0,0,0,0.02)] translate-y-full">
+<div class="flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-2xl p-3">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 p-3">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 p-3">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 p-3">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+</nav>
+</body></html>

@@ -113,40 +113,52 @@ class _BrahmaCreateViewState extends State<_BrahmaCreateView> {
             ),
 
             // ── Main content ─────────────────────────────────────────────
-            SafeArea(
+            Positioned.fill(
               child: Column(
-                children: [
-                  // ── Header ─────────────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    child: Row(
-                      children: [
-                        // X button — clears compose
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded,
-                              color: AppColors.onSurfaceVariant),
-                          onPressed: () {
-                            _controller.clear();
-                            context.read<BrahmaCreateBloc>().add(const ResetBrahmaEvent());
-                          },
+              children: [
+                  // ── Header (extends into status bar, matches Shiv/Vishnu) ──
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.only(
+                      left: 20,
+                      right: 20,
+                      top: MediaQuery.of(context).padding.top + 12,
+                      bottom: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.85),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.06),
+                          blurRadius: 32,
+                          offset: const Offset(0, 12),
                         ),
-
-                        Expanded(
-                          child: Text(
-                            AppLocalizations.of(context)!.brahmaTitle,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.onSurface,
-                              letterSpacing: -0.3,
-                            ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.navBrahma,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 3,
+                            color: AppColors.primary,
+                            height: 1,
                           ),
                         ),
-
-                        // Spacer to balance the X button width
-                        const SizedBox(width: 48),
+                        const SizedBox(height: 2),
+                        Text(
+                          AppLocalizations.of(context)!.brahmaTagline,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            letterSpacing: 0.8,
+                            color: AppColors.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ),

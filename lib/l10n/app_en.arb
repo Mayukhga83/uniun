@@ -90,6 +90,9 @@
   "brahmaTitle": "Brahma",
   "@brahmaTitle": { "description": "Title of the create-note screen" },
 
+  "brahmaTagline": "Write & publish to Nostr",
+  "@brahmaTagline": { "description": "Brahma header tagline shown below the title" },
+
   "brahmaHintText": "Write a new note...",
   "@brahmaHintText": { "description": "Placeholder in the note compose field" },
 
@@ -661,5 +664,85 @@
   "termsNoWarrantyTitle": "No Warranty",
   "@termsNoWarrantyTitle": {},
   "termsNoWarrantyBody": "UNIUN is provided as-is. We make no guarantees about relay uptime, third-party server availability, or persistence of content on external relays.",
-  "@termsNoWarrantyBody": {}
+  "@termsNoWarrantyBody": {},
+
+  "shivName": "SHIV",
+  "@shivName": { "description": "Shiv AI assistant name label (uppercase)" },
+
+  "shivTagline": "Think in threads",
+  "@shivTagline": { "description": "Shiv landing header tagline" },
+
+  "shivLandingBody": "Your on-device AI.\nThink in threads.",
+  "@shivLandingBody": { "description": "Shiv landing screen body subtitle" },
+
+  "shivNewConversation": "New Conversation",
+  "@shivNewConversation": { "description": "Button label to create a new Shiv conversation" },
+
+  "shivViewConversations": "{count, plural, =1{View 1 conversation} other{View {count} conversations}}",
+  "@shivViewConversations": {
+    "description": "Link to view existing conversations on Shiv landing",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "shivConversations": "Conversations",
+  "@shivConversations": { "description": "Title of the conversations history sheet" },
+
+  "shivNewConversationTooltip": "New conversation",
+  "@shivNewConversationTooltip": { "description": "Tooltip on new conversation icon button" },
+
+  "shivConversationsTooltip": "Conversations",
+  "@shivConversationsTooltip": { "description": "Tooltip on the history icon in chat header" },
+
+  "shivBranchTreeTooltip": "Branch tree",
+  "@shivBranchTreeTooltip": { "description": "Tooltip on the branch tree icon in chat header" },
+
+  "shivBranchTreeComingSoon": "Branch tree — coming in Phase 4",
+  "@shivBranchTreeComingSoon": { "description": "Snackbar shown when tapping the branch tree button" },
+
+  "shivDefaultConversationTitle": "New conversation",
+  "@shivDefaultConversationTitle": { "description": "Default title for a newly created conversation" },
+
+  "shivEmptyTitle": "Start a conversation",
+  "@shivEmptyTitle": { "description": "Empty chat state heading" },
+
+  "shivEmptyBody": "Ask Shiv anything — your saved notes\ngive it context about what you know.",
+  "@shivEmptyBody": { "description": "Empty chat state body text" },
+
+  "shivInputHint": "Ask Shiv anything…",
+  "@shivInputHint": { "description": "Hint text inside the Shiv chat input field" },
+
+  "shivNoConversations": "No conversations yet",
+  "@shivNoConversations": { "description": "Empty state in the conversations history sheet" },
+
+  "shivActiveLabel": "Active",
+  "@shivActiveLabel": { "description": "Badge on the currently active conversation in history" },
+
+  "shivTimeJustNow": "Just now",
+  "@shivTimeJustNow": { "description": "Relative time: less than 1 minute ago" },
+
+  "shivTimeMinutesAgo": "{count}m ago",
+  "@shivTimeMinutesAgo": {
+    "description": "Relative time in minutes",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "shivTimeHoursAgo": "{count}h ago",
+  "@shivTimeHoursAgo": {
+    "description": "Relative time in hours",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "shivTimeDaysAgo": "{count}d ago",
+  "@shivTimeDaysAgo": {
+    "description": "Relative time in days",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

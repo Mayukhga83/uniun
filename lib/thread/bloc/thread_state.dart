@@ -18,6 +18,7 @@ class ThreadState {
     this.status = ThreadStatus.initial,
     this.postStatus = ThreadPostStatus.idle,
     this.errorMessage,
+    this.isTreeBuilding = false,
   });
 
   final NoteEntity? rootNote;
@@ -29,6 +30,9 @@ class ThreadState {
   final Map<String, int> replyCounts;
   /// replyId → its direct replies (one level of nesting)
   final Map<String, List<NoteEntity>> nestedReplies;
+  /// true while the background isolate is constructing the nested reply tree.
+  /// UI shows skeletons for expanded-but-not-yet-ready nodes during this time.
+  final bool isTreeBuilding;
 
   final String replyText;
   /// null = composing a reply to the root note
@@ -58,6 +62,7 @@ class ThreadState {
     ThreadStatus? status,
     ThreadPostStatus? postStatus,
     String? errorMessage,
+    bool? isTreeBuilding,
   }) {
     return ThreadState(
       rootNote: rootNote ?? this.rootNote,
@@ -76,6 +81,7 @@ class ThreadState {
       status: status ?? this.status,
       postStatus: postStatus ?? this.postStatus,
       errorMessage: errorMessage,
+      isTreeBuilding: isTreeBuilding ?? this.isTreeBuilding,
     );
   }
 }

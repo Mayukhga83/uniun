@@ -91,7 +91,6 @@ class _ThreadViewState extends State<_ThreadView> {
       builder: (context, state) {
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
-          behavior: HitTestBehavior.translucent,
           child: Scaffold(
             backgroundColor: AppColors.surface,
             appBar: const ThreadAppBar(),
@@ -168,6 +167,7 @@ class _ThreadBody extends StatelessWidget {
                     replyCounts: state.replyCounts,
                     replyCount: state.replyCounts[reply.id] ?? 0,
                     showThreadLine: i < state.replies.length - 1,
+                    isTreeBuilding: state.isTreeBuilding,
                     onReplyTap: () {
                       ctx.read<ThreadBloc>().add(
                             SetReplyTargetEvent(

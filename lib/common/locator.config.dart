@@ -24,6 +24,7 @@ import 'package:uniun/data/repositories/outbound_event_repository_impl.dart'
 import 'package:uniun/data/repositories/profile_repository_impl.dart' as _i484;
 import 'package:uniun/data/repositories/saved_note_repository_impl.dart'
     as _i669;
+import 'package:uniun/data/repositories/shiv_repository_impl.dart' as _i412;
 import 'package:uniun/data/repositories/user_repository_impl.dart' as _i582;
 import 'package:uniun/domain/repositories/ai_model_repository.dart' as _i646;
 import 'package:uniun/domain/repositories/followed_note_repository.dart'
@@ -33,12 +34,14 @@ import 'package:uniun/domain/repositories/outbound_event_repository.dart'
     as _i218;
 import 'package:uniun/domain/repositories/profile_repository.dart' as _i967;
 import 'package:uniun/domain/repositories/saved_note_repository.dart' as _i43;
+import 'package:uniun/domain/repositories/shiv_repository.dart' as _i266;
 import 'package:uniun/domain/repositories/user_repository.dart' as _i103;
 import 'package:uniun/domain/usecases/ai_model_usecases.dart' as _i894;
 import 'package:uniun/domain/usecases/followed_note_usecases.dart' as _i561;
 import 'package:uniun/domain/usecases/note_usecases.dart' as _i475;
 import 'package:uniun/domain/usecases/profile_usecases.dart' as _i391;
 import 'package:uniun/domain/usecases/saved_note_usecases.dart' as _i858;
+import 'package:uniun/domain/usecases/shiv_usecases.dart' as _i604;
 import 'package:uniun/domain/usecases/user_usecases.dart' as _i799;
 import 'package:uniun/followed_notes/cubit/followed_notes_cubit.dart' as _i97;
 import 'package:uniun/followed_notes/followed_note_detail/cubit/followed_note_detail_cubit.dart'
@@ -46,8 +49,10 @@ import 'package:uniun/followed_notes/followed_note_detail/cubit/followed_note_de
 import 'package:uniun/home/bloc/drawer_bloc.dart' as _i111;
 import 'package:uniun/settings/cubit/edit_profile_cubit.dart' as _i195;
 import 'package:uniun/settings/cubit/settings_cubit.dart' as _i731;
+import 'package:uniun/shiv/chat/bloc/shiv_ai_bloc.dart' as _i334;
 import 'package:uniun/shiv/model_select/cubit/select_ai_model_cubit.dart'
     as _i53;
+import 'package:uniun/shiv/services/ai_model_runner.dart' as _i761;
 import 'package:uniun/thread/bloc/thread_bloc.dart' as _i118;
 import 'package:uniun/vishnu/bloc/vishnu_feed_bloc.dart' as _i558;
 
@@ -66,8 +71,12 @@ extension GetItInjectableX on _i174.GetIt {
       () => isarModule.createIsar(),
       preResolve: true,
     );
+    gh.lazySingleton<_i761.AIModelRunner>(() => _i761.AIModelRunner());
     gh.factory<_i646.AIModelRepository>(
       () => _i72.AIModelRepositoryImpl(gh<_i214.Isar>()),
+    );
+    gh.factory<_i266.ShivRepository>(
+      () => _i412.ShivRepositoryImpl(gh<_i214.Isar>()),
     );
     gh.factory<_i47.NoteRepository>(
       () => _i348.NoteRepositoryImpl(isar: gh<_i214.Isar>()),
@@ -107,6 +116,27 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i103.UserRepository>(
       () => _i582.UserRepositoryImpl(isar: gh<_i214.Isar>()),
     );
+    gh.lazySingleton<_i604.GetConversationsUseCase>(
+      () => _i604.GetConversationsUseCase(gh<_i266.ShivRepository>()),
+    );
+    gh.lazySingleton<_i604.CreateConversationUseCase>(
+      () => _i604.CreateConversationUseCase(gh<_i266.ShivRepository>()),
+    );
+    gh.lazySingleton<_i604.DeleteConversationUseCase>(
+      () => _i604.DeleteConversationUseCase(gh<_i266.ShivRepository>()),
+    );
+    gh.lazySingleton<_i604.GetMessagesUseCase>(
+      () => _i604.GetMessagesUseCase(gh<_i266.ShivRepository>()),
+    );
+    gh.lazySingleton<_i604.SaveMessageUseCase>(
+      () => _i604.SaveMessageUseCase(gh<_i266.ShivRepository>()),
+    );
+    gh.lazySingleton<_i604.UpdateMessageContentUseCase>(
+      () => _i604.UpdateMessageContentUseCase(gh<_i266.ShivRepository>()),
+    );
+    gh.lazySingleton<_i604.UpdateActiveBranchUseCase>(
+      () => _i604.UpdateActiveBranchUseCase(gh<_i266.ShivRepository>()),
+    );
     gh.lazySingleton<_i391.GetProfileUseCase>(
       () => _i391.GetProfileUseCase(gh<_i967.ProfileRepository>()),
     );
@@ -145,6 +175,17 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i475.GetThreadUseCase>(
       () => _i475.GetThreadUseCase(gh<_i47.NoteRepository>()),
+    );
+    gh.factory<_i334.ShivAIBloc>(
+      () => _i334.ShivAIBloc(
+        gh<_i604.GetConversationsUseCase>(),
+        gh<_i604.CreateConversationUseCase>(),
+        gh<_i604.DeleteConversationUseCase>(),
+        gh<_i604.GetMessagesUseCase>(),
+        gh<_i604.SaveMessageUseCase>(),
+        gh<_i604.UpdateMessageContentUseCase>(),
+        gh<_i761.AIModelRunner>(),
+      ),
     );
     gh.lazySingleton<_i799.GetActiveUserUseCase>(
       () => _i799.GetActiveUserUseCase(gh<_i103.UserRepository>()),

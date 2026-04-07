@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Conversation Tree</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error": "#ffffff",
+            "on-primary": "#ffffff",
+            "tertiary-fixed-dim": "#ffb688",
+            "surface-container-lowest": "#ffffff",
+            "background": "#f8f9fb",
+            "inverse-surface": "#2e3132",
+            "tertiary-container": "#b85a00",
+            "on-background": "#191c1e",
+            "on-surface-variant": "#414753",
+            "on-primary-container": "#fefcff",
+            "primary-fixed-dim": "#abc7ff",
+            "primary-fixed": "#d7e3ff",
+            "surface-container-low": "#f2f4f6",
+            "surface": "#f8f9fb",
+            "on-primary-fixed-variant": "#00458e",
+            "tertiary-fixed": "#ffdbc7",
+            "surface-dim": "#d9dadc",
+            "on-secondary-fixed-variant": "#2f476f",
+            "inverse-primary": "#abc7ff",
+            "surface-container-highest": "#e1e2e4",
+            "on-tertiary-fixed": "#311300",
+            "outline": "#727785",
+            "tertiary": "#934700",
+            "secondary-container": "#b8cfff",
+            "primary-container": "#1672df",
+            "surface-container-high": "#e7e8ea",
+            "surface-container": "#edeef0",
+            "on-tertiary-fixed-variant": "#733600",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#001b3f",
+            "on-primary-fixed": "#001b3f",
+            "surface-variant": "#e1e2e4",
+            "primary": "#005ab6",
+            "outline-variant": "#c1c6d5",
+            "on-secondary-container": "#415882",
+            "inverse-on-surface": "#f0f1f3",
+            "secondary-fixed": "#d7e3ff",
+            "surface-tint": "#005cba",
+            "error": "#ba1a1a",
+            "surface-bright": "#f8f9fb",
+            "on-tertiary-container": "#fffbff",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "secondary-fixed-dim": "#afc7f7",
+            "on-tertiary": "#ffffff",
+            "secondary": "#475f89",
+            "on-surface": "#191c1e"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "headline": ["Inter"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      line-height: 1;
+    }
+    .node-connector {
+      position: absolute;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .active-glow {
+      box-shadow: 0px 12px 32px rgba(0, 90, 182, 0.12);
+    }
+    .halo-effect {
+      background: radial-gradient(circle, rgba(184, 207, 255, 0.3) 0%, rgba(184, 207, 255, 0) 70%);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-secondary-container">
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl fixed top-0 w-full z-50 shadow-sm dark:shadow-none">
+<div class="flex items-center justify-between px-6 py-4 w-full">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-full text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-inter headline-sm font-bold tracking-tight text-slate-900 dark:text-slate-50">AI Conversation Tree</h1>
+</div>
+<button class="active:scale-95 duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-full text-slate-500">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="min-h-screen pt-28 pb-32 px-8 flex flex-col items-center overflow-x-hidden">
+<div class="w-full max-w-4xl flex flex-col items-center relative">
+<!-- Layer 1: Root Node -->
+<div class="relative z-20 mb-20 group">
+<div class="absolute -inset-10 halo-effect rounded-full opacity-60"></div>
+<div class="relative bg-white border border-outline-variant/10 shadow-lg rounded-[2rem] px-8 py-5 flex items-center gap-4 active-glow border-primary/20">
+<div class="bg-primary/10 p-3 rounded-2xl">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="architecture" data-weight="fill" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div>
+<p class="text-[0.65rem] font-bold text-primary uppercase tracking-[0.1em] mb-0.5">Root Concept</p>
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Architectural Planning</h2>
+</div>
+</div>
+</div>
+<!-- Level 2 Containers -->
+<div class="flex justify-between w-full relative z-10 mb-20">
+<!-- SVG Connectors Root to Level 2 -->
+<svg class="node-connector top-[-5rem] left-0 w-full h-20" preserveaspectratio="none">
+<path class="opacity-40" d="M 448 0 C 448 40, 160 40, 160 80" fill="none" stroke="#005ab6" stroke-width="3"></path>
+<path class="opacity-30" d="M 448 0 C 448 40, 448 40, 448 80" fill="none" stroke="#c1c6d5" stroke-width="2"></path>
+<path class="opacity-30" d="M 448 0 C 448 40, 736 40, 736 80" fill="none" stroke="#c1c6d5" stroke-width="2"></path>
+</svg>
+<!-- Node: Microservices Strategy (Active Path) -->
+<div class="flex flex-col items-center gap-20">
+<div class="bg-white border border-primary/20 active-glow rounded-3xl px-6 py-4 flex items-center gap-3 transition-all duration-300">
+<div class="bg-primary-container text-white p-2 rounded-xl">
+<span class="material-symbols-outlined text-xl" data-icon="hub">hub</span>
+</div>
+<span class="font-semibold text-on-surface">Microservices Strategy</span>
+</div>
+<!-- Level 3: Microservices Sub-branches -->
+<div class="flex gap-8 relative">
+<svg class="node-connector top-[-5rem] left-0 w-full h-20" preserveaspectratio="none">
+<path class="opacity-40" d="M 80 0 C 80 40, 0 40, 0 80" fill="none" stroke="#005ab6" stroke-width="2.5"></path>
+<path class="opacity-30" d="M 80 0 C 80 40, 160 40, 160 80" fill="none" stroke="#c1c6d5" stroke-width="1.5"></path>
+</svg>
+<!-- Active Node: Saga Pattern -->
+<div class="bg-primary-container/5 border border-primary/30 rounded-2xl px-5 py-3 flex items-center gap-3 shadow-sm active-glow">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="rebase_edit">rebase_edit</span>
+<span class="text-sm font-medium text-primary">Saga Pattern</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl px-5 py-3 flex items-center gap-3 opacity-60">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="database">database</span>
+<span class="text-sm font-medium text-on-surface-variant">Event Sourcing</span>
+</div>
+</div>
+</div>
+<!-- Node: Deployment Options -->
+<div class="flex flex-col items-center gap-20">
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-3xl px-6 py-4 flex items-center gap-3 opacity-70">
+<div class="bg-surface-container-high text-on-surface-variant p-2 rounded-xl">
+<span class="material-symbols-outlined text-xl" data-icon="cloud_sync">cloud_sync</span>
+</div>
+<span class="font-semibold text-on-surface-variant">Deployment Options</span>
+</div>
+<!-- Level 3: Deployment Sub-branches -->
+<div class="flex gap-8 relative">
+<svg class="node-connector top-[-5rem] left-0 w-full h-20" preserveaspectratio="none">
+<path class="opacity-30" d="M 80 0 C 80 40, 0 40, 0 80" fill="none" stroke="#c1c6d5" stroke-width="1.5"></path>
+<path class="opacity-30" d="M 80 0 C 80 40, 160 40, 160 80" fill="none" stroke="#c1c6d5" stroke-width="1.5"></path>
+</svg>
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl px-5 py-3 flex items-center gap-3 opacity-50">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="grid_view">grid_view</span>
+<span class="text-sm font-medium text-on-surface-variant">Kubernetes</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl px-5 py-3 flex items-center gap-3 opacity-50">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="bolt">bolt</span>
+<span class="text-sm font-medium text-on-surface-variant">Serverless</span>
+</div>
+</div>
+</div>
+<!-- Node: Security Model -->
+<div class="flex flex-col items-center gap-20">
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-3xl px-6 py-4 flex items-center gap-3 opacity-70">
+<div class="bg-surface-container-high text-on-surface-variant p-2 rounded-xl">
+<span class="material-symbols-outlined text-xl" data-icon="security">security</span>
+</div>
+<span class="font-semibold text-on-surface-variant">Security Model</span>
+</div>
+<!-- Level 3: Security Sub-branches -->
+<div class="flex gap-8 relative">
+<svg class="node-connector top-[-5rem] left-0 w-full h-20" preserveaspectratio="none">
+<path class="opacity-30" d="M 80 0 C 80 40, 0 40, 0 80" fill="none" stroke="#c1c6d5" stroke-width="1.5"></path>
+<path class="opacity-30" d="M 80 0 C 80 40, 160 40, 160 80" fill="none" stroke="#c1c6d5" stroke-width="1.5"></path>
+</svg>
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl px-5 py-3 flex items-center gap-3 opacity-50">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="key">key</span>
+<span class="text-sm font-medium text-on-surface-variant">OAuth2/OIDC</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl px-5 py-3 flex items-center gap-3 opacity-50">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="verified_user">verified_user</span>
+<span class="text-sm font-medium text-on-surface-variant">Zero Trust</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Editorial Sidebar Hint -->
+<div class="fixed right-8 top-32 w-64 bg-surface-container-lowest/40 backdrop-blur-md rounded-3xl p-6 border border-outline-variant/5 hidden lg:block">
+<h4 class="font-bold text-on-surface mb-4">Context Explorer</h4>
+<div class="space-y-4">
+<div class="flex flex-col gap-1">
+<span class="text-[0.6rem] font-bold text-primary uppercase">Current Node</span>
+<p class="text-sm font-medium text-on-surface-variant">Saga Pattern</p>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+          The Saga design pattern is a way to manage data consistency across microservices in distributed transaction scenarios.
+        </p>
+<div class="pt-4 flex flex-col gap-2">
+<button class="bg-primary text-white text-xs font-bold py-3 rounded-xl active:scale-95 duration-200">Expand Insights</button>
+<button class="bg-surface-container-high text-primary text-xs font-bold py-3 rounded-xl active:scale-95 duration-200">Ask Question</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 pb-8 pt-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0px_-12px_32px_rgba(47,128,237,0.06)] rounded-t-3xl">
+<div class="flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-2xl p-3 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="account_tree" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_tree</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 p-3 hover:text-blue-500 dark:hover:text-blue-300 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 p-3 hover:text-blue-500 dark:hover:text-blue-300 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 p-3 hover:text-blue-500 dark:hover:text-blue-300 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+</nav>
+</body></html>

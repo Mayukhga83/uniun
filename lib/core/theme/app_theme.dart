@@ -74,7 +74,7 @@ class AppTheme {
           onInverseSurface: AppColors.inverseOnSurface,
           inversePrimary: AppColors.inversePrimary,
         ),
-        scaffoldBackgroundColor: AppColors.surface,
+        scaffoldBackgroundColor: AppColors.surfaceContainerLowest,
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: AppColors.surfaceContainerLow,

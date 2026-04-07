@@ -21,6 +21,7 @@ class ThreadReplyItem extends StatefulWidget {
     required this.replyCounts,
     required this.replyCount,
     required this.showThreadLine,
+    required this.isTreeBuilding,
     required this.onReplyTap,
   });
 
@@ -32,6 +33,7 @@ class ThreadReplyItem extends StatefulWidget {
   final Map<String, int> replyCounts;
   final int replyCount;
   final bool showThreadLine;
+  final bool isTreeBuilding;
   final VoidCallback onReplyTap;
 
   @override
@@ -40,7 +42,7 @@ class ThreadReplyItem extends StatefulWidget {
 
 class _ThreadReplyItemState extends State<ThreadReplyItem> {
   bool _isSaved = false;
-  bool _showNested = false;
+  bool _showNested = true;
 
   @override
   void initState() {
@@ -167,75 +169,91 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
                       children: [
                         GestureDetector(
                           onTap: widget.onReplyTap,
-                          child: const Icon(Icons.reply_rounded,
-                              size: 18, color: AppColors.onSurfaceVariant),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            child: Icon(Icons.reply_rounded,
+                                size: 20, color: AppColors.onSurfaceVariant),
+                          ),
                         ),
-                        const SizedBox(width: 20),
+                        const SizedBox(width: 12),
                         if (widget.replyCount > 0)
                           GestureDetector(
                             onTap: () =>
                                 setState(() => _showNested = !_showNested),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.chat_bubble_outline_rounded,
-                                    size: 16,
-                                    color: AppColors.onSurfaceVariant),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${widget.replyCount}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.onSurfaceVariant,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.chat_bubble_outline_rounded,
+                                      size: 18,
+                                      color: AppColors.onSurfaceVariant),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${widget.replyCount}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         const Spacer(),
                         GestureDetector(
                           onTap: _toggleSave,
-                          child: Icon(
-                            _isSaved
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_border_rounded,
-                            size: 18,
-                            color: _isSaved
-                                ? AppColors.primary
-                                : AppColors.onSurfaceVariant,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            child: Icon(
+                              _isSaved
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              size: 20,
+                              color: _isSaved
+                                  ? AppColors.primary
+                                  : AppColors.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ],
                     ),
 
                     // Nested replies
-                    if (_showNested && widget.nestedReplies.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      ...List.generate(widget.nestedReplies.length, (i) {
-                        final nested = widget.nestedReplies[i];
-                        final isLast = i == widget.nestedReplies.length - 1;
-                        final name =
-                            widget.nestedProfiles[nested.authorPubkey]?.name ??
-                                threadShortPubkey(nested.authorPubkey);
-                        return ThreadNestedReplyItem(
-                          key: ValueKey(nested.id),
-                          reply: nested,
-                          profile: widget.nestedProfiles[nested.authorPubkey],
-                          nestedReplies: widget.allNestedReplies,
-                          allProfiles: widget.nestedProfiles,
-                          replyCounts: widget.replyCounts,
-                          depth: 0,
-                          isLastSibling: isLast,
-                          onReplyTap: () {
-                            context.read<ThreadBloc>().add(
-                                  SetReplyTargetEvent(
-                                    replyToId: nested.id,
-                                    replyToName: name,
-                                  ),
-                                );
-                          },
-                        );
-                      }),
+                    if (_showNested) ...[
+                      if (widget.nestedReplies.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        ...List.generate(widget.nestedReplies.length, (i) {
+                          final nested = widget.nestedReplies[i];
+                          final isLast = i == widget.nestedReplies.length - 1;
+                          final name =
+                              widget.nestedProfiles[nested.authorPubkey]?.name ??
+                                  threadShortPubkey(nested.authorPubkey);
+                          return ThreadNestedReplyItem(
+                            key: ValueKey(nested.id),
+                            reply: nested,
+                            profile: widget.nestedProfiles[nested.authorPubkey],
+                            nestedReplies: widget.allNestedReplies,
+                            allProfiles: widget.nestedProfiles,
+                            replyCounts: widget.replyCounts,
+                            isTreeBuilding: widget.isTreeBuilding,
+                            depth: 0,
+                            isLastSibling: isLast,
+                            onReplyTap: () {
+                              context.read<ThreadBloc>().add(
+                                    SetReplyTargetEvent(
+                                      replyToId: nested.id,
+                                      replyToName: name,
+                                    ),
+                                  );
+                            },
+                          );
+                        }),
+                      ] else if (widget.isTreeBuilding && widget.replyCount > 0)
+                        // Tree not ready yet — show cost-free skeleton.
+                        // Main thread is idle (isolate is working), so this
+                        // renders instantly with zero computation.
+                        const _NestedLoadingSkeleton(),
                     ],
                   ],
                 ),
@@ -243,6 +261,61 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Skeleton shown while background isolate builds the tree ──────────────────
+
+class _NestedLoadingSkeleton extends StatelessWidget {
+  const _NestedLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, left: 20),
+      child: Column(
+        children: List.generate(2, (i) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.outlineVariant.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 10,
+                      width: 72,
+                      decoration: BoxDecoration(
+                        color: AppColors.outlineVariant.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: AppColors.outlineVariant.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        )),
       ),
     );
   }

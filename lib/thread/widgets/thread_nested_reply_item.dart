@@ -19,10 +19,8 @@ class ThreadNestedReplyItem extends StatefulWidget {
     required this.allProfiles,
     required this.replyCounts,
     this.depth = 0,
-    /// Whether this item is the last sibling at its level.
-    /// When false a thread line is drawn below the avatar to connect to the
-    /// next sibling.
     this.isLastSibling = true,
+    this.isTreeBuilding = false,
   });
 
   final NoteEntity reply;
@@ -33,6 +31,7 @@ class ThreadNestedReplyItem extends StatefulWidget {
   final Map<String, int> replyCounts;
   final int depth;
   final bool isLastSibling;
+  final bool isTreeBuilding;
 
   @override
   State<ThreadNestedReplyItem> createState() => _ThreadNestedReplyItemState();
@@ -143,12 +142,15 @@ class _ThreadNestedReplyItemState extends State<ThreadNestedReplyItem> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          displayName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: AppColors.onSurface,
+                        Flexible(
+                          child: Text(
+                            displayName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: AppColors.onSurface,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -175,15 +177,16 @@ class _ThreadNestedReplyItemState extends State<ThreadNestedReplyItem> {
                       children: [
                         GestureDetector(
                           onTap: widget.onReplyTap,
-                          child: const Icon(Icons.reply_rounded,
-                              size: 16, color: AppColors.onSurfaceVariant),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                            child: Icon(Icons.reply_rounded,
+                                size: 18, color: AppColors.onSurfaceVariant),
+                          ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 8),
                         if (hasReplies)
                           GestureDetector(
                             onTap: () {
-                              // If children not yet loaded (beyond BFS depth),
-                              // fetch them now on first expand
                               if (!_showChildren && !hasChildren) {
                                 context.read<ThreadBloc>().add(
                                       ExpandReplyEvent(widget.reply.id),
@@ -191,67 +194,77 @@ class _ThreadNestedReplyItemState extends State<ThreadNestedReplyItem> {
                               }
                               setState(() => _showChildren = !_showChildren);
                             },
-                            child: Row(
-                              children: [
-                                const Icon(Icons.chat_bubble_outline_rounded,
-                                    size: 14,
-                                    color: AppColors.onSurfaceVariant),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '$replyCount',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.onSurfaceVariant,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.chat_bubble_outline_rounded,
+                                      size: 16,
+                                      color: AppColors.onSurfaceVariant),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$replyCount',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         const Spacer(),
                         GestureDetector(
                           onTap: _toggleSave,
-                          child: Icon(
-                            _isSaved
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_border_rounded,
-                            size: 16,
-                            color: _isSaved
-                                ? AppColors.primary
-                                : AppColors.onSurfaceVariant,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                            child: Icon(
+                              _isSaved
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              size: 18,
+                              color: _isSaved
+                                  ? AppColors.primary
+                                  : AppColors.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ],
                     ),
 
                     // Recursive children
-                    if (_showChildren && hasChildren) ...[
-                      const SizedBox(height: 8),
-                      ...List.generate(children.length, (i) {
-                        final child = children[i];
-                        final isLast = i == children.length - 1;
-                        final name =
-                            widget.allProfiles[child.authorPubkey]?.name ??
-                                threadShortPubkey(child.authorPubkey);
-                        return ThreadNestedReplyItem(
-                          key: ValueKey(child.id),
-                          reply: child,
-                          profile: widget.allProfiles[child.authorPubkey],
-                          nestedReplies: widget.nestedReplies,
-                          allProfiles: widget.allProfiles,
-                          replyCounts: widget.replyCounts,
-                          depth: widget.depth + 1,
-                          isLastSibling: isLast,
-                          onReplyTap: () {
-                            context.read<ThreadBloc>().add(
-                                  SetReplyTargetEvent(
-                                    replyToId: child.id,
-                                    replyToName: name,
-                                  ),
-                                );
-                          },
-                        );
-                      }),
+                    if (_showChildren) ...[
+                      if (hasChildren) ...[
+                        const SizedBox(height: 8),
+                        ...List.generate(children.length, (i) {
+                          final child = children[i];
+                          final isLast = i == children.length - 1;
+                          final name =
+                              widget.allProfiles[child.authorPubkey]?.name ??
+                                  threadShortPubkey(child.authorPubkey);
+                          return ThreadNestedReplyItem(
+                            key: ValueKey(child.id),
+                            reply: child,
+                            profile: widget.allProfiles[child.authorPubkey],
+                            nestedReplies: widget.nestedReplies,
+                            allProfiles: widget.allProfiles,
+                            replyCounts: widget.replyCounts,
+                            isTreeBuilding: widget.isTreeBuilding,
+                            depth: widget.depth + 1,
+                            isLastSibling: isLast,
+                            onReplyTap: () {
+                              context.read<ThreadBloc>().add(
+                                    SetReplyTargetEvent(
+                                      replyToId: child.id,
+                                      replyToName: name,
+                                    ),
+                                  );
+                            },
+                          );
+                        }),
+                      ] else if (widget.isTreeBuilding && replyCount > 0)
+                        const _NestedChildLoadingSkeleton(),
                     ],
                   ],
                 ),
@@ -259,6 +272,40 @@ class _ThreadNestedReplyItemState extends State<ThreadNestedReplyItem> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NestedChildLoadingSkeleton extends StatelessWidget {
+  const _NestedChildLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, left: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: AppColors.outlineVariant.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Container(
+              height: 10,
+              decoration: BoxDecoration(
+                color: AppColors.outlineVariant.withValues(alpha: 0.13),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -56,9 +56,9 @@ class _VishnuFeedViewState extends State<_VishnuFeedView> {
   Future<void> _onRefresh() async {
     context.read<VishnuFeedBloc>().add(const RefreshFeedEvent());
     await context.read<VishnuFeedBloc>().stream.firstWhere(
-          (s) => s.status != VishnuFeedStatus.loading,
-          orElse: () => const VishnuFeedState(),
-        );
+      (s) => s.status != VishnuFeedStatus.loading,
+      orElse: () => const VishnuFeedState(),
+    );
   }
 
   Future<void> _toggleFollow(
@@ -106,11 +106,10 @@ class _VishnuFeedViewState extends State<_VishnuFeedView> {
                 if (feedState.status == VishnuFeedStatus.error &&
                     feedState.notes.isEmpty) {
                   return _ErrorView(
-                    message:
-                        feedState.errorMessage ?? 'Something went wrong',
-                    onRetry: () => context
-                        .read<VishnuFeedBloc>()
-                        .add(const LoadFeedEvent()),
+                    message: feedState.errorMessage ?? 'Something went wrong',
+                    onRetry: () => context.read<VishnuFeedBloc>().add(
+                      const LoadFeedEvent(),
+                    ),
                   );
                 }
 
@@ -122,8 +121,9 @@ class _VishnuFeedViewState extends State<_VishnuFeedView> {
                 // Feed list
                 return BlocBuilder<FollowedNotesCubit, FollowedNotesState>(
                   builder: (context, followedState) {
-                    final followedIds =
-                        followedState.notes.map((n) => n.eventId).toSet();
+                    final followedIds = followedState.notes
+                        .map((n) => n.eventId)
+                        .toSet();
 
                     return RefreshIndicator(
                       color: AppColors.primary,
@@ -131,9 +131,12 @@ class _VishnuFeedViewState extends State<_VishnuFeedView> {
                       child: ListView.builder(
                         controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: feedState.notes.length +
-                            (feedState.status ==
-                                    VishnuFeedStatus.loadingMore
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).padding.bottom + 96,
+                        ),
+                        itemCount:
+                            feedState.notes.length +
+                            (feedState.status == VishnuFeedStatus.loadingMore
                                 ? 1
                                 : 0),
                         itemBuilder: (context, i) {
@@ -150,8 +153,7 @@ class _VishnuFeedViewState extends State<_VishnuFeedView> {
                           }
 
                           final note = feedState.notes[i];
-                          final profile =
-                              feedState.profiles[note.authorPubkey];
+                          final profile = feedState.profiles[note.authorPubkey];
                           final replyCount =
                               feedState.replyCounts[note.id] ?? 0;
                           final isFollowed = followedIds.contains(note.id);
@@ -177,7 +179,9 @@ class _VishnuFeedViewState extends State<_VishnuFeedView> {
                             ),
                             onSaveTap: () {
                               final bloc = context.read<VishnuFeedBloc>();
-                              final saved = feedState.savedIds.contains(note.id);
+                              final saved = feedState.savedIds.contains(
+                                note.id,
+                              );
                               if (saved) {
                                 bloc.add(UnsaveFeedNoteEvent(note.id));
                               } else {
@@ -245,8 +249,10 @@ class _FeedHeader extends StatelessWidget {
           const Spacer(),
           // Notifications bell
           IconButton(
-            icon: const Icon(Icons.notifications_outlined,
-                color: AppColors.onSurface),
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: AppColors.onSurface,
+            ),
             onPressed: () {},
           ),
           const SizedBox(width: 4),
@@ -288,8 +294,11 @@ class _EmptyFeedView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.sticky_note_2_outlined,
-              size: 52, color: AppColors.outlineVariant),
+          Icon(
+            Icons.sticky_note_2_outlined,
+            size: 52,
+            color: AppColors.outlineVariant,
+          ),
           const SizedBox(height: 16),
           Text(
             l10n.vishnuNoNotes,
@@ -303,7 +312,10 @@ class _EmptyFeedView extends StatelessWidget {
           Text(
             l10n.vishnuCreateFirst,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: AppColors.onSurfaceVariant),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -324,8 +336,11 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline_rounded,
-              size: 48, color: AppColors.error),
+          const Icon(
+            Icons.error_outline_rounded,
+            size: 48,
+            color: AppColors.error,
+          ),
           const SizedBox(height: 12),
           Text(
             message,

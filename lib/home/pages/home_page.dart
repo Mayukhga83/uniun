@@ -81,21 +81,18 @@ class _HomePageState extends State<HomePage> {
       ],
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.surfaceContainerLowest,
         resizeToAvoidBottomInset: false,
         drawer: VishnuDrawer(onSwitchTab: _switchTab),
         body: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 88),
-              child: IndexedStack(
-                index: _currentIndex,
-                children: [
-                  VishnuFeedPage(onOpenDrawer: _openDrawer),
-                  BrahmaCreatePage(onPublished: () => _switchTab(0)),
-                  const ShivPage(),
-                ],
-              ),
+            IndexedStack(
+              index: _currentIndex,
+              children: [
+                VishnuFeedPage(onOpenDrawer: _openDrawer),
+                BrahmaCreatePage(onPublished: () => _switchTab(0)),
+                const ShivPage(),
+              ],
             ),
             Positioned(
               left: 20,

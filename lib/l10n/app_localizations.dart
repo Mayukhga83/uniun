@@ -262,6 +262,12 @@ abstract class AppLocalizations {
   /// **'Brahma'**
   String get brahmaTitle;
 
+  /// Brahma header tagline shown below the title
+  ///
+  /// In en, this message translates to:
+  /// **'Write & publish to Nostr'**
+  String get brahmaTagline;
+
   /// Placeholder in the note compose field
   ///
   /// In en, this message translates to:
@@ -1365,6 +1371,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'UNIUN is provided as-is. We make no guarantees about relay uptime, third-party server availability, or persistence of content on external relays.'**
   String get termsNoWarrantyBody;
+
+  /// Shiv AI assistant name label (uppercase)
+  ///
+  /// In en, this message translates to:
+  /// **'SHIV'**
+  String get shivName;
+
+  /// Shiv landing header tagline
+  ///
+  /// In en, this message translates to:
+  /// **'Think in threads'**
+  String get shivTagline;
+
+  /// Shiv landing screen body subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Your on-device AI.\nThink in threads.'**
+  String get shivLandingBody;
+
+  /// Button label to create a new Shiv conversation
+  ///
+  /// In en, this message translates to:
+  /// **'New Conversation'**
+  String get shivNewConversation;
+
+  /// Link to view existing conversations on Shiv landing
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{View 1 conversation} other{View {count} conversations}}'**
+  String shivViewConversations(int count);
+
+  /// Title of the conversations history sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations'**
+  String get shivConversations;
+
+  /// Tooltip on new conversation icon button
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get shivNewConversationTooltip;
+
+  /// Tooltip on the history icon in chat header
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations'**
+  String get shivConversationsTooltip;
+
+  /// Tooltip on the branch tree icon in chat header
+  ///
+  /// In en, this message translates to:
+  /// **'Branch tree'**
+  String get shivBranchTreeTooltip;
+
+  /// Snackbar shown when tapping the branch tree button
+  ///
+  /// In en, this message translates to:
+  /// **'Branch tree — coming in Phase 4'**
+  String get shivBranchTreeComingSoon;
+
+  /// Default title for a newly created conversation
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get shivDefaultConversationTitle;
+
+  /// Empty chat state heading
+  ///
+  /// In en, this message translates to:
+  /// **'Start a conversation'**
+  String get shivEmptyTitle;
+
+  /// Empty chat state body text
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Shiv anything — your saved notes\ngive it context about what you know.'**
+  String get shivEmptyBody;
+
+  /// Hint text inside the Shiv chat input field
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Shiv anything…'**
+  String get shivInputHint;
+
+  /// Empty state in the conversations history sheet
+  ///
+  /// In en, this message translates to:
+  /// **'No conversations yet'**
+  String get shivNoConversations;
+
+  /// Badge on the currently active conversation in history
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get shivActiveLabel;
+
+  /// Relative time: less than 1 minute ago
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get shivTimeJustNow;
+
+  /// Relative time in minutes
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String shivTimeMinutesAgo(int count);
+
+  /// Relative time in hours
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String shivTimeHoursAgo(int count);
+
+  /// Relative time in days
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String shivTimeDaysAgo(int count);
 }
 
 class _AppLocalizationsDelegate
