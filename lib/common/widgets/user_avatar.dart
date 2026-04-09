@@ -23,10 +23,20 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = borderRadius ?? size / 2;
-    final effectiveSeed = seed.isEmpty ? AppConstants.kAppName : seed;
-    final isNetwork = photoUrl != null &&
+
+    // 'generated:<seed>' prefix means the user picked an avatar variant during
+    // onboarding. Use that seed directly for AvatarPlus instead of the pubkey.
+    final isGeneratedVariant =
+        photoUrl != null && photoUrl!.startsWith('generated:');
+    final isNetwork = !isGeneratedVariant &&
+        photoUrl != null &&
         photoUrl!.isNotEmpty &&
         (photoUrl!.startsWith('http://') || photoUrl!.startsWith('https://'));
+
+    // Which seed to pass into AvatarPlus when no real photo is available.
+    final generatedSeed = isGeneratedVariant
+        ? photoUrl!.substring('generated:'.length)
+        : (seed.isEmpty ? AppConstants.kAppName : seed);
 
     return Container(
       width: size,
@@ -48,10 +58,10 @@ class UserAvatar extends StatelessWidget {
               fit: BoxFit.cover,
               width: size,
               height: size,
-              placeholder: (_, __) => _generated(effectiveSeed),
-              errorWidget: (_, __, ___) => _generated(effectiveSeed),
+              placeholder: (_, __) => _generated(generatedSeed),
+              errorWidget: (_, __, ___) => _generated(generatedSeed),
             )
-          : _generated(effectiveSeed),
+          : _generated(generatedSeed),
     );
   }
 

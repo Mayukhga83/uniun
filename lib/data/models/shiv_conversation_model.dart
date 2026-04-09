@@ -13,9 +13,10 @@ class ShivConversationModel {
 
   late String title;
 
-  /// The branchId the user is currently viewing.
-  /// Updated when user switches branches via the graph view.
-  late String activeBranchId;
+  /// The messageId of the current leaf node (last message in active branch).
+  /// null = conversation has no messages yet.
+  /// Traversing up via parentId from this node gives the full branch.
+  String? activeLeafMessageId;
 
   @Index()
   late DateTime createdAt;
@@ -27,7 +28,7 @@ extension ShivConversationModelExtension on ShivConversationModel {
   ShivConversationEntity toDomain() => ShivConversationEntity(
         conversationId: conversationId,
         title: title,
-        activeBranchId: activeBranchId,
+        activeLeafMessageId: activeLeafMessageId,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );

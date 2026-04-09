@@ -82,16 +82,17 @@ class UpdateMessageContentUseCase
   }
 }
 
+/// Updates which leaf node the user is currently viewing (for branch switching).
 @lazySingleton
-class UpdateActiveBranchUseCase
+class UpdateActiveLeafUseCase
     extends UseCase<Either<Failure, Unit>,
-        (String conversationId, String branchId)> {
+        (String conversationId, String messageId)> {
   final ShivRepository _repository;
-  const UpdateActiveBranchUseCase(this._repository);
+  const UpdateActiveLeafUseCase(this._repository);
 
   @override
   Future<Either<Failure, Unit>> call((String, String) input,
       {bool cached = false}) {
-    return _repository.updateActiveBranch(input.$1, input.$2);
+    return _repository.updateActiveLeaf(input.$1, input.$2);
   }
 }

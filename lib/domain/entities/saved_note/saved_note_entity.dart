@@ -16,5 +16,7 @@ abstract class SavedNoteEntity with _$SavedNoteEntity {
     required List<String> tTags,
     required DateTime created,
     required DateTime savedAt,
+    /// 384-dim embedding vector. Null until the background EmbeddingService runs.
+    List<double>? embedding,
   }) = _SavedNoteEntity;
 }

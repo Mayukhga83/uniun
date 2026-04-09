@@ -30,4 +30,11 @@ abstract class NoteRepository {
 
   /// Mark a note as seen (updates isSeen flag)
   Future<Either<Failure, Unit>> markAsSeen(String eventId);
+
+  /// All notes authored by [pubkeyHex] stored locally (own notes, kept forever).
+  /// Used by the RAG pipeline for baseline interest personalisation.
+  Future<Either<Failure, List<NoteEntity>>> getOwnNotes(String pubkeyHex);
+
+  /// Persists a precomputed embedding vector for a note authored by the user.
+  Future<Either<Failure, Unit>> updateNoteEmbedding(String eventId, List<double> embedding);
 }

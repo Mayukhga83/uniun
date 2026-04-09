@@ -61,3 +61,22 @@ class GetAllSavedNotesUseCase
     return _repository.getAll();
   }
 }
+
+// ── UpdateEmbeddingUseCase ────────────────────────────────────────────────────
+
+/// Persists a precomputed embedding vector for a saved note.
+/// Input: (eventId, embedding) tuple.
+@lazySingleton
+class UpdateEmbeddingUseCase
+    extends UseCase<Either<Failure, Unit>, (String, List<double>)> {
+  final SavedNoteRepository _repository;
+  const UpdateEmbeddingUseCase(this._repository);
+
+  @override
+  Future<Either<Failure, Unit>> call(
+    (String, List<double>) input, {
+    bool cached = false,
+  }) {
+    return _repository.updateEmbedding(input.$1, input.$2);
+  }
+}

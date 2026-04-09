@@ -8,6 +8,7 @@ import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
 import 'package:uniun/followed_notes/cubit/followed_notes_cubit.dart';
+import 'package:uniun/shiv/rag/embedding/embedding_service.dart';
 import 'package:uniun/thread/bloc/thread_bloc.dart';
 import 'package:uniun/thread/utils/thread_formatters.dart';
 
@@ -199,7 +200,16 @@ class _ThreadRootNoteCardState extends State<ThreadRootNoteCard> {
                     final result = await getIt<SaveNoteUseCase>().call(widget.note);
                     result.fold(
                       (_) { if (mounted) setState(() => _isSaved = false); },
-                      (_) {},
+                      (saved) {
+                        getIt<EmbeddingService>().embed(saved.content).then((vec) {
+                          if (vec.isNotEmpty) {
+                            getIt<UpdateEmbeddingUseCase>().call((saved.eventId, vec));
+                            print('📦 Embedded saved note (thread root): ${saved.eventId}');
+                          }
+                        }).catchError((e) {
+                          print('📦 Embedding failed (thread root): $e');
+                        });
+                      },
                     );
                   } else {
                     final result = await getIt<UnsaveNoteUseCase>().call(widget.note.id);

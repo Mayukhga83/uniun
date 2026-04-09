@@ -683,7 +683,11 @@ mixin _$ShivAIState {
  ShivChatStatus get status; List<ShivConversationEntity> get conversations; ShivConversationEntity? get activeConversation; List<ShivMessageEntity> get messages;/// The streaming assistant message being built token-by-token.
 /// Non-null only while [status] == [ShivChatStatus.streaming].
  String? get streamingContent;/// The messageId of the placeholder assistant message being streamed.
- String? get streamingMessageId; String? get errorMessage;
+ String? get streamingMessageId; String? get errorMessage;/// How many saved notes were injected as RAG context for the last reply.
+/// 0 = embedding model not loaded or no matching notes found.
+/// Shown as a debug badge in the chat header.
+ int get ragContextCount;/// True while the embedding model is loading on first Shiv tab open.
+ bool get isRagInitializing;
 /// Create a copy of ShivAIState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -694,16 +698,16 @@ $ShivAIStateCopyWith<ShivAIState> get copyWith => _$ShivAIStateCopyWithImpl<Shiv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShivAIState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.conversations, conversations)&&(identical(other.activeConversation, activeConversation) || other.activeConversation == activeConversation)&&const DeepCollectionEquality().equals(other.messages, messages)&&(identical(other.streamingContent, streamingContent) || other.streamingContent == streamingContent)&&(identical(other.streamingMessageId, streamingMessageId) || other.streamingMessageId == streamingMessageId)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShivAIState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.conversations, conversations)&&(identical(other.activeConversation, activeConversation) || other.activeConversation == activeConversation)&&const DeepCollectionEquality().equals(other.messages, messages)&&(identical(other.streamingContent, streamingContent) || other.streamingContent == streamingContent)&&(identical(other.streamingMessageId, streamingMessageId) || other.streamingMessageId == streamingMessageId)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.ragContextCount, ragContextCount) || other.ragContextCount == ragContextCount)&&(identical(other.isRagInitializing, isRagInitializing) || other.isRagInitializing == isRagInitializing));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(conversations),activeConversation,const DeepCollectionEquality().hash(messages),streamingContent,streamingMessageId,errorMessage);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(conversations),activeConversation,const DeepCollectionEquality().hash(messages),streamingContent,streamingMessageId,errorMessage,ragContextCount,isRagInitializing);
 
 @override
 String toString() {
-  return 'ShivAIState(status: $status, conversations: $conversations, activeConversation: $activeConversation, messages: $messages, streamingContent: $streamingContent, streamingMessageId: $streamingMessageId, errorMessage: $errorMessage)';
+  return 'ShivAIState(status: $status, conversations: $conversations, activeConversation: $activeConversation, messages: $messages, streamingContent: $streamingContent, streamingMessageId: $streamingMessageId, errorMessage: $errorMessage, ragContextCount: $ragContextCount, isRagInitializing: $isRagInitializing)';
 }
 
 
@@ -714,7 +718,7 @@ abstract mixin class $ShivAIStateCopyWith<$Res>  {
   factory $ShivAIStateCopyWith(ShivAIState value, $Res Function(ShivAIState) _then) = _$ShivAIStateCopyWithImpl;
 @useResult
 $Res call({
- ShivChatStatus status, List<ShivConversationEntity> conversations, ShivConversationEntity? activeConversation, List<ShivMessageEntity> messages, String? streamingContent, String? streamingMessageId, String? errorMessage
+ ShivChatStatus status, List<ShivConversationEntity> conversations, ShivConversationEntity? activeConversation, List<ShivMessageEntity> messages, String? streamingContent, String? streamingMessageId, String? errorMessage, int ragContextCount, bool isRagInitializing
 });
 
 
@@ -731,7 +735,7 @@ class _$ShivAIStateCopyWithImpl<$Res>
 
 /// Create a copy of ShivAIState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? conversations = null,Object? activeConversation = freezed,Object? messages = null,Object? streamingContent = freezed,Object? streamingMessageId = freezed,Object? errorMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? conversations = null,Object? activeConversation = freezed,Object? messages = null,Object? streamingContent = freezed,Object? streamingMessageId = freezed,Object? errorMessage = freezed,Object? ragContextCount = null,Object? isRagInitializing = null,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ShivChatStatus,conversations: null == conversations ? _self.conversations : conversations // ignore: cast_nullable_to_non_nullable
@@ -740,7 +744,9 @@ as ShivConversationEntity?,messages: null == messages ? _self.messages : message
 as List<ShivMessageEntity>,streamingContent: freezed == streamingContent ? _self.streamingContent : streamingContent // ignore: cast_nullable_to_non_nullable
 as String?,streamingMessageId: freezed == streamingMessageId ? _self.streamingMessageId : streamingMessageId // ignore: cast_nullable_to_non_nullable
 as String?,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,ragContextCount: null == ragContextCount ? _self.ragContextCount : ragContextCount // ignore: cast_nullable_to_non_nullable
+as int,isRagInitializing: null == isRagInitializing ? _self.isRagInitializing : isRagInitializing // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 /// Create a copy of ShivAIState
@@ -837,10 +843,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ShivChatStatus status,  List<ShivConversationEntity> conversations,  ShivConversationEntity? activeConversation,  List<ShivMessageEntity> messages,  String? streamingContent,  String? streamingMessageId,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ShivChatStatus status,  List<ShivConversationEntity> conversations,  ShivConversationEntity? activeConversation,  List<ShivMessageEntity> messages,  String? streamingContent,  String? streamingMessageId,  String? errorMessage,  int ragContextCount,  bool isRagInitializing)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ShivAIState() when $default != null:
-return $default(_that.status,_that.conversations,_that.activeConversation,_that.messages,_that.streamingContent,_that.streamingMessageId,_that.errorMessage);case _:
+return $default(_that.status,_that.conversations,_that.activeConversation,_that.messages,_that.streamingContent,_that.streamingMessageId,_that.errorMessage,_that.ragContextCount,_that.isRagInitializing);case _:
   return orElse();
 
 }
@@ -858,10 +864,10 @@ return $default(_that.status,_that.conversations,_that.activeConversation,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ShivChatStatus status,  List<ShivConversationEntity> conversations,  ShivConversationEntity? activeConversation,  List<ShivMessageEntity> messages,  String? streamingContent,  String? streamingMessageId,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ShivChatStatus status,  List<ShivConversationEntity> conversations,  ShivConversationEntity? activeConversation,  List<ShivMessageEntity> messages,  String? streamingContent,  String? streamingMessageId,  String? errorMessage,  int ragContextCount,  bool isRagInitializing)  $default,) {final _that = this;
 switch (_that) {
 case _ShivAIState():
-return $default(_that.status,_that.conversations,_that.activeConversation,_that.messages,_that.streamingContent,_that.streamingMessageId,_that.errorMessage);case _:
+return $default(_that.status,_that.conversations,_that.activeConversation,_that.messages,_that.streamingContent,_that.streamingMessageId,_that.errorMessage,_that.ragContextCount,_that.isRagInitializing);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -878,10 +884,10 @@ return $default(_that.status,_that.conversations,_that.activeConversation,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ShivChatStatus status,  List<ShivConversationEntity> conversations,  ShivConversationEntity? activeConversation,  List<ShivMessageEntity> messages,  String? streamingContent,  String? streamingMessageId,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ShivChatStatus status,  List<ShivConversationEntity> conversations,  ShivConversationEntity? activeConversation,  List<ShivMessageEntity> messages,  String? streamingContent,  String? streamingMessageId,  String? errorMessage,  int ragContextCount,  bool isRagInitializing)?  $default,) {final _that = this;
 switch (_that) {
 case _ShivAIState() when $default != null:
-return $default(_that.status,_that.conversations,_that.activeConversation,_that.messages,_that.streamingContent,_that.streamingMessageId,_that.errorMessage);case _:
+return $default(_that.status,_that.conversations,_that.activeConversation,_that.messages,_that.streamingContent,_that.streamingMessageId,_that.errorMessage,_that.ragContextCount,_that.isRagInitializing);case _:
   return null;
 
 }
@@ -893,7 +899,7 @@ return $default(_that.status,_that.conversations,_that.activeConversation,_that.
 
 
 class _ShivAIState implements ShivAIState {
-  const _ShivAIState({this.status = ShivChatStatus.idle, final  List<ShivConversationEntity> conversations = const [], this.activeConversation, final  List<ShivMessageEntity> messages = const [], this.streamingContent, this.streamingMessageId, this.errorMessage}): _conversations = conversations,_messages = messages;
+  const _ShivAIState({this.status = ShivChatStatus.idle, final  List<ShivConversationEntity> conversations = const [], this.activeConversation, final  List<ShivMessageEntity> messages = const [], this.streamingContent, this.streamingMessageId, this.errorMessage, this.ragContextCount = 0, this.isRagInitializing = false}): _conversations = conversations,_messages = messages;
   
 
 @override@JsonKey() final  ShivChatStatus status;
@@ -918,6 +924,12 @@ class _ShivAIState implements ShivAIState {
 /// The messageId of the placeholder assistant message being streamed.
 @override final  String? streamingMessageId;
 @override final  String? errorMessage;
+/// How many saved notes were injected as RAG context for the last reply.
+/// 0 = embedding model not loaded or no matching notes found.
+/// Shown as a debug badge in the chat header.
+@override@JsonKey() final  int ragContextCount;
+/// True while the embedding model is loading on first Shiv tab open.
+@override@JsonKey() final  bool isRagInitializing;
 
 /// Create a copy of ShivAIState
 /// with the given fields replaced by the non-null parameter values.
@@ -929,16 +941,16 @@ _$ShivAIStateCopyWith<_ShivAIState> get copyWith => __$ShivAIStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShivAIState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._conversations, _conversations)&&(identical(other.activeConversation, activeConversation) || other.activeConversation == activeConversation)&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.streamingContent, streamingContent) || other.streamingContent == streamingContent)&&(identical(other.streamingMessageId, streamingMessageId) || other.streamingMessageId == streamingMessageId)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShivAIState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._conversations, _conversations)&&(identical(other.activeConversation, activeConversation) || other.activeConversation == activeConversation)&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.streamingContent, streamingContent) || other.streamingContent == streamingContent)&&(identical(other.streamingMessageId, streamingMessageId) || other.streamingMessageId == streamingMessageId)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.ragContextCount, ragContextCount) || other.ragContextCount == ragContextCount)&&(identical(other.isRagInitializing, isRagInitializing) || other.isRagInitializing == isRagInitializing));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_conversations),activeConversation,const DeepCollectionEquality().hash(_messages),streamingContent,streamingMessageId,errorMessage);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_conversations),activeConversation,const DeepCollectionEquality().hash(_messages),streamingContent,streamingMessageId,errorMessage,ragContextCount,isRagInitializing);
 
 @override
 String toString() {
-  return 'ShivAIState(status: $status, conversations: $conversations, activeConversation: $activeConversation, messages: $messages, streamingContent: $streamingContent, streamingMessageId: $streamingMessageId, errorMessage: $errorMessage)';
+  return 'ShivAIState(status: $status, conversations: $conversations, activeConversation: $activeConversation, messages: $messages, streamingContent: $streamingContent, streamingMessageId: $streamingMessageId, errorMessage: $errorMessage, ragContextCount: $ragContextCount, isRagInitializing: $isRagInitializing)';
 }
 
 
@@ -949,7 +961,7 @@ abstract mixin class _$ShivAIStateCopyWith<$Res> implements $ShivAIStateCopyWith
   factory _$ShivAIStateCopyWith(_ShivAIState value, $Res Function(_ShivAIState) _then) = __$ShivAIStateCopyWithImpl;
 @override @useResult
 $Res call({
- ShivChatStatus status, List<ShivConversationEntity> conversations, ShivConversationEntity? activeConversation, List<ShivMessageEntity> messages, String? streamingContent, String? streamingMessageId, String? errorMessage
+ ShivChatStatus status, List<ShivConversationEntity> conversations, ShivConversationEntity? activeConversation, List<ShivMessageEntity> messages, String? streamingContent, String? streamingMessageId, String? errorMessage, int ragContextCount, bool isRagInitializing
 });
 
 
@@ -966,7 +978,7 @@ class __$ShivAIStateCopyWithImpl<$Res>
 
 /// Create a copy of ShivAIState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? conversations = null,Object? activeConversation = freezed,Object? messages = null,Object? streamingContent = freezed,Object? streamingMessageId = freezed,Object? errorMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? conversations = null,Object? activeConversation = freezed,Object? messages = null,Object? streamingContent = freezed,Object? streamingMessageId = freezed,Object? errorMessage = freezed,Object? ragContextCount = null,Object? isRagInitializing = null,}) {
   return _then(_ShivAIState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ShivChatStatus,conversations: null == conversations ? _self._conversations : conversations // ignore: cast_nullable_to_non_nullable
@@ -975,7 +987,9 @@ as ShivConversationEntity?,messages: null == messages ? _self._messages : messag
 as List<ShivMessageEntity>,streamingContent: freezed == streamingContent ? _self.streamingContent : streamingContent // ignore: cast_nullable_to_non_nullable
 as String?,streamingMessageId: freezed == streamingMessageId ? _self.streamingMessageId : streamingMessageId // ignore: cast_nullable_to_non_nullable
 as String?,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,ragContextCount: null == ragContextCount ? _self.ragContextCount : ragContextCount // ignore: cast_nullable_to_non_nullable
+as int,isRagInitializing: null == isRagInitializing ? _self.isRagInitializing : isRagInitializing // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

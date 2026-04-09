@@ -21,6 +21,8 @@ abstract class NoteEntity with _$NoteEntity {
     String? rootEventId,
     /// NIP-10 "reply" marker — the direct parent note this replies to.
     String? replyToEventId,
+    /// 384-dim embedding vector. Non-null only for own notes after RAG init.
+    List<double>? embedding,
   }) = _NoteEntity;
 
   factory NoteEntity.fromJson(Map<String, dynamic> json) =>

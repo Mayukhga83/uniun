@@ -394,6 +394,9 @@
   "aiModelGemma4E4bDesc": "Maximum accuracy multimodal model. Best on flagship devices with 8 GB+ RAM.",
   "@aiModelGemma4E4bDesc": { "description": "Description for Gemma 4 E4B model" },
 
+  "aiEmbeddingSetupInProgress": "Setting up AI features…",
+  "@aiEmbeddingSetupInProgress": { "description": "Progress label shown while the embedding model is downloading after first LLM install" },
+
   "editProfileTitle": "Edit Profile",
   "@editProfileTitle": { "description": "Edit profile screen app-bar title" },
 

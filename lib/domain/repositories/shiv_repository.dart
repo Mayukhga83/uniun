@@ -7,7 +7,8 @@ abstract class ShivRepository {
   Future<Either<Failure, List<ShivConversationEntity>>> getConversations();
   Future<Either<Failure, ShivConversationEntity>> createConversation(String title);
   Future<Either<Failure, Unit>> updateConversationTitle(String conversationId, String title);
-  Future<Either<Failure, Unit>> updateActiveBranch(String conversationId, String branchId);
+  /// Updates the active leaf node for branch switching.
+  Future<Either<Failure, Unit>> updateActiveLeaf(String conversationId, String messageId);
   Future<Either<Failure, Unit>> deleteConversation(String conversationId);
   Future<Either<Failure, List<ShivMessageEntity>>> getMessages(String conversationId);
   Future<Either<Failure, ShivMessageEntity>> saveMessage(ShivMessageEntity message);

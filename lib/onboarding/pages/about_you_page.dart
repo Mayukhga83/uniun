@@ -15,6 +15,9 @@ class AboutYouPage extends StatefulWidget {
   State<AboutYouPage> createState() => _AboutYouPageState();
 }
 
+// Number of avatar variants the user can shuffle through.
+const _kAvatarVariants = 6;
+
 class _AboutYouPageState extends State<AboutYouPage> {
   final _displayNameController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -22,6 +25,9 @@ class _AboutYouPageState extends State<AboutYouPage> {
 
   String? _displayNameError;
   String? _usernameError;
+
+  /// Which avatar variant is currently selected (0 = default, 1-5 = shuffled).
+  int _avatarVariant = 0;
 
   @override
   void initState() {
@@ -45,6 +51,14 @@ class _AboutYouPageState extends State<AboutYouPage> {
       _displayNameController.text.trim().isNotEmpty &&
       _usernameController.text.trim().isNotEmpty;
 
+  /// The seed actually fed into AvatarPlus — pubkeyHex + variant suffix.
+  String _avatarSeed(String pubkeyHex) =>
+      _avatarVariant == 0 ? pubkeyHex : '${pubkeyHex}_v$_avatarVariant';
+
+  void _shuffle() {
+    setState(() => _avatarVariant = (_avatarVariant + 1) % _kAvatarVariants);
+  }
+
   void _onContinue(BuildContext context) {
     final name = _displayNameController.text.trim();
     final username = _usernameController.text.trim();
@@ -66,6 +80,7 @@ class _AboutYouPageState extends State<AboutYouPage> {
     if (hasError) return;
 
     final args = _args(context);
+    final pubkeyHex = args['pubkeyHex'] as String? ?? '';
     Navigator.pushNamed(
       context,
       AppRoutes.yourIdentityKeys,
@@ -74,6 +89,8 @@ class _AboutYouPageState extends State<AboutYouPage> {
         'displayName': name,
         'username': username,
         'bio': _bioController.text.trim(),
+        // Only store the variant seed when user shuffled away from default.
+        'avatarSeed': _avatarVariant == 0 ? null : _avatarSeed(pubkeyHex),
       },
     );
   }
@@ -89,7 +106,7 @@ class _AboutYouPageState extends State<AboutYouPage> {
   @override
   Widget build(BuildContext context) {
     final args = _args(context);
-    final npub = args['npub'] as String? ?? '';
+    final pubkeyHex = args['pubkeyHex'] as String? ?? '';
 
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
@@ -134,10 +151,10 @@ class _AboutYouPageState extends State<AboutYouPage> {
 
                     const SizedBox(height: 24),
 
-                    // ── Avatar ────────────────────────────────────────
+                    // ── Avatar + shuffle ──────────────────────────────
                     GeneratedAvatar(
-                      seed: npub,
-                      name: _displayNameController.text.trim(),
+                      seed: _avatarSeed(pubkeyHex),
+                      onShuffle: _shuffle,
                     ),
                     const SizedBox(height: 6),
                     Text(

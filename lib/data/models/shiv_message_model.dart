@@ -17,13 +17,8 @@ class ShivMessageModel {
 
   /// The messageId of the previous message in this branch.
   /// null = this is the first message in the conversation (root).
+  /// Traverse up via parentId to reconstruct the full branch.
   String? parentId;
-
-  /// Groups messages that travel together on the same straight-line path.
-  /// All messages from root up to a branch point share the same branchId
-  /// as the branch they were originally created in.
-  @Index()
-  late String branchId;
 
   @Enumerated(EnumType.name)
   late MessageRole role;
@@ -39,7 +34,6 @@ extension ShivMessageModelExtension on ShivMessageModel {
         messageId: messageId,
         conversationId: conversationId,
         parentId: parentId,
-        branchId: branchId,
         role: role,
         content: content,
         createdAt: createdAt,

@@ -56,6 +56,30 @@ class ModelSelectionFooter extends StatelessWidget {
                 ),
               ],
             )
+          : state.isEmbeddingDownloading
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: const LinearProgressIndicator(
+                    minHeight: 6,
+                    backgroundColor: Color(0x1A6750A4),
+                    valueColor:
+                        AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.aiEmbeddingSetupInProgress,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            )
           : FilledButton(
               onPressed: state.selectedModelId == null
                   ? null

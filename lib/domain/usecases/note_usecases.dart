@@ -144,6 +144,25 @@ class GetThreadReplyCountUseCase extends UseCase<Either<Failure, int>, String> {
   }
 }
 
+// ── GetOwnNotesUseCase ────────────────────────────────────────────────────────
+
+/// All notes authored by this user stored locally.
+/// Used by the RAG pipeline for baseline personalisation.
+@lazySingleton
+class GetOwnNotesUseCase
+    extends UseCase<Either<Failure, List<NoteEntity>>, String> {
+  final NoteRepository _repository;
+  const GetOwnNotesUseCase(this._repository);
+
+  @override
+  Future<Either<Failure, List<NoteEntity>>> call(
+    String pubkeyHex, {
+    bool cached = false,
+  }) {
+    return _repository.getOwnNotes(pubkeyHex);
+  }
+}
+
 // ── PublishNoteUseCase ────────────────────────────────────────────────────────
 
 /// Publishes a fully signed NoteEntity.
@@ -226,5 +245,24 @@ class PublishNoteUseCase
       'content': note.content,
       'sig': note.sig,
     });
+  }
+}
+
+// ── UpdateNoteEmbeddingUseCase ─────────────────────────────────────────────────
+
+/// Persists a precomputed embedding vector into [NoteModel] (own notes only).
+/// Input: (eventId, embedding) tuple.
+@lazySingleton
+class UpdateNoteEmbeddingUseCase
+    extends UseCase<Either<Failure, Unit>, (String, List<double>)> {
+  final NoteRepository _repository;
+  const UpdateNoteEmbeddingUseCase(this._repository);
+
+  @override
+  Future<Either<Failure, Unit>> call(
+    (String, List<double>) input, {
+    bool cached = false,
+  }) {
+    return _repository.updateNoteEmbedding(input.$1, input.$2);
   }
 }

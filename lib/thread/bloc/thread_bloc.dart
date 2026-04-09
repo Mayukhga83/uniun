@@ -1,5 +1,4 @@
 import 'package:bloc/bloc.dart';
-import 'package:flutter/foundation.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:injectable/injectable.dart';
 import 'package:nostr_core_dart/nostr.dart';
@@ -12,56 +11,6 @@ import 'package:uniun/domain/usecases/user_usecases.dart';
 
 part 'thread_event.dart';
 part 'thread_state.dart';
-
-// ── Isolate data classes (top-level — required by Isolate.run) ───────────────
-
-class _BfsInput {
-  const _BfsInput({
-    required this.rootId,
-    required this.allNotes,
-    required this.parentOf,
-    required this.replyCounts,
-  });
-
-  /// The root note's eventId — used as fallback parent for direct replies.
-  final String rootId;
-
-  /// Flat list of every reply note collected by the main isolate (all levels).
-  final List<NoteEntity> allNotes;
-
-  /// noteId → parentNoteId, built during BFS discovery on the main isolate.
-  /// More reliable than replyToEventId because it comes directly from which
-  /// _getReplies(parentId) call returned each child.
-  final Map<String, String> parentOf;
-
-  /// All reply counts collected by the main isolate.
-  final Map<String, int> replyCounts;
-}
-
-class _BfsResult {
-  const _BfsResult({required this.nestedReplies});
-
-  /// parentNoteId → sorted list of its direct children.
-  final Map<String, List<NoteEntity>> nestedReplies;
-}
-
-/// Runs entirely in the background isolate — pure Dart, zero Isar, zero Flutter.
-/// Receives flat note data from the main isolate and builds the nested tree.
-_BfsResult _buildBfsTree(_BfsInput input) {
-  final parentToChildren = <String, List<NoteEntity>>{};
-
-  for (final note in input.allNotes) {
-    final parentId = input.parentOf[note.id] ?? input.rootId;
-    parentToChildren.putIfAbsent(parentId, () => []).add(note);
-  }
-
-  // Sort each bucket oldest → newest so the UI renders chronologically.
-  for (final children in parentToChildren.values) {
-    children.sort((a, b) => a.created.compareTo(b.created));
-  }
-
-  return _BfsResult(nestedReplies: parentToChildren);
-}
 
 // ── BLoC ─────────────────────────────────────────────────────────────────────
 
@@ -109,7 +58,7 @@ class ThreadBloc extends Bloc<ThreadEvent, ThreadState> {
     }
     final rootNote = rootResult.getOrElse(() => throw StateError(''));
 
-    // ── Phase 2: fetch root profile + direct replies in parallel ─────────────
+    // ── Phase 2: fetch root profile + direct replies + parent chain in parallel
     final profiles = <String, ProfileEntity>{};
     final replyCounts = <String, int>{};
 
@@ -128,94 +77,32 @@ class ThreadBloc extends Bloc<ThreadEvent, ThreadState> {
       pr.fold((_) {}, (p) => profiles[p.pubkey] = p);
     }));
 
-    // ── SKELETON EMIT — screen renders immediately ────────────────────────────
-    // isTreeBuilding = true signals widgets to show skeleton placeholders
-    // when the user expands a reply before the background isolate is done.
+    // ── Walk up the parent chain (max 2 levels) ───────────────────────────────
+    // Needed to display context above the focused note (X/Twitter style).
+    final parentChain = <NoteEntity>[];
+    var parentId = rootNote.replyToEventId;
+    var depth = 0;
+    while (parentId != null && depth < 2) {
+      final pr = await _getNoteById.call(parentId);
+      if (pr.isLeft()) break;
+      final parent = pr.getOrElse(() => throw StateError('unreachable'));
+      parentChain.insert(0, parent); // oldest first
+      if (!profiles.containsKey(parent.authorPubkey)) {
+        final pfr = await _getProfile.call(parent.authorPubkey);
+        pfr.fold((_) {}, (p) => profiles[p.pubkey] = p);
+      }
+      parentId = parent.replyToEventId;
+      depth++;
+    }
+
     emit(state.copyWith(
       rootNote: rootNote,
+      parentChain: parentChain,
       profiles: Map.from(profiles),
       replies: directReplies,
       replyCounts: Map.from(replyCounts),
       nestedReplies: const {},
       status: ThreadStatus.loaded,
-      isTreeBuilding: true,
-    ));
-
-    // ── Phase 3: BFS discovery on main isolate (I/O only, no tree building) ──
-    // We only collect flat data here. The tree structure is built in the
-    // background isolate in Phase 4. This keeps the main thread free.
-    final allNotes = <NoteEntity>[...directReplies];
-    final parentOf = <String, String>{
-      for (final r in directReplies) r.id: rootNote.id,
-    };
-
-    var queue = directReplies.map((r) => r.id).toList();
-    final visited = <String>{rootNote.id, ...directReplies.map((r) => r.id)};
-    int limit = 60;
-
-    while (queue.isNotEmpty && limit > 0) {
-      final batch = queue.take(limit).toList();
-      limit -= batch.length;
-      queue = [];
-
-      // Fetch children for every node in this level — pure I/O, parallel
-      final childResults = await Future.wait(
-        batch.map((id) => _getReplies.call(id)),
-      );
-
-      for (int i = 0; i < batch.length; i++) {
-        childResults[i].fold((_) {}, (children) {
-          for (final child in children) {
-            if (!visited.contains(child.id)) {
-              visited.add(child.id);
-              allNotes.add(child);
-              parentOf[child.id] = batch[i]; // parent = node we queried
-              queue.add(child.id);
-            }
-          }
-        });
-      }
-
-      // Fetch profiles + counts for newly discovered nodes — parallel
-      await Future.wait(queue.map((id) async {
-        final node = allNotes.where((n) => n.id == id).firstOrNull;
-        if (node == null) return;
-
-        final cr = await _getReplyCount.call(id);
-        cr.fold((_) {}, (c) => replyCounts[id] = c);
-
-        if (!profiles.containsKey(node.authorPubkey)) {
-          final pr = await _getProfile.call(node.authorPubkey);
-          pr.fold((_) {}, (p) => profiles[p.pubkey] = p);
-        }
-      }));
-    }
-
-    if (emit.isDone) return;
-
-    // ── Phase 4: background isolate builds the tree (CPU, off main thread) ───
-    // compute() sends _BfsInput data to a fresh isolate and calls _buildBfsTree
-    // with it. Unlike Isolate.run(() => ...), compute() takes a top-level
-    // function reference + data separately — no closure, nothing captures
-    // ThreadBloc or Isar, so SendPort.send() succeeds.
-    final bfsResult = await compute(
-      _buildBfsTree,
-      _BfsInput(
-        rootId: rootNote.id,
-        allNotes: allNotes,
-        parentOf: Map.from(parentOf),
-        replyCounts: Map.from(replyCounts),
-      ),
-    );
-
-    if (emit.isDone) return;
-
-    // ── Phase 5: back on main isolate — update UI with the full tree ──────────
-    emit(state.copyWith(
-      profiles: Map.from(profiles),
-      replyCounts: Map.from(replyCounts),
-      nestedReplies: bfsResult.nestedReplies,
-      isTreeBuilding: false,
     ));
   }
 
@@ -225,10 +112,6 @@ class ThreadBloc extends Bloc<ThreadEvent, ThreadState> {
     ExpandReplyEvent event,
     Emitter<ThreadState> emit,
   ) async {
-    // Background isolate is still building — it will cover this node.
-    // Widget shows skeleton during this time. Ignore the event.
-    if (state.isTreeBuilding) return;
-
     // Already loaded — nothing to do
     if (state.nestedReplies.containsKey(event.replyId)) return;
 
@@ -266,13 +149,17 @@ class ThreadBloc extends Bloc<ThreadEvent, ThreadState> {
   // ── Reply composer ────────────────────────────────────────────────────────
 
   void _onUpdateText(UpdateReplyTextEvent event, Emitter<ThreadState> emit) {
-    emit(state.copyWith(replyText: event.text));
+    emit(state.copyWith(
+      replyText: event.text,
+      postStatus: ThreadPostStatus.idle,
+    ));
   }
 
   void _onSetTarget(SetReplyTargetEvent event, Emitter<ThreadState> emit) {
     emit(state.copyWith(
       replyingToId: event.replyToId,
       replyingToName: event.replyToName,
+      postStatus: ThreadPostStatus.idle,
     ));
   }
 

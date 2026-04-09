@@ -45,12 +45,17 @@ class _YourIdentityKeysPageState extends State<YourIdentityKeysPage> {
         final displayName = args['displayName'] as String? ?? '';
         final username = args['username'] as String? ?? '';
         final bio = args['bio'] as String? ?? '';
+        // avatarSeed is only set when user shuffled away from the default.
+        // Store as 'generated:<seed>' so UserAvatar can detect and use it.
+        final avatarSeed = args['avatarSeed'] as String?;
+        final avatarUrl = avatarSeed != null ? 'generated:$avatarSeed' : null;
         if (displayName.isNotEmpty || username.isNotEmpty) {
           await getIt<SaveProfileUseCase>().call(ProfileEntity(
             pubkey: user.pubkeyHex,
             name: displayName.isEmpty ? null : displayName,
             username: username.isEmpty ? null : username,
             about: bio.isEmpty ? null : bio,
+            avatarUrl: avatarUrl,
             updatedAt: DateTime.now(),
             lastSeenAt: DateTime(3000, 6, 1),
           ));

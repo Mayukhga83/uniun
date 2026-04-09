@@ -8,6 +8,7 @@ import 'package:uniun/core/enum/message_role.dart';
 import 'package:uniun/domain/entities/shiv/shiv_conversation_entity.dart';
 import 'package:uniun/domain/entities/shiv/shiv_message_entity.dart';
 import 'package:uniun/domain/usecases/shiv_usecases.dart';
+import 'package:uniun/shiv/rag/pipeline/rag_pipeline.dart';
 import 'package:uniun/shiv/services/ai_model_runner.dart';
 import 'package:uuid/uuid.dart';
 
@@ -24,6 +25,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
   final SaveMessageUseCase _saveMessage;
   final UpdateMessageContentUseCase _updateMessageContent;
   final AIModelRunner _runner;
+  final RagPipeline _rag;
 
   StreamSubscription<String>? _streamSub;
 
@@ -35,6 +37,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
     this._saveMessage,
     this._updateMessageContent,
     this._runner,
+    this._rag,
   ) : super(const ShivAIState()) {
     on<_LoadConversations>(_onLoadConversations, transformer: droppable());
     on<_CreateConversation>(_onCreateConversation, transformer: droppable());
@@ -51,6 +54,10 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
 
   Future<void> _onLoadConversations(
       _LoadConversations event, Emitter<ShivAIState> emit) async {
+    emit(state.copyWith(isRagInitializing: true));
+    await _rag.init();
+    emit(state.copyWith(isRagInitializing: false));
+
     final result = await _getConversations.call();
     result.fold(
       (f) => emit(state.copyWith(
@@ -67,11 +74,12 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       (f) async => emit(state.copyWith(
           status: ShivChatStatus.error, errorMessage: f.toString())),
       (conv) async {
-        await _runner.initChat();
+        await _initChatSession();
         emit(state.copyWith(
           status: ShivChatStatus.chatIdle,
           activeConversation: conv,
           messages: [],
+          ragContextCount: 0,
           errorMessage: null,
         ));
       },
@@ -90,11 +98,12 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       (f) async => emit(state.copyWith(
           status: ShivChatStatus.error, errorMessage: f.toString())),
       (msgs) async {
-        await _runner.initChat();
+        await _initChatSession();
         emit(state.copyWith(
           status: ShivChatStatus.chatIdle,
           activeConversation: conv,
           messages: msgs,
+          ragContextCount: 0,
           errorMessage: null,
         ));
       },
@@ -111,13 +120,13 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       messages: [],
       streamingContent: null,
       streamingMessageId: null,
+      ragContextCount: 0,
     ));
   }
 
   Future<void> _onDeleteConversation(
       _DeleteConversation event, Emitter<ShivAIState> emit) async {
     await _deleteConversation.call(event.conversationId);
-    // Remove from list immediately for instant UI feedback.
     final updated = state.conversations
         .where((c) => c.conversationId != event.conversationId)
         .toList();
@@ -140,20 +149,18 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       messageId: userMsgId,
       conversationId: conv.conversationId,
       parentId: state.messages.lastOrNull?.messageId,
-      branchId: conv.activeBranchId,
       role: MessageRole.user,
       content: text,
       createdAt: DateTime.now(),
     );
     await _saveMessage.call(userMsg);
 
-    // 2 — Create placeholder assistant message.
+    // 2 — Placeholder assistant message.
     final assistantMsgId = const Uuid().v4();
     final placeholderMsg = ShivMessageEntity(
       messageId: assistantMsgId,
       conversationId: conv.conversationId,
       parentId: userMsgId,
-      branchId: conv.activeBranchId,
       role: MessageRole.assistant,
       content: '',
       createdAt: DateTime.now(),
@@ -167,12 +174,14 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       streamingMessageId: assistantMsgId,
     ));
 
-    // 3 — Build prompt from conversation history.
-    final prompt = _buildPrompt(state.messages, text);
+    // 3 — RAG: embed query → retrieve notes → build per-turn user message.
+    //     No history in here — InferenceChat tracks turns internally.
+    final ragMsg = await _rag.buildMessage(userQuestion: text);
+    emit(state.copyWith(ragContextCount: ragMsg.contextCount));
 
     // 4 — Stream inference.
     _streamSub?.cancel();
-    _streamSub = _runner.sendAndStream(prompt).listen(
+    _streamSub = _runner.sendAndStream(ragMsg.userMessage).listen(
       (token) => add(ShivAIEvent.tokenReceived(token)),
       onDone: () => add(const ShivAIEvent.streamDone()),
       onError: (Object e) => add(ShivAIEvent.streamError(e.toString())),
@@ -180,8 +189,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
     );
   }
 
-  void _onTokenReceived(
-      _TokenReceived event, Emitter<ShivAIState> emit) {
+  void _onTokenReceived(_TokenReceived event, Emitter<ShivAIState> emit) {
     final accumulated = (state.streamingContent ?? '') + event.token;
     emit(state.copyWith(streamingContent: accumulated));
   }
@@ -192,10 +200,8 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
     final content = state.streamingContent ?? '';
 
     if (msgId != null) {
-      // Persist the complete response.
       await _updateMessageContent.call((msgId, content));
 
-      // Update the message in the list.
       final updatedMessages = state.messages.map((m) {
         if (m.messageId == msgId) return m.copyWith(content: content);
         return m;
@@ -225,36 +231,19 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
     ));
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-
-  /// Builds a plain-text prompt from the conversation history.
-  /// Phase 3 will replace/augment this with RAG context.
-  String _buildPrompt(List<ShivMessageEntity> prior, String newUserText) {
-    final buffer = StringBuffer();
-
-    buffer.writeln(
-        'You are Shiv, an intelligent AI assistant integrated into UNIUN — '
-        'a decentralized knowledge and social network. '
-        'Answer the user concisely and helpfully.');
-    buffer.writeln();
-
-    // Include up to the last 10 messages for context (avoid token overflow).
-    final history = prior.length > 10 ? prior.sublist(prior.length - 10) : prior;
-    for (final msg in history) {
-      final role = msg.role == MessageRole.user ? 'User' : 'Shiv';
-      buffer.writeln('$role: ${msg.content}');
-    }
-
-    buffer.writeln('User: $newUserText');
-    buffer.writeln('Shiv:');
-
-    return buffer.toString();
-  }
-
   @override
   Future<void> close() async {
     _streamSub?.cancel();
     await _runner.close();
     return super.close();
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  /// Creates a fresh InferenceChat session with the Shiv system instruction.
+  /// Called whenever a conversation is opened or created.
+  Future<void> _initChatSession() async {
+    final systemInstruction = await _rag.buildSystemInstruction();
+    await _runner.initChat(systemInstruction: systemInstruction);
   }
 }

@@ -6,9 +6,11 @@ import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
+import 'package:uniun/shiv/rag/embedding/embedding_service.dart';
 import 'package:uniun/thread/bloc/thread_bloc.dart';
 import 'package:uniun/thread/utils/thread_formatters.dart';
-import 'package:uniun/thread/widgets/thread_nested_reply_item.dart';
+
+// ── Top-level reply item (Twitter/X style) ────────────────────────────────────
 
 class ThreadReplyItem extends StatefulWidget {
   const ThreadReplyItem({
@@ -20,9 +22,9 @@ class ThreadReplyItem extends StatefulWidget {
     required this.allNestedReplies,
     required this.replyCounts,
     required this.replyCount,
-    required this.showThreadLine,
-    required this.isTreeBuilding,
+    required this.showThreadLine, // kept for API compat — ignored
     required this.onReplyTap,
+    this.onTap, // navigate into this reply's detail
   });
 
   final NoteEntity reply;
@@ -33,8 +35,9 @@ class ThreadReplyItem extends StatefulWidget {
   final Map<String, int> replyCounts;
   final int replyCount;
   final bool showThreadLine;
-  final bool isTreeBuilding;
   final VoidCallback onReplyTap;
+  /// Tapping the content area of this reply navigates into its detail thread.
+  final VoidCallback? onTap;
 
   @override
   State<ThreadReplyItem> createState() => _ThreadReplyItemState();
@@ -42,7 +45,7 @@ class ThreadReplyItem extends StatefulWidget {
 
 class _ThreadReplyItemState extends State<ThreadReplyItem> {
   bool _isSaved = false;
-  bool _showNested = true;
+  bool _showReplies = false;
 
   @override
   void initState() {
@@ -57,8 +60,10 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
   @override
   void didUpdateWidget(ThreadReplyItem old) {
     super.didUpdateWidget(old);
-    if (widget.nestedReplies.length > old.nestedReplies.length) {
-      setState(() => _showNested = true);
+    // Auto-open when replies stream in while the user already expanded
+    if (_showReplies &&
+        widget.nestedReplies.length > old.nestedReplies.length) {
+      setState(() {});
     }
   }
 
@@ -68,16 +73,38 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
     if (nowSaved) {
       final result = await getIt<SaveNoteUseCase>().call(widget.reply);
       result.fold(
-        (_) { if (mounted) setState(() => _isSaved = false); },
-        (_) {},
+        (_) {
+          if (mounted) setState(() => _isSaved = false);
+        },
+        (saved) {
+          getIt<EmbeddingService>().embed(saved.content).then((vec) {
+            if (vec.isNotEmpty) {
+              getIt<UpdateEmbeddingUseCase>().call((saved.eventId, vec));
+              print('📦 Embedded saved note (thread reply): ${saved.eventId}');
+            }
+          }).catchError((e) {
+            print('📦 Embedding failed (thread reply): $e');
+          });
+        },
       );
     } else {
       final result = await getIt<UnsaveNoteUseCase>().call(widget.reply.id);
       result.fold(
-        (_) { if (mounted) setState(() => _isSaved = true); },
+        (_) {
+          if (mounted) setState(() => _isSaved = true);
+        },
         (_) {},
       );
     }
+  }
+
+  void _onToggleReplies() {
+    if (!_showReplies &&
+        widget.nestedReplies.isEmpty &&
+        widget.replyCount > 0) {
+      context.read<ThreadBloc>().add(ExpandReplyEvent(widget.reply.id));
+    }
+    setState(() => _showReplies = !_showReplies);
   }
 
   @override
@@ -87,65 +114,46 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
         profile?.username ??
         threadShortPubkey(widget.reply.authorPubkey);
 
-    final showLine = widget.showThreadLine ||
-        (widget.nestedReplies.isNotEmpty && _showNested);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Thread line column
-            SizedBox(
-              width: 40,
-              child: Column(
-                children: [
-                  UserAvatar(
-                    seed: widget.reply.authorPubkey,
-                    photoUrl: profile?.avatarUrl,
-                    size: 40,
-                    borderRadius: 20,
-                  ),
-                  if (showLine)
-                    Expanded(
-                      child: Center(
-                        child: Container(
-                          width: 2,
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.outlineVariant
-                                .withValues(alpha: 0.30),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Main reply card ────────────────────────────────────────────────────
+        GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              UserAvatar(
+                seed: widget.reply.authorPubkey,
+                photoUrl: profile?.avatarUrl,
+                size: 40,
+                borderRadius: 20,
               ),
-            ),
-            const SizedBox(width: 12),
-
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Name · time
                     Row(
                       children: [
-                        Text(
-                          displayName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: AppColors.onSurface,
+                        Flexible(
+                          child: Text(
+                            displayName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: AppColors.onSurface,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '• ${threadTimeAgo(widget.reply.created)}',
+                          '· ${threadTimeAgo(widget.reply.created)}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.onSurfaceVariant,
@@ -153,7 +161,8 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
+                    // Content
                     Text(
                       widget.reply.content,
                       style: const TextStyle(
@@ -163,102 +172,219 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
                       ),
                     ),
                     const SizedBox(height: 10),
-
-                    // Actions
+                    // Action row
                     Row(
                       children: [
-                        GestureDetector(
+                        _ActionBtn(
+                          icon: Icons.reply_rounded,
                           onTap: widget.onReplyTap,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            child: Icon(Icons.reply_rounded,
-                                size: 20, color: AppColors.onSurfaceVariant),
-                          ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 20),
                         if (widget.replyCount > 0)
-                          GestureDetector(
-                            onTap: () =>
-                                setState(() => _showNested = !_showNested),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.chat_bubble_outline_rounded,
-                                      size: 18,
-                                      color: AppColors.onSurfaceVariant),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${widget.replyCount}',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          _ActionBtn(
+                            icon: _showReplies
+                                ? Icons.chat_bubble_rounded
+                                : Icons.chat_bubble_outline_rounded,
+                            label: '${widget.replyCount}',
+                            onTap: _onToggleReplies,
+                            active: _showReplies,
                           ),
                         const Spacer(),
-                        GestureDetector(
+                        _ActionBtn(
+                          icon: _isSaved
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_border_rounded,
                           onTap: _toggleSave,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            child: Icon(
-                              _isSaved
-                                  ? Icons.bookmark_rounded
-                                  : Icons.bookmark_border_rounded,
-                              size: 20,
-                              color: _isSaved
-                                  ? AppColors.primary
-                                  : AppColors.onSurfaceVariant,
-                            ),
-                          ),
+                          active: _isSaved,
                         ),
                       ],
                     ),
-
-                    // Nested replies
-                    if (_showNested) ...[
-                      if (widget.nestedReplies.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        ...List.generate(widget.nestedReplies.length, (i) {
-                          final nested = widget.nestedReplies[i];
-                          final isLast = i == widget.nestedReplies.length - 1;
-                          final name =
-                              widget.nestedProfiles[nested.authorPubkey]?.name ??
-                                  threadShortPubkey(nested.authorPubkey);
-                          return ThreadNestedReplyItem(
-                            key: ValueKey(nested.id),
-                            reply: nested,
-                            profile: widget.nestedProfiles[nested.authorPubkey],
-                            nestedReplies: widget.allNestedReplies,
-                            allProfiles: widget.nestedProfiles,
-                            replyCounts: widget.replyCounts,
-                            isTreeBuilding: widget.isTreeBuilding,
-                            depth: 0,
-                            isLastSibling: isLast,
-                            onReplyTap: () {
-                              context.read<ThreadBloc>().add(
-                                    SetReplyTargetEvent(
-                                      replyToId: nested.id,
-                                      replyToName: name,
-                                    ),
-                                  );
-                            },
-                          );
-                        }),
-                      ] else if (widget.isTreeBuilding && widget.replyCount > 0)
-                        // Tree not ready yet — show cost-free skeleton.
-                        // Main thread is idle (isolate is working), so this
-                        // renders instantly with zero computation.
-                        const _NestedLoadingSkeleton(),
-                    ],
                   ],
                 ),
               ),
+            ],
+          ),
+        ),
+        ), // closes GestureDetector
+
+        // ── Inline sub-replies (one level max) ────────────────────────────────
+        if (_showReplies) ...[
+          if (widget.nestedReplies.isNotEmpty)
+            ...List.generate(widget.nestedReplies.length, (i) {
+              final nested = widget.nestedReplies[i];
+              final nestedProfile =
+                  widget.nestedProfiles[nested.authorPubkey];
+              final nestedName = nestedProfile?.name ??
+                  nestedProfile?.username ??
+                  threadShortPubkey(nested.authorPubkey);
+              final nestedCount = widget.replyCounts[nested.id] ?? 0;
+              return _InlineReplyItem(
+                reply: nested,
+                profile: nestedProfile,
+                displayName: nestedName,
+                replyCount: nestedCount,
+                onReplyTap: () {
+                  context.read<ThreadBloc>().add(
+                        SetReplyTargetEvent(
+                          replyToId: nested.id,
+                          replyToName: nestedName,
+                        ),
+                      );
+                },
+              );
+            })
+          else if (widget.replyCount > 0)
+            const _InlineLoadingSkeleton(),
+        ],
+
+        // ── Divider between replies ────────────────────────────────────────────
+        Divider(
+          height: 1,
+          color: AppColors.outlineVariant.withValues(alpha: 0.12),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Inline sub-reply (one level, compact) ─────────────────────────────────────
+
+class _InlineReplyItem extends StatelessWidget {
+  const _InlineReplyItem({
+    required this.reply,
+    required this.profile,
+    required this.displayName,
+    required this.replyCount,
+    required this.onReplyTap,
+  });
+
+  final NoteEntity reply;
+  final ProfileEntity? profile;
+  final String displayName;
+  final int replyCount;
+  final VoidCallback onReplyTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 52, bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UserAvatar(
+            seed: reply.authorPubkey,
+            photoUrl: profile?.avatarUrl,
+            size: 30,
+            borderRadius: 15,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        displayName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '· ${threadTimeAgo(reply.created)}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reply.content,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.onSurface,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: onReplyTap,
+                      child: const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                        child: Icon(Icons.reply_rounded,
+                            size: 16, color: AppColors.onSurfaceVariant),
+                      ),
+                    ),
+                    if (replyCount > 0) ...[
+                      const SizedBox(width: 10),
+                      Text(
+                        '$replyCount ${replyCount == 1 ? 'reply' : 'replies'}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Shared action button ───────────────────────────────────────────────────────
+
+class _ActionBtn extends StatelessWidget {
+  const _ActionBtn({
+    required this.icon,
+    required this.onTap,
+    this.label,
+    this.active = false,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? AppColors.primary : AppColors.onSurfaceVariant;
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            if (label != null) ...[
+              const SizedBox(width: 4),
+              Text(
+                label!,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -266,56 +392,36 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
   }
 }
 
-// ── Skeleton shown while background isolate builds the tree ──────────────────
+// ── Skeleton while tree loads ─────────────────────────────────────────────────
 
-class _NestedLoadingSkeleton extends StatelessWidget {
-  const _NestedLoadingSkeleton();
+class _InlineLoadingSkeleton extends StatelessWidget {
+  const _InlineLoadingSkeleton();
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, left: 20),
-      child: Column(
-        children: List.generate(2, (i) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.outlineVariant.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 10,
-                      width: 72,
-                      decoration: BoxDecoration(
-                        color: AppColors.outlineVariant.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: AppColors.outlineVariant.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      padding: const EdgeInsets.only(left: 52, bottom: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: AppColors.outlineVariant.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
           ),
-        )),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 10,
+              decoration: BoxDecoration(
+                color: AppColors.outlineVariant.withValues(alpha: 0.13),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

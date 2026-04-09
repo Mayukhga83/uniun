@@ -820,6 +820,12 @@ abstract class AppLocalizations {
   /// **'Maximum accuracy multimodal model. Best on flagship devices with 8 GB+ RAM.'**
   String get aiModelGemma4E4bDesc;
 
+  /// Progress label shown while the embedding model is downloading after first LLM install
+  ///
+  /// In en, this message translates to:
+  /// **'Setting up AI features…'**
+  String get aiEmbeddingSetupInProgress;
+
   /// Edit profile screen app-bar title
   ///
   /// In en, this message translates to:

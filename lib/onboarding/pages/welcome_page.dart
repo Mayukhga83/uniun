@@ -82,7 +82,11 @@ class WelcomePage extends StatelessWidget {
                     Navigator.pushNamed(
                       context,
                       AppRoutes.aboutYou,
-                      arguments: {'npub': npub, 'nsec': nsec},
+                      arguments: {
+                        'npub': npub,
+                        'nsec': nsec,
+                        'pubkeyHex': keychain.public,
+                      },
                     );
                   },
                   child: Row(

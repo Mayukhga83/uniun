@@ -5,6 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uniun/domain/entities/ai_model/ai_model_entity.dart';
 import 'package:uniun/domain/usecases/ai_model_usecases.dart';
+import 'package:uniun/shiv/rag/embedding/embedding_model_downloader.dart';
 
 part 'select_ai_model_state.dart';
 part 'select_ai_model_cubit.freezed.dart';
@@ -14,6 +15,7 @@ class SelectAIModelCubit extends Cubit<SelectAIModelState> {
   final GetAvailableAIModelsUseCase _getAvailable;
   final GetActiveAIModelUseCase _getActive;
   final DownloadAndActivateAIModelUseCase _download;
+  final EmbeddingModelDownloader _embeddingDownloader;
 
   StreamSubscription<AIModelDownloadEvent>? _downloadSub;
 
@@ -21,6 +23,7 @@ class SelectAIModelCubit extends Cubit<SelectAIModelState> {
     this._getAvailable,
     this._getActive,
     this._download,
+    this._embeddingDownloader,
   ) : super(const SelectAIModelState()) {
     _init();
   }
@@ -68,11 +71,26 @@ class SelectAIModelCubit extends Cubit<SelectAIModelState> {
         event.when(
           progress: (value) =>
               emit(state.copyWith(downloadProgress: value)),
-          complete: (id) => emit(state.copyWith(
-            status: SelectAIModelStatus.done,
-            activeModelId: id,
-            downloadProgress: 1.0,
-          )),
+          complete: (id) async {
+            // Download embedding model BEFORE emitting done, so the cubit
+            // is still alive (navigating away on done closes the cubit).
+            if (!await _embeddingDownloader.isDownloaded()) {
+              if (isClosed) return;
+              emit(state.copyWith(
+                downloadProgress: 1.0,
+                isEmbeddingDownloading: true,
+              ));
+              await _embeddingDownloader.downloadIfNeeded();
+              if (isClosed) return;
+              emit(state.copyWith(isEmbeddingDownloading: false));
+            }
+            if (isClosed) return;
+            emit(state.copyWith(
+              status: SelectAIModelStatus.done,
+              activeModelId: id,
+              downloadProgress: 1.0,
+            ));
+          },
           failed: (msg) => emit(state.copyWith(
             status: SelectAIModelStatus.error,
             errorMessage: msg,

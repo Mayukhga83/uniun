@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:injectable/injectable.dart';
@@ -6,6 +8,7 @@ import 'package:uniun/core/enum/note_type.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/usecases/note_usecases.dart';
 import 'package:uniun/domain/usecases/user_usecases.dart';
+import 'package:uniun/shiv/rag/embedding/embedding_service.dart';
 
 part 'brahma_create_event.dart';
 part 'brahma_create_state.dart';
@@ -14,9 +17,15 @@ part 'brahma_create_state.dart';
 class BrahmaCreateBloc extends Bloc<BrahmaCreateEvent, BrahmaCreateState> {
   final GetActiveUserKeysUseCase _getActiveUserKeys;
   final PublishNoteUseCase _publishUseCase;
+  final UpdateNoteEmbeddingUseCase _updateNoteEmbedding;
+  final EmbeddingService _embedding;
 
-  BrahmaCreateBloc(this._getActiveUserKeys, this._publishUseCase)
-      : super(const BrahmaCreateState()) {
+  BrahmaCreateBloc(
+    this._getActiveUserKeys,
+    this._publishUseCase,
+    this._updateNoteEmbedding,
+    this._embedding,
+  ) : super(const BrahmaCreateState()) {
     on<SubmitNoteEvent>(_onSubmitNote, transformer: droppable());
     on<ResetBrahmaEvent>(_onReset);
   }
@@ -100,7 +109,12 @@ class BrahmaCreateBloc extends Bloc<BrahmaCreateEvent, BrahmaCreateState> {
         status: BrahmaCreateStatus.error,
         errorMessage: f.toMessage(),
       )),
-      (_) => emit(state.copyWith(status: BrahmaCreateStatus.success)),
+      (_) {
+        emit(state.copyWith(status: BrahmaCreateStatus.success));
+        // Fire-and-forget: embed this note for RAG (no-op if model not ready yet;
+        // re-embed pass in RagPipeline.init() will catch it on next Shiv open).
+        unawaited(_embedNote(signedEvent.id, signedEvent.content));
+      },
     );
   }
 
@@ -109,6 +123,14 @@ class BrahmaCreateBloc extends Bloc<BrahmaCreateEvent, BrahmaCreateState> {
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Future<void> _embedNote(String eventId, String content) async {
+    final vec = await _embedding.embed(content);
+    if (vec.isNotEmpty) {
+      await _updateNoteEmbedding.call((eventId, vec));
+      print('📦 Embedded own note after publish: $eventId');
+    }
+  }
 
   List<String> _extractHashtags(String content) {
     final matches = RegExp(r'#(\w+)').allMatches(content);

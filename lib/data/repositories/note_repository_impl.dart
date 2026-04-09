@@ -180,4 +180,39 @@ class NoteRepositoryImpl extends NoteRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, List<NoteEntity>>> getOwnNotes(
+      String pubkeyHex) async {
+    try {
+      final notes = await isar.noteModels
+          .filter()
+          .authorPubkeyEqualTo(pubkeyHex)
+          .sortByCreatedDesc()
+          .findAll();
+      return Right(notes.map((m) => m.toDomain()).toList());
+    } catch (e) {
+      return Left(Failure.errorFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateNoteEmbedding(
+      String eventId, List<double> embedding) async {
+    try {
+      await isar.writeTxn(() async {
+        final note = await isar.noteModels
+            .filter()
+            .eventIdEqualTo(eventId)
+            .findFirst();
+        if (note != null) {
+          note.embedding = embedding;
+          await isar.noteModels.put(note);
+        }
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(Failure.errorFailure(e.toString()));
+    }
+  }
+
 }

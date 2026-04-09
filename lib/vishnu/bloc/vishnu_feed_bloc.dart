@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:injectable/injectable.dart';
@@ -7,6 +9,7 @@ import 'package:uniun/domain/inputs/note_input.dart';
 import 'package:uniun/domain/usecases/note_usecases.dart' hide SaveNoteUseCase;
 import 'package:uniun/domain/usecases/profile_usecases.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
+import 'package:uniun/shiv/rag/embedding/embedding_service.dart';
 
 part 'vishnu_feed_event.dart';
 part 'vishnu_feed_state.dart';
@@ -21,6 +24,8 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
   final GetAllSavedNotesUseCase _getAllSavedNotes;
   final SaveNoteUseCase _saveNote;
   final UnsaveNoteUseCase _unsaveNote;
+  final UpdateEmbeddingUseCase _updateEmbedding;
+  final EmbeddingService _embeddingService;
 
   VishnuFeedBloc(
     this._getFeed,
@@ -29,6 +34,8 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
     this._getAllSavedNotes,
     this._saveNote,
     this._unsaveNote,
+    this._updateEmbedding,
+    this._embeddingService,
   ) : super(const VishnuFeedState()) {
     on<LoadFeedEvent>(_onLoad, transformer: droppable());
     on<RefreshFeedEvent>(_onRefresh, transformer: droppable());
@@ -81,7 +88,11 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
         final rollback = Set<String>.from(state.savedIds)..remove(event.note.id);
         emit(state.copyWith(savedIds: rollback));
       },
-      (_) {},
+      (savedNote) {
+        // Fire-and-forget: generate embedding in background.
+        // Does not block UI — errors are silently ignored.
+        unawaited(_generateEmbedding(savedNote.eventId, savedNote.content));
+      },
     );
   }
 
@@ -101,6 +112,20 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
       },
       (_) {},
     );
+  }
+
+  /// Generates and persists an embedding for a newly saved note.
+  /// Fire-and-forget — caller must not await.
+  Future<void> _generateEmbedding(String eventId, String content) async {
+    try {
+      final vector = await _embeddingService.embed(content);
+      if (vector.isNotEmpty) {
+        await _updateEmbedding.call((eventId, vector));
+        print('📦 Embedded saved note (feed): $eventId');
+      }
+    } catch (e) {
+      print('📦 Embedding failed (feed): $e');
+    }
   }
 
   Future<void> _fetchPage(

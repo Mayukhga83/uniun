@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ShivMessageEntity {
 
- String get messageId; String get conversationId; String? get parentId; String get branchId; MessageRole get role; String get content; DateTime get createdAt;
+ String get messageId; String get conversationId; String? get parentId; MessageRole get role; String get content; DateTime get createdAt;
 /// Create a copy of ShivMessageEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ShivMessageEntityCopyWith<ShivMessageEntity> get copyWith => _$ShivMessageEntit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShivMessageEntity&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.branchId, branchId) || other.branchId == branchId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShivMessageEntity&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,messageId,conversationId,parentId,branchId,role,content,createdAt);
+int get hashCode => Object.hash(runtimeType,messageId,conversationId,parentId,role,content,createdAt);
 
 @override
 String toString() {
-  return 'ShivMessageEntity(messageId: $messageId, conversationId: $conversationId, parentId: $parentId, branchId: $branchId, role: $role, content: $content, createdAt: $createdAt)';
+  return 'ShivMessageEntity(messageId: $messageId, conversationId: $conversationId, parentId: $parentId, role: $role, content: $content, createdAt: $createdAt)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ShivMessageEntityCopyWith<$Res>  {
   factory $ShivMessageEntityCopyWith(ShivMessageEntity value, $Res Function(ShivMessageEntity) _then) = _$ShivMessageEntityCopyWithImpl;
 @useResult
 $Res call({
- String messageId, String conversationId, String? parentId, String branchId, MessageRole role, String content, DateTime createdAt
+ String messageId, String conversationId, String? parentId, MessageRole role, String content, DateTime createdAt
 });
 
 
@@ -62,13 +62,12 @@ class _$ShivMessageEntityCopyWithImpl<$Res>
 
 /// Create a copy of ShivMessageEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? messageId = null,Object? conversationId = null,Object? parentId = freezed,Object? branchId = null,Object? role = null,Object? content = null,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? messageId = null,Object? conversationId = null,Object? parentId = freezed,Object? role = null,Object? content = null,Object? createdAt = null,}) {
   return _then(_self.copyWith(
 messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,conversationId: null == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
 as String,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
-as String?,branchId: null == branchId ? _self.branchId : branchId // ignore: cast_nullable_to_non_nullable
-as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
+as String?,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as MessageRole,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
@@ -156,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String messageId,  String conversationId,  String? parentId,  String branchId,  MessageRole role,  String content,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String messageId,  String conversationId,  String? parentId,  MessageRole role,  String content,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ShivMessageEntity() when $default != null:
-return $default(_that.messageId,_that.conversationId,_that.parentId,_that.branchId,_that.role,_that.content,_that.createdAt);case _:
+return $default(_that.messageId,_that.conversationId,_that.parentId,_that.role,_that.content,_that.createdAt);case _:
   return orElse();
 
 }
@@ -177,10 +176,10 @@ return $default(_that.messageId,_that.conversationId,_that.parentId,_that.branch
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String messageId,  String conversationId,  String? parentId,  String branchId,  MessageRole role,  String content,  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String messageId,  String conversationId,  String? parentId,  MessageRole role,  String content,  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _ShivMessageEntity():
-return $default(_that.messageId,_that.conversationId,_that.parentId,_that.branchId,_that.role,_that.content,_that.createdAt);case _:
+return $default(_that.messageId,_that.conversationId,_that.parentId,_that.role,_that.content,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +196,10 @@ return $default(_that.messageId,_that.conversationId,_that.parentId,_that.branch
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String messageId,  String conversationId,  String? parentId,  String branchId,  MessageRole role,  String content,  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String messageId,  String conversationId,  String? parentId,  MessageRole role,  String content,  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ShivMessageEntity() when $default != null:
-return $default(_that.messageId,_that.conversationId,_that.parentId,_that.branchId,_that.role,_that.content,_that.createdAt);case _:
+return $default(_that.messageId,_that.conversationId,_that.parentId,_that.role,_that.content,_that.createdAt);case _:
   return null;
 
 }
@@ -212,13 +211,12 @@ return $default(_that.messageId,_that.conversationId,_that.parentId,_that.branch
 
 
 class _ShivMessageEntity implements ShivMessageEntity {
-  const _ShivMessageEntity({required this.messageId, required this.conversationId, this.parentId, required this.branchId, required this.role, required this.content, required this.createdAt});
+  const _ShivMessageEntity({required this.messageId, required this.conversationId, this.parentId, required this.role, required this.content, required this.createdAt});
   
 
 @override final  String messageId;
 @override final  String conversationId;
 @override final  String? parentId;
-@override final  String branchId;
 @override final  MessageRole role;
 @override final  String content;
 @override final  DateTime createdAt;
@@ -233,16 +231,16 @@ _$ShivMessageEntityCopyWith<_ShivMessageEntity> get copyWith => __$ShivMessageEn
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShivMessageEntity&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.branchId, branchId) || other.branchId == branchId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShivMessageEntity&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,messageId,conversationId,parentId,branchId,role,content,createdAt);
+int get hashCode => Object.hash(runtimeType,messageId,conversationId,parentId,role,content,createdAt);
 
 @override
 String toString() {
-  return 'ShivMessageEntity(messageId: $messageId, conversationId: $conversationId, parentId: $parentId, branchId: $branchId, role: $role, content: $content, createdAt: $createdAt)';
+  return 'ShivMessageEntity(messageId: $messageId, conversationId: $conversationId, parentId: $parentId, role: $role, content: $content, createdAt: $createdAt)';
 }
 
 
@@ -253,7 +251,7 @@ abstract mixin class _$ShivMessageEntityCopyWith<$Res> implements $ShivMessageEn
   factory _$ShivMessageEntityCopyWith(_ShivMessageEntity value, $Res Function(_ShivMessageEntity) _then) = __$ShivMessageEntityCopyWithImpl;
 @override @useResult
 $Res call({
- String messageId, String conversationId, String? parentId, String branchId, MessageRole role, String content, DateTime createdAt
+ String messageId, String conversationId, String? parentId, MessageRole role, String content, DateTime createdAt
 });
 
 
@@ -270,13 +268,12 @@ class __$ShivMessageEntityCopyWithImpl<$Res>
 
 /// Create a copy of ShivMessageEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? messageId = null,Object? conversationId = null,Object? parentId = freezed,Object? branchId = null,Object? role = null,Object? content = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? messageId = null,Object? conversationId = null,Object? parentId = freezed,Object? role = null,Object? content = null,Object? createdAt = null,}) {
   return _then(_ShivMessageEntity(
 messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,conversationId: null == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
 as String,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
-as String?,branchId: null == branchId ? _self.branchId : branchId // ignore: cast_nullable_to_non_nullable
-as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
+as String?,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as MessageRole,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
