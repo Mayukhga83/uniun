@@ -52,6 +52,12 @@ import 'package:uniun/settings/cubit/settings_cubit.dart' as _i731;
 import 'package:uniun/shiv/chat/bloc/shiv_ai_bloc.dart' as _i334;
 import 'package:uniun/shiv/model_select/cubit/select_ai_model_cubit.dart'
     as _i53;
+import 'package:uniun/shiv/rag/embedding/embedding_model_downloader.dart'
+    as _i113;
+import 'package:uniun/shiv/rag/embedding/embedding_service.dart' as _i828;
+import 'package:uniun/shiv/rag/pipeline/rag_pipeline.dart' as _i1067;
+import 'package:uniun/shiv/rag/prompt/prompt_builder.dart' as _i197;
+import 'package:uniun/shiv/rag/retrieval/vector_search_service.dart' as _i285;
 import 'package:uniun/shiv/services/ai_model_runner.dart' as _i761;
 import 'package:uniun/thread/bloc/thread_bloc.dart' as _i118;
 import 'package:uniun/vishnu/bloc/vishnu_feed_bloc.dart' as _i558;
@@ -71,6 +77,11 @@ extension GetItInjectableX on _i174.GetIt {
       () => isarModule.createIsar(),
       preResolve: true,
     );
+    gh.lazySingleton<_i113.EmbeddingModelDownloader>(
+      () => _i113.EmbeddingModelDownloader(),
+    );
+    gh.lazySingleton<_i828.EmbeddingService>(() => _i828.EmbeddingService());
+    gh.lazySingleton<_i197.PromptBuilder>(() => const _i197.PromptBuilder());
     gh.lazySingleton<_i761.AIModelRunner>(() => _i761.AIModelRunner());
     gh.factory<_i646.AIModelRepository>(
       () => _i72.AIModelRepositoryImpl(gh<_i214.Isar>()),
@@ -223,6 +234,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i894.ClearActiveAIModelUseCase>(
       () => _i894.ClearActiveAIModelUseCase(gh<_i646.AIModelRepository>()),
     );
+    gh.lazySingleton<_i285.VectorSearchService>(
+      () => _i285.VectorSearchService(
+        gh<_i858.GetAllSavedNotesUseCase>(),
+        gh<_i799.GetActiveUserUseCase>(),
+        gh<InvalidType>(),
+      ),
+    );
     gh.lazySingleton<_i475.GetReplyCountUseCase>(
       () => _i475.GetReplyCountUseCase(gh<_i47.NoteRepository>()),
     );
@@ -268,6 +286,19 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i799.GetActiveUserUseCase>(),
         gh<_i391.GetOwnProfileUseCase>(),
         gh<_i561.GetAllFollowedNotesUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i1067.RagPipeline>(
+      () => _i1067.RagPipeline(
+        gh<_i828.EmbeddingService>(),
+        gh<_i285.VectorSearchService>(),
+        gh<_i197.PromptBuilder>(),
+        gh<_i799.GetActiveUserUseCase>(),
+        gh<_i391.GetOwnProfileUseCase>(),
+        gh<InvalidType>(),
+        gh<_i858.GetAllSavedNotesUseCase>(),
+        gh<InvalidType>(),
+        gh<InvalidType>(),
       ),
     );
     gh.factory<_i118.ThreadBloc>(

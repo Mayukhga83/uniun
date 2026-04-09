@@ -23,20 +23,19 @@ const AIModelSelectionModelSchema = CollectionSchema(
       name: r'downloadedAt',
       type: IsarType.dateTime,
     ),
-    r'isActive': PropertySchema(id: 1, name: r'isActive', type: IsarType.bool),
     r'modelId': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'modelId',
       type: IsarType.string,
       enumMap: _AIModelSelectionModelmodelIdEnumValueMap,
     ),
     r'modelName': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'modelName',
       type: IsarType.string,
     ),
     r'modelPath': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'modelPath',
       type: IsarType.string,
     ),
@@ -58,19 +57,6 @@ const AIModelSelectionModelSchema = CollectionSchema(
           name: r'modelId',
           type: IndexType.hash,
           caseSensitive: true,
-        ),
-      ],
-    ),
-    r'isActive': IndexSchema(
-      id: 8092228061260947457,
-      name: r'isActive',
-      unique: false,
-      replace: false,
-      properties: [
-        IndexPropertySchema(
-          name: r'isActive',
-          type: IndexType.value,
-          caseSensitive: false,
         ),
       ],
     ),
@@ -103,10 +89,9 @@ void _aIModelSelectionModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.downloadedAt);
-  writer.writeBool(offsets[1], object.isActive);
-  writer.writeString(offsets[2], object.modelId.name);
-  writer.writeString(offsets[3], object.modelName);
-  writer.writeString(offsets[4], object.modelPath);
+  writer.writeString(offsets[1], object.modelId.name);
+  writer.writeString(offsets[2], object.modelName);
+  writer.writeString(offsets[3], object.modelPath);
 }
 
 AIModelSelectionModel _aIModelSelectionModelDeserialize(
@@ -118,14 +103,13 @@ AIModelSelectionModel _aIModelSelectionModelDeserialize(
   final object = AIModelSelectionModel();
   object.downloadedAt = reader.readDateTime(offsets[0]);
   object.id = id;
-  object.isActive = reader.readBool(offsets[1]);
   object.modelId =
       _AIModelSelectionModelmodelIdValueEnumMap[reader.readStringOrNull(
-        offsets[2],
+        offsets[1],
       )] ??
       AIModelId.qwen25_05b;
-  object.modelName = reader.readString(offsets[3]);
-  object.modelPath = reader.readString(offsets[4]);
+  object.modelName = reader.readString(offsets[2]);
+  object.modelPath = reader.readString(offsets[3]);
   return object;
 }
 
@@ -139,16 +123,14 @@ P _aIModelSelectionModelDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
-    case 2:
       return (_AIModelSelectionModelmodelIdValueEnumMap[reader.readStringOrNull(
                 offset,
               )] ??
               AIModelId.qwen25_05b)
           as P;
-    case 3:
+    case 2:
       return (reader.readString(offset)) as P;
-    case 4:
+    case 3:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -254,15 +236,6 @@ extension AIModelSelectionModelQueryWhereSort
   anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterWhere>
-  anyIsActive() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        const IndexWhereClause.any(indexName: r'isActive'),
-      );
     });
   }
 }
@@ -386,58 +359,6 @@ extension AIModelSelectionModelQueryWhere
                 indexName: r'modelId',
                 lower: [],
                 upper: [modelId],
-                includeUpper: false,
-              ),
-            );
-      }
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterWhereClause>
-  isActiveEqualTo(bool isActive) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        IndexWhereClause.equalTo(indexName: r'isActive', value: [isActive]),
-      );
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterWhereClause>
-  isActiveNotEqualTo(bool isActive) {
-    return QueryBuilder.apply(this, (query) {
-      if (query.whereSort == Sort.asc) {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isActive',
-                lower: [],
-                upper: [isActive],
-                includeUpper: false,
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isActive',
-                lower: [isActive],
-                includeLower: false,
-                upper: [],
-              ),
-            );
-      } else {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isActive',
-                lower: [isActive],
-                includeLower: false,
-                upper: [],
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isActive',
-                lower: [],
-                upper: [isActive],
                 includeUpper: false,
               ),
             );
@@ -591,19 +512,6 @@ extension AIModelSelectionModelQueryFilter
           upper: upper,
           includeUpper: includeUpper,
         ),
-      );
-    });
-  }
-
-  QueryBuilder<
-    AIModelSelectionModel,
-    AIModelSelectionModel,
-    QAfterFilterCondition
-  >
-  isActiveEqualTo(bool value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'isActive', value: value),
       );
     });
   }
@@ -1185,20 +1093,6 @@ extension AIModelSelectionModelQuerySortBy
   }
 
   QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterSortBy>
-  sortByIsActive() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isActive', Sort.asc);
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterSortBy>
-  sortByIsActiveDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isActive', Sort.desc);
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterSortBy>
   sortByModelId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'modelId', Sort.asc);
@@ -1272,20 +1166,6 @@ extension AIModelSelectionModelQuerySortThenBy
   }
 
   QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterSortBy>
-  thenByIsActive() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isActive', Sort.asc);
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterSortBy>
-  thenByIsActiveDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isActive', Sort.desc);
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QAfterSortBy>
   thenByModelId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'modelId', Sort.asc);
@@ -1338,13 +1218,6 @@ extension AIModelSelectionModelQueryWhereDistinct
   }
 
   QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QDistinct>
-  distinctByIsActive() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'isActive');
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, AIModelSelectionModel, QDistinct>
   distinctByModelId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'modelId', caseSensitive: caseSensitive);
@@ -1383,13 +1256,6 @@ extension AIModelSelectionModelQueryProperty
   downloadedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'downloadedAt');
-    });
-  }
-
-  QueryBuilder<AIModelSelectionModel, bool, QQueryOperations>
-  isActiveProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'isActive');
     });
   }
 

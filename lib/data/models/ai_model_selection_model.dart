@@ -18,8 +18,4 @@ class AIModelSelectionModel {
   late String modelPath;
 
   late DateTime downloadedAt;
-
-  /// Only one row should have isActive = true at a time.
-  @Index()
-  late bool isActive;
 }

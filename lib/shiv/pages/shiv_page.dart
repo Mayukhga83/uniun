@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniun/common/locator.dart';
+import 'package:uniun/core/router/app_routes.dart';
 import 'package:uniun/core/theme/app_theme.dart';
+import 'package:uniun/domain/usecases/ai_model_usecases.dart';
 import 'package:uniun/l10n/app_localizations.dart';
 import 'package:uniun/shiv/chat/bloc/shiv_ai_bloc.dart';
 import 'package:uniun/shiv/chat/pages/shiv_chat_page.dart';
@@ -13,9 +15,29 @@ import 'package:uniun/shiv/chat/pages/shiv_history_page.dart';
 /// - If no conversation is active → landing screen with "New Chat" + history button.
 /// - If a conversation is active → [ShivChatPage].
 ///
-/// Model availability is guaranteed by [HomePage] before this tab is shown.
-class ShivPage extends StatelessWidget {
+/// Redirects to the AI model selection screen if no model is installed.
+class ShivPage extends StatefulWidget {
   const ShivPage({super.key});
+
+  @override
+  State<ShivPage> createState() => _ShivPageState();
+}
+
+class _ShivPageState extends State<ShivPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkModel());
+  }
+
+  Future<void> _checkModel() async {
+    if (!mounted) return;
+    final result = await getIt<GetActiveAIModelUseCase>().call();
+    final hasModel = result.fold((_) => false, (m) => m != null);
+    if (!hasModel && mounted) {
+      await Navigator.of(context).pushNamed(AppRoutes.aiModelSelection);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
