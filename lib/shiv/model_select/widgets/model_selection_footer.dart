@@ -45,14 +45,29 @@ class ModelSelectionFooter extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  l10n.aiModelDownloadingProgress(
-                      (state.downloadProgress * 100).round()),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      l10n.aiModelDownloadingProgress(
+                          (state.downloadProgress * 100).round()),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => context.read<SelectAIModelCubit>().close(),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             )
@@ -70,13 +85,28 @@ class ModelSelectionFooter extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  l10n.aiEmbeddingSetupInProgress,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      l10n.aiEmbeddingSetupInProgress,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => context.read<SelectAIModelCubit>().close(),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             )

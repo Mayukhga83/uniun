@@ -18,6 +18,8 @@ import 'package:uniun/data/datasources/isar_module.dart' as _i146;
 import 'package:uniun/data/repositories/ai_model_repository_impl.dart' as _i72;
 import 'package:uniun/data/repositories/followed_note_repository_impl.dart'
     as _i107;
+import 'package:uniun/data/repositories/isar_vector_repository_impl.dart'
+    as _i456;
 import 'package:uniun/data/repositories/note_repository_impl.dart' as _i348;
 import 'package:uniun/data/repositories/outbound_event_repository_impl.dart'
     as _i694;
@@ -36,6 +38,7 @@ import 'package:uniun/domain/repositories/profile_repository.dart' as _i967;
 import 'package:uniun/domain/repositories/saved_note_repository.dart' as _i43;
 import 'package:uniun/domain/repositories/shiv_repository.dart' as _i266;
 import 'package:uniun/domain/repositories/user_repository.dart' as _i103;
+import 'package:uniun/domain/repositories/vector_repository.dart' as _i739;
 import 'package:uniun/domain/usecases/ai_model_usecases.dart' as _i894;
 import 'package:uniun/domain/usecases/followed_note_usecases.dart' as _i561;
 import 'package:uniun/domain/usecases/note_usecases.dart' as _i475;
@@ -43,6 +46,7 @@ import 'package:uniun/domain/usecases/profile_usecases.dart' as _i391;
 import 'package:uniun/domain/usecases/saved_note_usecases.dart' as _i858;
 import 'package:uniun/domain/usecases/shiv_usecases.dart' as _i604;
 import 'package:uniun/domain/usecases/user_usecases.dart' as _i799;
+import 'package:uniun/domain/usecases/vector_usecases.dart' as _i756;
 import 'package:uniun/followed_notes/cubit/followed_notes_cubit.dart' as _i97;
 import 'package:uniun/followed_notes/followed_note_detail/cubit/followed_note_detail_cubit.dart'
     as _i464;
@@ -86,8 +90,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i646.AIModelRepository>(
       () => _i72.AIModelRepositoryImpl(gh<_i214.Isar>()),
     );
+    gh.factory<_i739.VectorRepository>(
+      () => _i456.IsarVectorRepositoryImpl(gh<_i214.Isar>()),
+    );
     gh.factory<_i266.ShivRepository>(
       () => _i412.ShivRepositoryImpl(gh<_i214.Isar>()),
+    );
+    gh.lazySingleton<_i475.UpdateNoteEmbeddingUseCase>(
+      () => _i475.UpdateNoteEmbeddingUseCase(gh<_i739.VectorRepository>()),
+    );
+    gh.lazySingleton<_i858.UpdateEmbeddingUseCase>(
+      () => _i858.UpdateEmbeddingUseCase(gh<_i739.VectorRepository>()),
     );
     gh.factory<_i47.NoteRepository>(
       () => _i348.NoteRepositoryImpl(isar: gh<_i214.Isar>()),
@@ -169,9 +182,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i858.GetAllSavedNotesUseCase>(
       () => _i858.GetAllSavedNotesUseCase(gh<_i43.SavedNoteRepository>()),
     );
-    gh.lazySingleton<_i858.UpdateEmbeddingUseCase>(
-      () => _i858.UpdateEmbeddingUseCase(gh<_i43.SavedNoteRepository>()),
-    );
     gh.lazySingleton<_i475.GetFeedUseCase>(
       () => _i475.GetFeedUseCase(gh<_i47.NoteRepository>()),
     );
@@ -189,6 +199,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i475.GetThreadUseCase>(
       () => _i475.GetThreadUseCase(gh<_i47.NoteRepository>()),
+    );
+    gh.lazySingleton<_i756.SearchVectorNotesUseCase>(
+      () => _i756.SearchVectorNotesUseCase(gh<_i739.VectorRepository>()),
     );
     gh.lazySingleton<_i799.GetActiveUserUseCase>(
       () => _i799.GetActiveUserUseCase(gh<_i103.UserRepository>()),
@@ -220,6 +233,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i894.ClearActiveAIModelUseCase>(
       () => _i894.ClearActiveAIModelUseCase(gh<_i646.AIModelRepository>()),
     );
+    gh.factory<_i787.BrahmaCreateBloc>(
+      () => _i787.BrahmaCreateBloc(
+        gh<_i799.GetActiveUserKeysUseCase>(),
+        gh<_i475.PublishNoteUseCase>(),
+        gh<_i475.UpdateNoteEmbeddingUseCase>(),
+        gh<_i828.EmbeddingService>(),
+      ),
+    );
     gh.lazySingleton<_i475.GetReplyCountUseCase>(
       () => _i475.GetReplyCountUseCase(gh<_i47.NoteRepository>()),
     );
@@ -228,9 +249,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i475.GetOwnNotesUseCase>(
       () => _i475.GetOwnNotesUseCase(gh<_i47.NoteRepository>()),
-    );
-    gh.lazySingleton<_i475.UpdateNoteEmbeddingUseCase>(
-      () => _i475.UpdateNoteEmbeddingUseCase(gh<_i47.NoteRepository>()),
     );
     gh.factory<_i97.FollowedNotesCubit>(
       () => _i97.FollowedNotesCubit(
@@ -247,10 +265,35 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i391.SaveProfileUseCase>(),
       ),
     );
+    gh.lazySingleton<_i285.VectorSearchService>(
+      () => _i285.VectorSearchService(gh<_i756.SearchVectorNotesUseCase>()),
+    );
+    gh.lazySingleton<_i1067.RagPipeline>(
+      () => _i1067.RagPipeline(
+        gh<_i828.EmbeddingService>(),
+        gh<_i285.VectorSearchService>(),
+        gh<_i197.PromptBuilder>(),
+        gh<_i799.GetActiveUserUseCase>(),
+        gh<_i391.GetOwnProfileUseCase>(),
+        gh<_i475.GetOwnNotesUseCase>(),
+      ),
+    );
     gh.factory<_i731.SettingsCubit>(
       () => _i731.SettingsCubit(
         gh<_i799.GetActiveUserUseCase>(),
         gh<_i391.GetOwnProfileUseCase>(),
+      ),
+    );
+    gh.factory<_i334.ShivAIBloc>(
+      () => _i334.ShivAIBloc(
+        gh<_i604.GetConversationsUseCase>(),
+        gh<_i604.CreateConversationUseCase>(),
+        gh<_i604.DeleteConversationUseCase>(),
+        gh<_i604.GetMessagesUseCase>(),
+        gh<_i604.SaveMessageUseCase>(),
+        gh<_i604.UpdateMessageContentUseCase>(),
+        gh<_i761.AIModelRunner>(),
+        gh<_i1067.RagPipeline>(),
       ),
     );
     gh.lazySingleton<_i799.GetActiveUserProfileUseCase>(
@@ -264,13 +307,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i799.GetActiveUserUseCase>(),
         gh<_i391.GetOwnProfileUseCase>(),
         gh<_i561.GetAllFollowedNotesUseCase>(),
-      ),
-    );
-    gh.lazySingleton<_i285.VectorSearchService>(
-      () => _i285.VectorSearchService(
-        gh<_i858.GetAllSavedNotesUseCase>(),
-        gh<_i799.GetActiveUserUseCase>(),
-        gh<_i475.GetOwnNotesUseCase>(),
       ),
     );
     gh.factory<_i53.SelectAIModelCubit>(
@@ -301,39 +337,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i391.GetProfileUseCase>(),
         gh<_i475.GetReplyCountUseCase>(),
         gh<_i799.GetActiveUserKeysUseCase>(),
-      ),
-    );
-    gh.factory<_i787.BrahmaCreateBloc>(
-      () => _i787.BrahmaCreateBloc(
-        gh<_i799.GetActiveUserKeysUseCase>(),
-        gh<_i475.PublishNoteUseCase>(),
-        gh<_i475.UpdateNoteEmbeddingUseCase>(),
-        gh<_i828.EmbeddingService>(),
-      ),
-    );
-    gh.lazySingleton<_i1067.RagPipeline>(
-      () => _i1067.RagPipeline(
-        gh<_i828.EmbeddingService>(),
-        gh<_i285.VectorSearchService>(),
-        gh<_i197.PromptBuilder>(),
-        gh<_i799.GetActiveUserUseCase>(),
-        gh<_i391.GetOwnProfileUseCase>(),
-        gh<_i475.GetOwnNotesUseCase>(),
-        gh<_i858.GetAllSavedNotesUseCase>(),
-        gh<_i858.UpdateEmbeddingUseCase>(),
-        gh<_i475.UpdateNoteEmbeddingUseCase>(),
-      ),
-    );
-    gh.factory<_i334.ShivAIBloc>(
-      () => _i334.ShivAIBloc(
-        gh<_i604.GetConversationsUseCase>(),
-        gh<_i604.CreateConversationUseCase>(),
-        gh<_i604.DeleteConversationUseCase>(),
-        gh<_i604.GetMessagesUseCase>(),
-        gh<_i604.SaveMessageUseCase>(),
-        gh<_i604.UpdateMessageContentUseCase>(),
-        gh<_i761.AIModelRunner>(),
-        gh<_i1067.RagPipeline>(),
       ),
     );
     return this;

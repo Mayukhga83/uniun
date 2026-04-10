@@ -40,6 +40,21 @@ class SelectAIModelCubit extends Cubit<SelectAIModelState> {
           models.where((m) => m.isRecommended).firstOrNull?.modelId ??
           models.firstOrNull?.modelId,
     ));
+
+    // If a model is already active (app restart with existing model),
+    // ensure the embedding model files are also present.
+    if (activeId != null) {
+      unawaited(_ensureEmbeddingDownloaded());
+    }
+  }
+
+  Future<void> _ensureEmbeddingDownloaded() async {
+    if (await _embeddingDownloader.isDownloaded()) return;
+    if (isClosed) return;
+    emit(state.copyWith(isEmbeddingDownloading: true));
+    await _embeddingDownloader.downloadIfNeeded();
+    if (isClosed) return;
+    emit(state.copyWith(isEmbeddingDownloading: false));
   }
 
   Future<void> refresh() => _init();
@@ -82,13 +97,19 @@ class SelectAIModelCubit extends Cubit<SelectAIModelState> {
               ));
               await _embeddingDownloader.downloadIfNeeded();
               if (isClosed) return;
-              emit(state.copyWith(isEmbeddingDownloading: false));
+              // Embedding download complete — clear embedding flag
+              emit(state.copyWith(
+                isEmbeddingDownloading: false,
+                downloadProgress: 1.0,
+              ));
             }
             if (isClosed) return;
+            // All downloads complete — emit done status
             emit(state.copyWith(
               status: SelectAIModelStatus.done,
               activeModelId: id,
               downloadProgress: 1.0,
+              isEmbeddingDownloading: false,
             ));
           },
           failed: (msg) => emit(state.copyWith(

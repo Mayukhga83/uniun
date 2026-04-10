@@ -89,23 +89,4 @@ class SavedNoteRepositoryImpl extends SavedNoteRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, Unit>> updateEmbedding(
-      String eventId, List<double> embedding) async {
-    try {
-      await isar.writeTxn(() async {
-        final model = await isar.savedNoteModels
-            .where()
-            .eventIdEqualTo(eventId)
-            .findFirst();
-        if (model != null) {
-          model.embedding = embedding;
-          await isar.savedNoteModels.put(model);
-        }
-      });
-      return const Right(unit);
-    } catch (e) {
-      return Left(Failure.errorFailure(e.toString()));
-    }
-  }
 }

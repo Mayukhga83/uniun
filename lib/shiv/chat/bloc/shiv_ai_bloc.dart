@@ -69,6 +69,9 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
 
   Future<void> _onCreateConversation(
       _CreateConversation event, Emitter<ShivAIState> emit) async {
+    // Guard: no model loaded yet — ShivPage._checkModel() will redirect.
+    if (!_runner.hasActiveModel) return;
+
     final result = await _createConversation.call('New conversation');
     await result.fold(
       (f) async => emit(state.copyWith(
@@ -88,6 +91,9 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
 
   Future<void> _onOpenConversation(
       _OpenConversation event, Emitter<ShivAIState> emit) async {
+    // Guard: no model loaded yet — ShivPage._checkModel() will redirect.
+    if (!_runner.hasActiveModel) return;
+
     final conv = state.conversations
         .where((c) => c.conversationId == event.conversationId)
         .firstOrNull;

@@ -8,6 +8,8 @@ import 'package:uniun/l10n/app_localizations.dart';
 import 'package:uniun/shiv/chat/bloc/shiv_ai_bloc.dart';
 import 'package:uniun/shiv/chat/pages/shiv_chat_page.dart';
 import 'package:uniun/shiv/chat/pages/shiv_history_page.dart';
+import 'package:uniun/shiv/model_select/pages/ai_model_selection_page.dart';
+import 'package:uniun/shiv/services/ai_model_runner.dart';
 
 /// Shiv AI assistant tab root.
 ///
@@ -24,6 +26,8 @@ class ShivPage extends StatefulWidget {
 }
 
 class _ShivPageState extends State<ShivPage> {
+  bool? _hasModel;
+
   @override
   void initState() {
     super.initState();
@@ -34,17 +38,39 @@ class _ShivPageState extends State<ShivPage> {
     if (!mounted) return;
     final result = await getIt<GetActiveAIModelUseCase>().call();
     final hasModel = result.fold((_) => false, (m) => m != null);
-    if (!hasModel && mounted) {
-      await Navigator.of(context).pushNamed(AppRoutes.aiModelSelection);
+    if (mounted) {
+      setState(() => _hasModel = hasModel);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) =>
-          getIt<ShivAIBloc>()..add(const ShivAIEvent.loadConversations()),
-      child: const _ShivRoot(),
+    // Show model selection if no model exists
+    if (_hasModel == false) {
+      return WillPopScope(
+        onWillPop: () async {
+          // When returning from model selection, re-check for model
+          await _checkModel();
+          return false;
+        },
+        child: const AIModelSelectionPage(),
+      );
+    }
+
+    // Show Shiv UI once model exists
+    if (_hasModel == true) {
+      return BlocProvider(
+        create: (_) =>
+            getIt<ShivAIBloc>()..add(const ShivAIEvent.loadConversations()),
+        child: const _ShivRoot(),
+      );
+    }
+
+    // Loading state
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }
@@ -191,9 +217,16 @@ class _ShivLanding extends StatelessWidget {
               builder: (context, state) {
                 return _LandingBody(
                   conversationCount: state.conversations.length,
-                  onNewChat: () => context.read<ShivAIBloc>().add(
-                    const ShivAIEvent.createConversation(),
-                  ),
+                  onNewChat: () {
+                    // Check if model is active before creating conversation
+                    if (!getIt<AIModelRunner>().hasActiveModel) {
+                      Navigator.of(context).pushNamed(AppRoutes.aiModelSelection);
+                    } else {
+                      context.read<ShivAIBloc>().add(
+                        const ShivAIEvent.createConversation(),
+                      );
+                    }
+                  },
                   onHistory: () => ShivHistoryPage.show(context),
                 );
               },

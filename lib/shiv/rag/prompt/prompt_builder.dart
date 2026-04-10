@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:uniun/shiv/rag/retrieval/scored_note.dart';
+import 'package:uniun/domain/entities/shiv/scored_note.dart';
 
 /// Data loaded once per session from Isar.
 /// Personalises every prompt even when the user has zero saved notes.

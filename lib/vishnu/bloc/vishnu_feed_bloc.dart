@@ -156,8 +156,11 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
           r.fold((_) {}, (p) => profiles[pubkey] = p);
         }
 
-        // Reply counts
-        final counts = Map<String, int>.from(state.replyCounts);
+        // Reply counts — on refresh/initial load start fresh so stale counts
+        // from a previous session are not served after new replies arrive.
+        final counts = append
+            ? Map<String, int>.from(state.replyCounts)
+            : <String, int>{};
         for (final note in newNotes) {
           if (!counts.containsKey(note.id)) {
             final r = await _getThreadReplyCount.call(note.id);

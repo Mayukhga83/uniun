@@ -15,8 +15,4 @@ abstract class SavedNoteRepository {
 
   /// All saved notes, newest-saved first.
   Future<Either<Failure, List<SavedNoteEntity>>> getAll();
-
-  /// Persist the computed embedding vector for a saved note.
-  Future<Either<Failure, Unit>> updateEmbedding(
-      String eventId, List<double> embedding);
 }

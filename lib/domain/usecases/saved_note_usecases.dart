@@ -5,6 +5,7 @@ import 'package:uniun/core/usecases/usecase.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/saved_note/saved_note_entity.dart';
 import 'package:uniun/domain/repositories/saved_note_repository.dart';
+import 'package:uniun/domain/repositories/vector_repository.dart';
 
 // ── SaveNoteUseCase ───────────────────────────────────────────────────────────
 
@@ -64,19 +65,24 @@ class GetAllSavedNotesUseCase
 
 // ── UpdateEmbeddingUseCase ────────────────────────────────────────────────────
 
-/// Persists a precomputed embedding vector for a saved note.
-/// Input: (eventId, embedding) tuple.
+/// Persists a precomputed embedding vector via [VectorRepository].
+/// Input: (id, embedding) tuple — works for saved notes and own authored notes.
 @lazySingleton
 class UpdateEmbeddingUseCase
     extends UseCase<Either<Failure, Unit>, (String, List<double>)> {
-  final SavedNoteRepository _repository;
-  const UpdateEmbeddingUseCase(this._repository);
+  final VectorRepository _vectorRepository;
+  const UpdateEmbeddingUseCase(this._vectorRepository);
 
   @override
   Future<Either<Failure, Unit>> call(
     (String, List<double>) input, {
     bool cached = false,
-  }) {
-    return _repository.updateEmbedding(input.$1, input.$2);
+  }) async {
+    try {
+      await _vectorRepository.upsert(input.$1, input.$2);
+      return const Right(unit);
+    } catch (e) {
+      return Left(Failure.errorFailure(e.toString()));
+    }
   }
 }
