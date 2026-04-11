@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:injectable/injectable.dart';
@@ -8,6 +10,7 @@ import 'package:uniun/domain/entities/profile/profile_entity.dart';
 import 'package:uniun/domain/usecases/note_usecases.dart';
 import 'package:uniun/domain/usecases/profile_usecases.dart';
 import 'package:uniun/domain/usecases/user_usecases.dart';
+import 'package:uniun/domain/usecases/vector_usecases.dart';
 
 part 'thread_event.dart';
 part 'thread_state.dart';
@@ -22,6 +25,7 @@ class ThreadBloc extends Bloc<ThreadEvent, ThreadState> {
   final GetProfileUseCase _getProfile;
   final GetReplyCountUseCase _getReplyCount;
   final GetActiveUserKeysUseCase _getActiveUserKeys;
+  final EmbedAndStoreNoteUseCase _embedAndStore;
 
   ThreadBloc(
     this._getNoteById,
@@ -30,6 +34,7 @@ class ThreadBloc extends Bloc<ThreadEvent, ThreadState> {
     this._getProfile,
     this._getReplyCount,
     this._getActiveUserKeys,
+    this._embedAndStore,
   ) : super(const ThreadState()) {
     on<LoadThreadEvent>(_onLoad, transformer: droppable());
     on<UpdateReplyTextEvent>(_onUpdateText);
@@ -228,6 +233,8 @@ class ThreadBloc extends Bloc<ThreadEvent, ThreadState> {
         errorMessage: f.toMessage(),
       )),
       (published) {
+        // Fire-and-forget: embed own authored reply for RAG.
+        unawaited(_embedAndStore.call((published.id, published.content)));
         final updatedState = state.copyWith(
           replyText: '',
           replyingToId: null,

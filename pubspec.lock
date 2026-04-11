@@ -242,7 +242,7 @@ packages:
     source: hosted
     version: "1.19.1"
   convert:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: convert
       sha256: b30acd5944035672bc15c6b7a8b47d773e41e2f17de064350988c5d02adb1c68
@@ -258,7 +258,7 @@ packages:
     source: hosted
     version: "0.3.5+2"
   crypto:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: crypto
       sha256: c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf
@@ -917,6 +917,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  nostr:
+    dependency: "direct main"
+    description:
+      name: nostr
+      sha256: "7f6083d67098a3d6ee888002c4371c3c4583d125f17087f07c769e6cb2c4a63a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
   nostr_core_dart:
     dependency: "direct main"
     description:
@@ -1443,7 +1451,7 @@ packages:
     source: hosted
     version: "1.0.1"
   web_socket_channel:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: web_socket_channel
       sha256: d645757fb0f4773d602444000a8131ff5d48c9e47adfe9772652dd1a4f2d45c8

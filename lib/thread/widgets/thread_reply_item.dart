@@ -6,7 +6,7 @@ import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
-import 'package:uniun/shiv/rag/embedding/embedding_service.dart';
+import 'package:uniun/domain/usecases/vector_usecases.dart';
 import 'package:uniun/thread/bloc/thread_bloc.dart';
 import 'package:uniun/thread/utils/thread_formatters.dart';
 
@@ -77,14 +77,8 @@ class _ThreadReplyItemState extends State<ThreadReplyItem> {
           if (mounted) setState(() => _isSaved = false);
         },
         (saved) {
-          getIt<EmbeddingService>().embed(saved.content).then((vec) {
-            if (vec.isNotEmpty) {
-              getIt<UpdateEmbeddingUseCase>().call((saved.eventId, vec));
-              print('📦 Embedded saved note (thread reply): ${saved.eventId}');
-            }
-          }).catchError((e) {
-            print('📦 Embedding failed (thread reply): $e');
-          });
+          getIt<EmbedAndStoreNoteUseCase>()
+              .call((saved.eventId, saved.content));
         },
       );
     } else {

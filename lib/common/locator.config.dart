@@ -16,6 +16,7 @@ import 'package:uniun/brahma/bloc/brahma_create_bloc.dart' as _i787;
 import 'package:uniun/core/isolate/embedded_server_bridge.dart' as _i717;
 import 'package:uniun/data/datasources/isar_module.dart' as _i146;
 import 'package:uniun/data/repositories/ai_model_repository_impl.dart' as _i72;
+import 'package:uniun/data/repositories/channel_repository_impl.dart' as _i1009;
 import 'package:uniun/data/repositories/followed_note_repository_impl.dart'
     as _i107;
 import 'package:uniun/data/repositories/isar_vector_repository_impl.dart'
@@ -24,19 +25,26 @@ import 'package:uniun/data/repositories/note_repository_impl.dart' as _i348;
 import 'package:uniun/data/repositories/outbound_event_repository_impl.dart'
     as _i694;
 import 'package:uniun/data/repositories/profile_repository_impl.dart' as _i484;
+import 'package:uniun/data/repositories/relay_repository_impl.dart' as _i542;
 import 'package:uniun/data/repositories/saved_note_repository_impl.dart'
     as _i669;
 import 'package:uniun/data/repositories/shiv_repository_impl.dart' as _i412;
+import 'package:uniun/data/repositories/subscription_record_repository_impl.dart'
+    as _i364;
 import 'package:uniun/data/repositories/user_repository_impl.dart' as _i582;
 import 'package:uniun/domain/repositories/ai_model_repository.dart' as _i646;
+import 'package:uniun/domain/repositories/channel_repository.dart' as _i127;
 import 'package:uniun/domain/repositories/followed_note_repository.dart'
     as _i836;
 import 'package:uniun/domain/repositories/note_repository.dart' as _i47;
 import 'package:uniun/domain/repositories/outbound_event_repository.dart'
     as _i218;
 import 'package:uniun/domain/repositories/profile_repository.dart' as _i967;
+import 'package:uniun/domain/repositories/relay_repository.dart' as _i993;
 import 'package:uniun/domain/repositories/saved_note_repository.dart' as _i43;
 import 'package:uniun/domain/repositories/shiv_repository.dart' as _i266;
+import 'package:uniun/domain/repositories/subscription_record_repository.dart'
+    as _i194;
 import 'package:uniun/domain/repositories/user_repository.dart' as _i103;
 import 'package:uniun/domain/repositories/vector_repository.dart' as _i739;
 import 'package:uniun/domain/usecases/ai_model_usecases.dart' as _i894;
@@ -114,8 +122,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i43.SavedNoteRepository>(
       () => _i669.SavedNoteRepositoryImpl(isar: gh<_i214.Isar>()),
     );
+    gh.factory<_i194.SubscriptionRecordRepository>(
+      () => _i364.SubscriptionRecordRepositoryImpl(isar: gh<_i214.Isar>()),
+    );
     gh.factory<_i967.ProfileRepository>(
       () => _i484.ProfileRepositoryImpl(isar: gh<_i214.Isar>()),
+    );
+    gh.factory<_i127.ChannelRepository>(
+      () => _i1009.ChannelRepositoryImpl(isar: gh<_i214.Isar>()),
+    );
+    gh.factory<_i993.RelayRepository>(
+      () => _i542.RelayRepositoryImpl(isar: gh<_i214.Isar>()),
     );
     gh.lazySingleton<_i561.GetAllFollowedNotesUseCase>(
       () =>
@@ -233,12 +250,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i894.ClearActiveAIModelUseCase>(
       () => _i894.ClearActiveAIModelUseCase(gh<_i646.AIModelRepository>()),
     );
-    gh.factory<_i787.BrahmaCreateBloc>(
-      () => _i787.BrahmaCreateBloc(
-        gh<_i799.GetActiveUserKeysUseCase>(),
-        gh<_i475.PublishNoteUseCase>(),
-        gh<_i475.UpdateNoteEmbeddingUseCase>(),
+    gh.lazySingleton<_i756.EmbedAndStoreNoteUseCase>(
+      () => _i756.EmbedAndStoreNoteUseCase(
         gh<_i828.EmbeddingService>(),
+        gh<_i739.VectorRepository>(),
       ),
     );
     gh.lazySingleton<_i475.GetReplyCountUseCase>(
@@ -278,6 +293,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i475.GetOwnNotesUseCase>(),
       ),
     );
+    gh.factory<_i787.BrahmaCreateBloc>(
+      () => _i787.BrahmaCreateBloc(
+        gh<_i799.GetActiveUserKeysUseCase>(),
+        gh<_i475.PublishNoteUseCase>(),
+        gh<_i756.EmbedAndStoreNoteUseCase>(),
+      ),
+    );
     gh.factory<_i731.SettingsCubit>(
       () => _i731.SettingsCubit(
         gh<_i799.GetActiveUserUseCase>(),
@@ -309,6 +331,17 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i561.GetAllFollowedNotesUseCase>(),
       ),
     );
+    gh.factory<_i118.ThreadBloc>(
+      () => _i118.ThreadBloc(
+        gh<_i475.GetNoteByIdUseCase>(),
+        gh<_i475.GetRepliesUseCase>(),
+        gh<_i475.PublishNoteUseCase>(),
+        gh<_i391.GetProfileUseCase>(),
+        gh<_i475.GetReplyCountUseCase>(),
+        gh<_i799.GetActiveUserKeysUseCase>(),
+        gh<_i756.EmbedAndStoreNoteUseCase>(),
+      ),
+    );
     gh.factory<_i53.SelectAIModelCubit>(
       () => _i53.SelectAIModelCubit(
         gh<_i894.GetAvailableAIModelsUseCase>(),
@@ -325,18 +358,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i858.GetAllSavedNotesUseCase>(),
         gh<_i858.SaveNoteUseCase>(),
         gh<_i858.UnsaveNoteUseCase>(),
-        gh<_i858.UpdateEmbeddingUseCase>(),
-        gh<_i828.EmbeddingService>(),
-      ),
-    );
-    gh.factory<_i118.ThreadBloc>(
-      () => _i118.ThreadBloc(
-        gh<_i475.GetNoteByIdUseCase>(),
-        gh<_i475.GetRepliesUseCase>(),
-        gh<_i475.PublishNoteUseCase>(),
-        gh<_i391.GetProfileUseCase>(),
-        gh<_i475.GetReplyCountUseCase>(),
-        gh<_i799.GetActiveUserKeysUseCase>(),
+        gh<_i756.EmbedAndStoreNoteUseCase>(),
       ),
     );
     return this;
