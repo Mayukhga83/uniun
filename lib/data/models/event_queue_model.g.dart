@@ -17,22 +17,51 @@ const EventQueueModelSchema = CollectionSchema(
   name: r'EventQueue',
   id: 8017143989177430287,
   properties: {
-    r'enqueuedAt': PropertySchema(
+    r'authorPubkey': PropertySchema(
       id: 0,
+      name: r'authorPubkey',
+      type: IsarType.string,
+    ),
+    r'content': PropertySchema(id: 1, name: r'content', type: IsarType.string),
+    r'created': PropertySchema(
+      id: 2,
+      name: r'created',
+      type: IsarType.dateTime,
+    ),
+    r'eTagRefs': PropertySchema(
+      id: 3,
+      name: r'eTagRefs',
+      type: IsarType.stringList,
+    ),
+    r'enqueuedAt': PropertySchema(
+      id: 4,
       name: r'enqueuedAt',
       type: IsarType.dateTime,
     ),
-    r'eventId': PropertySchema(id: 1, name: r'eventId', type: IsarType.string),
+    r'eventId': PropertySchema(id: 5, name: r'eventId', type: IsarType.string),
+    r'kind': PropertySchema(id: 6, name: r'kind', type: IsarType.long),
+    r'pTagRefs': PropertySchema(
+      id: 7,
+      name: r'pTagRefs',
+      type: IsarType.stringList,
+    ),
+    r'replyToEventId': PropertySchema(
+      id: 8,
+      name: r'replyToEventId',
+      type: IsarType.string,
+    ),
+    r'rootEventId': PropertySchema(
+      id: 9,
+      name: r'rootEventId',
+      type: IsarType.string,
+    ),
     r'sentCount': PropertySchema(
-      id: 2,
+      id: 10,
       name: r'sentCount',
       type: IsarType.long,
     ),
-    r'serializedRelayMessage': PropertySchema(
-      id: 3,
-      name: r'serializedRelayMessage',
-      type: IsarType.string,
-    ),
+    r'sig': PropertySchema(id: 11, name: r'sig', type: IsarType.string),
+    r'tTags': PropertySchema(id: 12, name: r'tTags', type: IsarType.stringList),
   },
 
   estimateSize: _eventQueueModelEstimateSize,
@@ -70,8 +99,43 @@ int _eventQueueModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.authorPubkey.length * 3;
+  bytesCount += 3 + object.content.length * 3;
+  bytesCount += 3 + object.eTagRefs.length * 3;
+  {
+    for (var i = 0; i < object.eTagRefs.length; i++) {
+      final value = object.eTagRefs[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.eventId.length * 3;
-  bytesCount += 3 + object.serializedRelayMessage.length * 3;
+  bytesCount += 3 + object.pTagRefs.length * 3;
+  {
+    for (var i = 0; i < object.pTagRefs.length; i++) {
+      final value = object.pTagRefs[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  {
+    final value = object.replyToEventId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.rootEventId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.sig.length * 3;
+  bytesCount += 3 + object.tTags.length * 3;
+  {
+    for (var i = 0; i < object.tTags.length; i++) {
+      final value = object.tTags[i];
+      bytesCount += value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -81,10 +145,19 @@ void _eventQueueModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.enqueuedAt);
-  writer.writeString(offsets[1], object.eventId);
-  writer.writeLong(offsets[2], object.sentCount);
-  writer.writeString(offsets[3], object.serializedRelayMessage);
+  writer.writeString(offsets[0], object.authorPubkey);
+  writer.writeString(offsets[1], object.content);
+  writer.writeDateTime(offsets[2], object.created);
+  writer.writeStringList(offsets[3], object.eTagRefs);
+  writer.writeDateTime(offsets[4], object.enqueuedAt);
+  writer.writeString(offsets[5], object.eventId);
+  writer.writeLong(offsets[6], object.kind);
+  writer.writeStringList(offsets[7], object.pTagRefs);
+  writer.writeString(offsets[8], object.replyToEventId);
+  writer.writeString(offsets[9], object.rootEventId);
+  writer.writeLong(offsets[10], object.sentCount);
+  writer.writeString(offsets[11], object.sig);
+  writer.writeStringList(offsets[12], object.tTags);
 }
 
 EventQueueModel _eventQueueModelDeserialize(
@@ -94,11 +167,20 @@ EventQueueModel _eventQueueModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = EventQueueModel();
-  object.enqueuedAt = reader.readDateTime(offsets[0]);
-  object.eventId = reader.readString(offsets[1]);
+  object.authorPubkey = reader.readString(offsets[0]);
+  object.content = reader.readString(offsets[1]);
+  object.created = reader.readDateTime(offsets[2]);
+  object.eTagRefs = reader.readStringList(offsets[3]) ?? [];
+  object.enqueuedAt = reader.readDateTime(offsets[4]);
+  object.eventId = reader.readString(offsets[5]);
   object.id = id;
-  object.sentCount = reader.readLong(offsets[2]);
-  object.serializedRelayMessage = reader.readString(offsets[3]);
+  object.kind = reader.readLong(offsets[6]);
+  object.pTagRefs = reader.readStringList(offsets[7]) ?? [];
+  object.replyToEventId = reader.readStringOrNull(offsets[8]);
+  object.rootEventId = reader.readStringOrNull(offsets[9]);
+  object.sentCount = reader.readLong(offsets[10]);
+  object.sig = reader.readString(offsets[11]);
+  object.tTags = reader.readStringList(offsets[12]) ?? [];
   return object;
 }
 
@@ -110,13 +192,31 @@ P _eventQueueModelDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 3:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 4:
+      return (reader.readDateTime(offset)) as P;
+    case 5:
       return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readLong(offset)) as P;
+    case 7:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
+      return (reader.readLong(offset)) as P;
+    case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
+      return (reader.readStringList(offset) ?? []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -330,6 +430,537 @@ extension EventQueueModelQueryWhere
 
 extension EventQueueModelQueryFilter
     on QueryBuilder<EventQueueModel, EventQueueModel, QFilterCondition> {
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'authorPubkey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'authorPubkey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'authorPubkey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'authorPubkey',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'authorPubkey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'authorPubkey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'authorPubkey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'authorPubkey',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'authorPubkey', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  authorPubkeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'authorPubkey', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'content',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'content',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'content',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'content',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'content',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'content',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'content',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'content',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'content', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  contentIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'content', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  createdEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'created', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  createdGreaterThan(DateTime value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'created',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  createdLessThan(DateTime value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'created',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  createdBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'created',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'eTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'eTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'eTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'eTagRefs',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'eTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'eTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'eTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'eTagRefs',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'eTagRefs', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'eTagRefs', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'eTagRefs', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'eTagRefs', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'eTagRefs', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsLengthLessThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'eTagRefs', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'eTagRefs', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  eTagRefsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'eTagRefs',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
   enqueuedAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -582,6 +1213,573 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  kindEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'kind', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  kindGreaterThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'kind',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  kindLessThan(int value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'kind',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  kindBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'kind',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'pTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'pTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'pTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'pTagRefs',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'pTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'pTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'pTagRefs',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'pTagRefs',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'pTagRefs', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'pTagRefs', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'pTagRefs', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'pTagRefs', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'pTagRefs', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsLengthLessThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'pTagRefs', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'pTagRefs', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  pTagRefsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'pTagRefs',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'replyToEventId'),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'replyToEventId'),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'replyToEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'replyToEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'replyToEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'replyToEventId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'replyToEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'replyToEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'replyToEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'replyToEventId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'replyToEventId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  replyToEventIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'replyToEventId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'rootEventId'),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'rootEventId'),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'rootEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'rootEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'rootEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'rootEventId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'rootEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'rootEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'rootEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'rootEventId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'rootEventId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  rootEventIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'rootEventId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
   sentCountEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -637,11 +1835,11 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageEqualTo(String value, {bool caseSensitive = true}) {
+  sigEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(
-          property: r'serializedRelayMessage',
+          property: r'sig',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -650,7 +1848,7 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageGreaterThan(
+  sigGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -659,7 +1857,7 @@ extension EventQueueModelQueryFilter
       return query.addFilterCondition(
         FilterCondition.greaterThan(
           include: include,
-          property: r'serializedRelayMessage',
+          property: r'sig',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -668,16 +1866,12 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
+  sigLessThan(String value, {bool include = false, bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.lessThan(
           include: include,
-          property: r'serializedRelayMessage',
+          property: r'sig',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -686,7 +1880,7 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageBetween(
+  sigBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -696,7 +1890,7 @@ extension EventQueueModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.between(
-          property: r'serializedRelayMessage',
+          property: r'sig',
           lower: lower,
           includeLower: includeLower,
           upper: upper,
@@ -708,11 +1902,11 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageStartsWith(String value, {bool caseSensitive = true}) {
+  sigStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.startsWith(
-          property: r'serializedRelayMessage',
+          property: r'sig',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -721,11 +1915,11 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageEndsWith(String value, {bool caseSensitive = true}) {
+  sigEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.endsWith(
-          property: r'serializedRelayMessage',
+          property: r'sig',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -734,11 +1928,11 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageContains(String value, {bool caseSensitive = true}) {
+  sigContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.contains(
-          property: r'serializedRelayMessage',
+          property: r'sig',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -747,11 +1941,11 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageMatches(String pattern, {bool caseSensitive = true}) {
+  sigMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.matches(
-          property: r'serializedRelayMessage',
+          property: r'sig',
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -760,22 +1954,213 @@ extension EventQueueModelQueryFilter
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageIsEmpty() {
+  sigIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'serializedRelayMessage', value: ''),
+        FilterCondition.equalTo(property: r'sig', value: ''),
       );
     });
   }
 
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
-  serializedRelayMessageIsNotEmpty() {
+  sigIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'sig', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'tTags',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
-          property: r'serializedRelayMessage',
-          value: '',
+          include: include,
+          property: r'tTags',
+          value: value,
+          caseSensitive: caseSensitive,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'tTags',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'tTags',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'tTags',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'tTags',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'tTags',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'tTags',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'tTags', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'tTags', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'tTags', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'tTags', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'tTags', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsLengthLessThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'tTags', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'tTags', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterFilterCondition>
+  tTagsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tTags',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
       );
     });
   }
@@ -789,6 +2174,46 @@ extension EventQueueModelQueryLinks
 
 extension EventQueueModelQuerySortBy
     on QueryBuilder<EventQueueModel, EventQueueModel, QSortBy> {
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByAuthorPubkey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'authorPubkey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByAuthorPubkeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'authorPubkey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> sortByContent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'content', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByContentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'content', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> sortByCreated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'created', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByCreatedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'created', Sort.desc);
+    });
+  }
+
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
   sortByEnqueuedAt() {
     return QueryBuilder.apply(this, (query) {
@@ -816,6 +2241,47 @@ extension EventQueueModelQuerySortBy
     });
   }
 
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> sortByKind() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'kind', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByKindDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'kind', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByReplyToEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'replyToEventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByReplyToEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'replyToEventId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByRootEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'rootEventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  sortByRootEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'rootEventId', Sort.desc);
+    });
+  }
+
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
   sortBySentCount() {
     return QueryBuilder.apply(this, (query) {
@@ -830,23 +2296,61 @@ extension EventQueueModelQuerySortBy
     });
   }
 
-  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
-  sortBySerializedRelayMessage() {
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> sortBySig() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'serializedRelayMessage', Sort.asc);
+      return query.addSortBy(r'sig', Sort.asc);
     });
   }
 
-  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
-  sortBySerializedRelayMessageDesc() {
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> sortBySigDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'serializedRelayMessage', Sort.desc);
+      return query.addSortBy(r'sig', Sort.desc);
     });
   }
 }
 
 extension EventQueueModelQuerySortThenBy
     on QueryBuilder<EventQueueModel, EventQueueModel, QSortThenBy> {
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByAuthorPubkey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'authorPubkey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByAuthorPubkeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'authorPubkey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> thenByContent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'content', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByContentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'content', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> thenByCreated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'created', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByCreatedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'created', Sort.desc);
+    });
+  }
+
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
   thenByEnqueuedAt() {
     return QueryBuilder.apply(this, (query) {
@@ -886,6 +2390,47 @@ extension EventQueueModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> thenByKind() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'kind', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByKindDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'kind', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByReplyToEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'replyToEventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByReplyToEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'replyToEventId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByRootEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'rootEventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
+  thenByRootEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'rootEventId', Sort.desc);
+    });
+  }
+
   QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
   thenBySentCount() {
     return QueryBuilder.apply(this, (query) {
@@ -900,23 +2445,50 @@ extension EventQueueModelQuerySortThenBy
     });
   }
 
-  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
-  thenBySerializedRelayMessage() {
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> thenBySig() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'serializedRelayMessage', Sort.asc);
+      return query.addSortBy(r'sig', Sort.asc);
     });
   }
 
-  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy>
-  thenBySerializedRelayMessageDesc() {
+  QueryBuilder<EventQueueModel, EventQueueModel, QAfterSortBy> thenBySigDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'serializedRelayMessage', Sort.desc);
+      return query.addSortBy(r'sig', Sort.desc);
     });
   }
 }
 
 extension EventQueueModelQueryWhereDistinct
     on QueryBuilder<EventQueueModel, EventQueueModel, QDistinct> {
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
+  distinctByAuthorPubkey({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'authorPubkey', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct> distinctByContent({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'content', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
+  distinctByCreated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'created');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
+  distinctByETagRefs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'eTagRefs');
+    });
+  }
+
   QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
   distinctByEnqueuedAt() {
     return QueryBuilder.apply(this, (query) {
@@ -932,6 +2504,36 @@ extension EventQueueModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct> distinctByKind() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'kind');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
+  distinctByPTagRefs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'pTagRefs');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
+  distinctByReplyToEventId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'replyToEventId',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
+  distinctByRootEventId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'rootEventId', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
   distinctBySentCount() {
     return QueryBuilder.apply(this, (query) {
@@ -939,13 +2541,17 @@ extension EventQueueModelQueryWhereDistinct
     });
   }
 
-  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct>
-  distinctBySerializedRelayMessage({bool caseSensitive = true}) {
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct> distinctBySig({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(
-        r'serializedRelayMessage',
-        caseSensitive: caseSensitive,
-      );
+      return query.addDistinctBy(r'sig', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<EventQueueModel, EventQueueModel, QDistinct> distinctByTTags() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'tTags');
     });
   }
 }
@@ -955,6 +2561,32 @@ extension EventQueueModelQueryProperty
   QueryBuilder<EventQueueModel, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, String, QQueryOperations>
+  authorPubkeyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'authorPubkey');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, String, QQueryOperations> contentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'content');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, DateTime, QQueryOperations> createdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'created');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, List<String>, QQueryOperations>
+  eTagRefsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'eTagRefs');
     });
   }
 
@@ -971,16 +2603,49 @@ extension EventQueueModelQueryProperty
     });
   }
 
+  QueryBuilder<EventQueueModel, int, QQueryOperations> kindProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'kind');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, List<String>, QQueryOperations>
+  pTagRefsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'pTagRefs');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, String?, QQueryOperations>
+  replyToEventIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'replyToEventId');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, String?, QQueryOperations>
+  rootEventIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'rootEventId');
+    });
+  }
+
   QueryBuilder<EventQueueModel, int, QQueryOperations> sentCountProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'sentCount');
     });
   }
 
-  QueryBuilder<EventQueueModel, String, QQueryOperations>
-  serializedRelayMessageProperty() {
+  QueryBuilder<EventQueueModel, String, QQueryOperations> sigProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'serializedRelayMessage');
+      return query.addPropertyName(r'sig');
+    });
+  }
+
+  QueryBuilder<EventQueueModel, List<String>, QQueryOperations>
+  tTagsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'tTags');
     });
   }
 }

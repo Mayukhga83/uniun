@@ -38,6 +38,11 @@ class NoteModel {
   late DateTime created;
   late bool isSeen;
 
+  /// 384-dim L2-normalised float vector from all-MiniLM-L6-v2.
+  /// Null until [EmbeddingService] processes this note.
+  /// Only generated for own notes (authorPubkey == logged-in user).
+  List<double>? embedding;
+
   NoteModel({
     required this.eventId,
     required this.sig,
@@ -130,5 +135,6 @@ extension NoteModelExtension on NoteModel {
         tTags: tTags,
         created: created,
         isSeen: isSeen,
+        embedding: embedding,
       );
 }

@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniun/brahma/pages/brahma_create_page.dart';
 import 'package:uniun/common/locator.dart';
-import 'package:uniun/core/router/app_routes.dart';
 import 'package:uniun/core/theme/app_theme.dart';
-import 'package:uniun/domain/usecases/ai_model_usecases.dart';
 import 'package:uniun/home/bloc/drawer_bloc.dart' as app_drawer;
 import 'package:uniun/home/widgets/vishnu_drawer.dart';
 import 'package:uniun/followed_notes/cubit/followed_notes_cubit.dart';
@@ -51,22 +49,7 @@ class _HomePageState extends State<HomePage> {
     if (i == 0 && _currentIndex != 0) {
       _vishnuFeedBloc.add(const RefreshFeedEvent());
     }
-
-    // When tapping Shiv tab, check if a model is downloaded first.
-    // If not, send the user to the selection screen instead of switching tabs.
-    if (i == 2 && _currentIndex != 2) {
-      final result = await getIt<GetActiveAIModelUseCase>().call();
-      final hasModel = result.fold((_) => false, (m) => m != null);
-      if (!hasModel && mounted) {
-        await Navigator.of(context).pushNamed(AppRoutes.aiModelSelection);
-        // After returning, re-check — only switch to Shiv if they downloaded one
-        final result2 = await getIt<GetActiveAIModelUseCase>().call();
-        final nowHasModel = result2.fold((_) => false, (m) => m != null);
-        if (!nowHasModel || !mounted) return;
-      }
-    }
-
-    if (mounted) setState(() => _currentIndex = i);
+    setState(() => _currentIndex = i);
   }
 
   void _openDrawer() => _scaffoldKey.currentState?.openDrawer();

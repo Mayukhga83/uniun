@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniun/common/locator.dart';
+import 'package:uniun/core/router/app_routes.dart';
 import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/domain/usecases/user_usecases.dart';
 import 'package:uniun/followed_notes/cubit/followed_notes_cubit.dart';
 import 'package:uniun/thread/bloc/thread_bloc.dart';
 import 'package:uniun/thread/widgets/thread_app_bar.dart';
-import 'package:uniun/thread/widgets/thread_empty_states.dart'; // ThreadEmptyReplies
+import 'package:uniun/thread/widgets/thread_empty_states.dart';
+import 'package:uniun/thread/widgets/thread_parent_context.dart';
 import 'package:uniun/thread/widgets/thread_reply_composer.dart';
 import 'package:uniun/thread/widgets/thread_reply_item.dart';
 import 'package:uniun/thread/widgets/thread_root_note_card.dart';
@@ -130,9 +132,28 @@ class _ThreadBody extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        // Root note card
+        // ── Parent context (ancestors above the focused note) ─────────────────
+        if (state.parentChain.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 16, left: 20, right: 20),
+            sliver: SliverToBoxAdapter(
+              child: ThreadParentContext(
+                notes: state.parentChain,
+                profiles: state.profiles,
+                onNoteTap: (noteId) =>
+                    Navigator.pushNamed(context, AppRoutes.thread,
+                        arguments: noteId),
+              ),
+            ),
+          ),
+
+        // ── Focused / root note card ───────────────────────────────────────────
         SliverPadding(
-          padding: const EdgeInsets.only(top: 16, left: 20, right: 20),
+          padding: EdgeInsets.only(
+            top: state.parentChain.isEmpty ? 16 : 0,
+            left: 20,
+            right: 20,
+          ),
           sliver: SliverToBoxAdapter(
             child: ThreadRootNoteCard(
               note: root,
@@ -141,7 +162,7 @@ class _ThreadBody extends StatelessWidget {
           ),
         ),
 
-        // Replies
+        // ── Replies ───────────────────────────────────────────────────────────
         if (state.replies.isEmpty)
           const SliverFillRemaining(
             hasScrollBody: false,
@@ -167,7 +188,6 @@ class _ThreadBody extends StatelessWidget {
                     replyCounts: state.replyCounts,
                     replyCount: state.replyCounts[reply.id] ?? 0,
                     showThreadLine: i < state.replies.length - 1,
-                    isTreeBuilding: state.isTreeBuilding,
                     onReplyTap: () {
                       ctx.read<ThreadBloc>().add(
                             SetReplyTargetEvent(
@@ -175,6 +195,12 @@ class _ThreadBody extends StatelessWidget {
                           );
                       focusNode.requestFocus();
                     },
+                    // Tapping the content area opens the reply's own thread view
+                    onTap: () => Navigator.pushNamed(
+                      ctx,
+                      AppRoutes.thread,
+                      arguments: reply.id,
+                    ),
                   );
                 },
                 childCount: state.replies.length,

@@ -14,7 +14,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ShivConversationEntity {
 
- String get conversationId; String get title; String get activeBranchId; DateTime get createdAt; DateTime get updatedAt;
+ String get conversationId; String get title;/// The messageId of the current leaf node (last message in active branch).
+/// null = conversation has no messages yet.
+ String? get activeLeafMessageId; DateTime get createdAt; DateTime get updatedAt;
 /// Create a copy of ShivConversationEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +27,16 @@ $ShivConversationEntityCopyWith<ShivConversationEntity> get copyWith => _$ShivCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShivConversationEntity&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.title, title) || other.title == title)&&(identical(other.activeBranchId, activeBranchId) || other.activeBranchId == activeBranchId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShivConversationEntity&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.title, title) || other.title == title)&&(identical(other.activeLeafMessageId, activeLeafMessageId) || other.activeLeafMessageId == activeLeafMessageId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,conversationId,title,activeBranchId,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,conversationId,title,activeLeafMessageId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'ShivConversationEntity(conversationId: $conversationId, title: $title, activeBranchId: $activeBranchId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'ShivConversationEntity(conversationId: $conversationId, title: $title, activeLeafMessageId: $activeLeafMessageId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -45,7 +47,7 @@ abstract mixin class $ShivConversationEntityCopyWith<$Res>  {
   factory $ShivConversationEntityCopyWith(ShivConversationEntity value, $Res Function(ShivConversationEntity) _then) = _$ShivConversationEntityCopyWithImpl;
 @useResult
 $Res call({
- String conversationId, String title, String activeBranchId, DateTime createdAt, DateTime updatedAt
+ String conversationId, String title, String? activeLeafMessageId, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -62,12 +64,12 @@ class _$ShivConversationEntityCopyWithImpl<$Res>
 
 /// Create a copy of ShivConversationEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? conversationId = null,Object? title = null,Object? activeBranchId = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? conversationId = null,Object? title = null,Object? activeLeafMessageId = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_self.copyWith(
 conversationId: null == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,activeBranchId: null == activeBranchId ? _self.activeBranchId : activeBranchId // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,activeLeafMessageId: freezed == activeLeafMessageId ? _self.activeLeafMessageId : activeLeafMessageId // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
@@ -154,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String conversationId,  String title,  String activeBranchId,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String conversationId,  String title,  String? activeLeafMessageId,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ShivConversationEntity() when $default != null:
-return $default(_that.conversationId,_that.title,_that.activeBranchId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.conversationId,_that.title,_that.activeLeafMessageId,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -175,10 +177,10 @@ return $default(_that.conversationId,_that.title,_that.activeBranchId,_that.crea
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String conversationId,  String title,  String activeBranchId,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String conversationId,  String title,  String? activeLeafMessageId,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _ShivConversationEntity():
-return $default(_that.conversationId,_that.title,_that.activeBranchId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.conversationId,_that.title,_that.activeLeafMessageId,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +197,10 @@ return $default(_that.conversationId,_that.title,_that.activeBranchId,_that.crea
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String conversationId,  String title,  String activeBranchId,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String conversationId,  String title,  String? activeLeafMessageId,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ShivConversationEntity() when $default != null:
-return $default(_that.conversationId,_that.title,_that.activeBranchId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.conversationId,_that.title,_that.activeLeafMessageId,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -210,12 +212,14 @@ return $default(_that.conversationId,_that.title,_that.activeBranchId,_that.crea
 
 
 class _ShivConversationEntity implements ShivConversationEntity {
-  const _ShivConversationEntity({required this.conversationId, required this.title, required this.activeBranchId, required this.createdAt, required this.updatedAt});
+  const _ShivConversationEntity({required this.conversationId, required this.title, this.activeLeafMessageId, required this.createdAt, required this.updatedAt});
   
 
 @override final  String conversationId;
 @override final  String title;
-@override final  String activeBranchId;
+/// The messageId of the current leaf node (last message in active branch).
+/// null = conversation has no messages yet.
+@override final  String? activeLeafMessageId;
 @override final  DateTime createdAt;
 @override final  DateTime updatedAt;
 
@@ -229,16 +233,16 @@ _$ShivConversationEntityCopyWith<_ShivConversationEntity> get copyWith => __$Shi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShivConversationEntity&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.title, title) || other.title == title)&&(identical(other.activeBranchId, activeBranchId) || other.activeBranchId == activeBranchId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShivConversationEntity&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.title, title) || other.title == title)&&(identical(other.activeLeafMessageId, activeLeafMessageId) || other.activeLeafMessageId == activeLeafMessageId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,conversationId,title,activeBranchId,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,conversationId,title,activeLeafMessageId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'ShivConversationEntity(conversationId: $conversationId, title: $title, activeBranchId: $activeBranchId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'ShivConversationEntity(conversationId: $conversationId, title: $title, activeLeafMessageId: $activeLeafMessageId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -249,7 +253,7 @@ abstract mixin class _$ShivConversationEntityCopyWith<$Res> implements $ShivConv
   factory _$ShivConversationEntityCopyWith(_ShivConversationEntity value, $Res Function(_ShivConversationEntity) _then) = __$ShivConversationEntityCopyWithImpl;
 @override @useResult
 $Res call({
- String conversationId, String title, String activeBranchId, DateTime createdAt, DateTime updatedAt
+ String conversationId, String title, String? activeLeafMessageId, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -266,12 +270,12 @@ class __$ShivConversationEntityCopyWithImpl<$Res>
 
 /// Create a copy of ShivConversationEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? conversationId = null,Object? title = null,Object? activeBranchId = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? conversationId = null,Object? title = null,Object? activeLeafMessageId = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_ShivConversationEntity(
 conversationId: null == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,activeBranchId: null == activeBranchId ? _self.activeBranchId : activeBranchId // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,activeLeafMessageId: freezed == activeLeafMessageId ? _self.activeLeafMessageId : activeLeafMessageId // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));

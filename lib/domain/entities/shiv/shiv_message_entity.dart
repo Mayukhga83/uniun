@@ -9,7 +9,6 @@ abstract class ShivMessageEntity with _$ShivMessageEntity {
     required String messageId,
     required String conversationId,
     String? parentId,
-    required String branchId,
     required MessageRole role,
     required String content,
     required DateTime createdAt,

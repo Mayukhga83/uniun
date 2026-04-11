@@ -33,13 +33,10 @@ class ShivRepositoryImpl implements ShivRepository {
       String title) async {
     try {
       final now = DateTime.now();
-      final conversationId = const Uuid().v4();
-      final branchId = const Uuid().v4();
-
       final model = ShivConversationModel()
-        ..conversationId = conversationId
+        ..conversationId = const Uuid().v4()
         ..title = title
-        ..activeBranchId = branchId
+        ..activeLeafMessageId = null
         ..createdAt = now
         ..updatedAt = now;
 
@@ -75,8 +72,8 @@ class ShivRepositoryImpl implements ShivRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> updateActiveBranch(
-      String conversationId, String branchId) async {
+  Future<Either<Failure, Unit>> updateActiveLeaf(
+      String conversationId, String messageId) async {
     try {
       await _isar.writeTxn(() async {
         final row = await _isar.shivConversationModels
@@ -84,7 +81,7 @@ class ShivRepositoryImpl implements ShivRepository {
             .conversationIdEqualTo(conversationId)
             .findFirst();
         if (row != null) {
-          row.activeBranchId = branchId;
+          row.activeLeafMessageId = messageId;
           row.updatedAt = DateTime.now();
           await _isar.shivConversationModels.put(row);
         }
@@ -100,15 +97,12 @@ class ShivRepositoryImpl implements ShivRepository {
       String conversationId) async {
     try {
       await _isar.writeTxn(() async {
-        // Delete all messages first
         final messages = await _isar.shivMessageModels
             .filter()
             .conversationIdEqualTo(conversationId)
             .findAll();
-        final ids = messages.map((m) => m.id).toList();
-        await _isar.shivMessageModels.deleteAll(ids);
+        await _isar.shivMessageModels.deleteAll(messages.map((m) => m.id).toList());
 
-        // Delete the conversation
         final row = await _isar.shivConversationModels
             .filter()
             .conversationIdEqualTo(conversationId)
@@ -146,19 +140,19 @@ class ShivRepositoryImpl implements ShivRepository {
         ..messageId = message.messageId
         ..conversationId = message.conversationId
         ..parentId = message.parentId
-        ..branchId = message.branchId
         ..role = message.role
         ..content = message.content
         ..createdAt = message.createdAt;
 
       await _isar.writeTxn(() async {
         await _isar.shivMessageModels.put(model);
-        // Touch conversation updatedAt
+        // Advance the leaf pointer and touch updatedAt on the conversation
         final conv = await _isar.shivConversationModels
             .filter()
             .conversationIdEqualTo(message.conversationId)
             .findFirst();
         if (conv != null) {
+          conv.activeLeafMessageId = message.messageId;
           conv.updatedAt = DateTime.now();
           await _isar.shivConversationModels.put(conv);
         }

@@ -9,6 +9,7 @@ import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/inputs/note_input.dart';
 import 'package:uniun/domain/repositories/note_repository.dart';
 import 'package:uniun/domain/repositories/outbound_event_repository.dart';
+import 'package:uniun/domain/repositories/vector_repository.dart';
 
 // ── GetFeedUseCase ────────────────────────────────────────────────────────────
 
@@ -144,6 +145,25 @@ class GetThreadReplyCountUseCase extends UseCase<Either<Failure, int>, String> {
   }
 }
 
+// ── GetOwnNotesUseCase ────────────────────────────────────────────────────────
+
+/// All notes authored by this user stored locally.
+/// Used by the RAG pipeline for baseline personalisation.
+@lazySingleton
+class GetOwnNotesUseCase
+    extends UseCase<Either<Failure, List<NoteEntity>>, String> {
+  final NoteRepository _repository;
+  const GetOwnNotesUseCase(this._repository);
+
+  @override
+  Future<Either<Failure, List<NoteEntity>>> call(
+    String pubkeyHex, {
+    bool cached = false,
+  }) {
+    return _repository.getOwnNotes(pubkeyHex);
+  }
+}
+
 // ── PublishNoteUseCase ────────────────────────────────────────────────────────
 
 /// Publishes a fully signed NoteEntity.
@@ -226,5 +246,29 @@ class PublishNoteUseCase
       'content': note.content,
       'sig': note.sig,
     });
+  }
+}
+
+// ── UpdateNoteEmbeddingUseCase ─────────────────────────────────────────────────
+
+/// Persists a precomputed embedding vector via [VectorRepository] (own notes).
+/// Input: (eventId, embedding) tuple.
+@lazySingleton
+class UpdateNoteEmbeddingUseCase
+    extends UseCase<Either<Failure, Unit>, (String, List<double>)> {
+  final VectorRepository _vectorRepository;
+  const UpdateNoteEmbeddingUseCase(this._vectorRepository);
+
+  @override
+  Future<Either<Failure, Unit>> call(
+    (String, List<double>) input, {
+    bool cached = false,
+  }) async {
+    try {
+      await _vectorRepository.upsert(input.$1, input.$2);
+      return const Right(unit);
+    } catch (e) {
+      return Left(Failure.errorFailure(e.toString()));
+    }
   }
 }

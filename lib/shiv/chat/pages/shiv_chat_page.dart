@@ -58,6 +58,7 @@ class _ShivChatPageState extends State<ShivChatPage> {
               children: [
                 _ShivChatHeader(
                   threadTitle: conv?.title ?? l10n.shivDefaultConversationTitle,
+                  ragContextCount: state.ragContextCount,
                   onHistoryTap: () => ShivHistoryPage.show(context),
                   onTreeTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -109,11 +110,13 @@ class _ShivChatPageState extends State<ShivChatPage> {
 class _ShivChatHeader extends StatelessWidget {
   const _ShivChatHeader({
     required this.threadTitle,
+    required this.ragContextCount,
     required this.onHistoryTap,
     required this.onTreeTap,
   });
 
   final String threadTitle;
+  final int ragContextCount;
   final VoidCallback onHistoryTap;
   final VoidCallback onTreeTap;
 
@@ -153,16 +156,42 @@ class _ShivChatHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  threadTitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 0.8,
-                    color: AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        threadTitle,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 0.8,
+                          color: AppColors.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (ragContextCount > 0) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Text(
+                          '● $ragContextCount notes',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

@@ -16,7 +16,9 @@ mixin _$SelectAIModelState {
 
  SelectAIModelStatus get status; List<AIModelEntity> get models;/// The card the user has tapped (highlighted in UI).
  AIModelId? get selectedModelId;/// The model that is already downloaded and active.
- AIModelId? get activeModelId; double get downloadProgress; String? get errorMessage;
+ AIModelId? get activeModelId; double get downloadProgress;/// True while the embedding model (all-MiniLM-L6-v2) is downloading
+/// after the first LLM install. False once downloaded or already present.
+ bool get isEmbeddingDownloading; String? get errorMessage;
 /// Create a copy of SelectAIModelState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,16 +29,16 @@ $SelectAIModelStateCopyWith<SelectAIModelState> get copyWith => _$SelectAIModelS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SelectAIModelState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.models, models)&&(identical(other.selectedModelId, selectedModelId) || other.selectedModelId == selectedModelId)&&(identical(other.activeModelId, activeModelId) || other.activeModelId == activeModelId)&&(identical(other.downloadProgress, downloadProgress) || other.downloadProgress == downloadProgress)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SelectAIModelState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.models, models)&&(identical(other.selectedModelId, selectedModelId) || other.selectedModelId == selectedModelId)&&(identical(other.activeModelId, activeModelId) || other.activeModelId == activeModelId)&&(identical(other.downloadProgress, downloadProgress) || other.downloadProgress == downloadProgress)&&(identical(other.isEmbeddingDownloading, isEmbeddingDownloading) || other.isEmbeddingDownloading == isEmbeddingDownloading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(models),selectedModelId,activeModelId,downloadProgress,errorMessage);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(models),selectedModelId,activeModelId,downloadProgress,isEmbeddingDownloading,errorMessage);
 
 @override
 String toString() {
-  return 'SelectAIModelState(status: $status, models: $models, selectedModelId: $selectedModelId, activeModelId: $activeModelId, downloadProgress: $downloadProgress, errorMessage: $errorMessage)';
+  return 'SelectAIModelState(status: $status, models: $models, selectedModelId: $selectedModelId, activeModelId: $activeModelId, downloadProgress: $downloadProgress, isEmbeddingDownloading: $isEmbeddingDownloading, errorMessage: $errorMessage)';
 }
 
 
@@ -47,7 +49,7 @@ abstract mixin class $SelectAIModelStateCopyWith<$Res>  {
   factory $SelectAIModelStateCopyWith(SelectAIModelState value, $Res Function(SelectAIModelState) _then) = _$SelectAIModelStateCopyWithImpl;
 @useResult
 $Res call({
- SelectAIModelStatus status, List<AIModelEntity> models, AIModelId? selectedModelId, AIModelId? activeModelId, double downloadProgress, String? errorMessage
+ SelectAIModelStatus status, List<AIModelEntity> models, AIModelId? selectedModelId, AIModelId? activeModelId, double downloadProgress, bool isEmbeddingDownloading, String? errorMessage
 });
 
 
@@ -64,14 +66,15 @@ class _$SelectAIModelStateCopyWithImpl<$Res>
 
 /// Create a copy of SelectAIModelState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? models = null,Object? selectedModelId = freezed,Object? activeModelId = freezed,Object? downloadProgress = null,Object? errorMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? models = null,Object? selectedModelId = freezed,Object? activeModelId = freezed,Object? downloadProgress = null,Object? isEmbeddingDownloading = null,Object? errorMessage = freezed,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as SelectAIModelStatus,models: null == models ? _self.models : models // ignore: cast_nullable_to_non_nullable
 as List<AIModelEntity>,selectedModelId: freezed == selectedModelId ? _self.selectedModelId : selectedModelId // ignore: cast_nullable_to_non_nullable
 as AIModelId?,activeModelId: freezed == activeModelId ? _self.activeModelId : activeModelId // ignore: cast_nullable_to_non_nullable
 as AIModelId?,downloadProgress: null == downloadProgress ? _self.downloadProgress : downloadProgress // ignore: cast_nullable_to_non_nullable
-as double,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as double,isEmbeddingDownloading: null == isEmbeddingDownloading ? _self.isEmbeddingDownloading : isEmbeddingDownloading // ignore: cast_nullable_to_non_nullable
+as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -157,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SelectAIModelStatus status,  List<AIModelEntity> models,  AIModelId? selectedModelId,  AIModelId? activeModelId,  double downloadProgress,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SelectAIModelStatus status,  List<AIModelEntity> models,  AIModelId? selectedModelId,  AIModelId? activeModelId,  double downloadProgress,  bool isEmbeddingDownloading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SelectAIModelState() when $default != null:
-return $default(_that.status,_that.models,_that.selectedModelId,_that.activeModelId,_that.downloadProgress,_that.errorMessage);case _:
+return $default(_that.status,_that.models,_that.selectedModelId,_that.activeModelId,_that.downloadProgress,_that.isEmbeddingDownloading,_that.errorMessage);case _:
   return orElse();
 
 }
@@ -178,10 +181,10 @@ return $default(_that.status,_that.models,_that.selectedModelId,_that.activeMode
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SelectAIModelStatus status,  List<AIModelEntity> models,  AIModelId? selectedModelId,  AIModelId? activeModelId,  double downloadProgress,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SelectAIModelStatus status,  List<AIModelEntity> models,  AIModelId? selectedModelId,  AIModelId? activeModelId,  double downloadProgress,  bool isEmbeddingDownloading,  String? errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _SelectAIModelState():
-return $default(_that.status,_that.models,_that.selectedModelId,_that.activeModelId,_that.downloadProgress,_that.errorMessage);case _:
+return $default(_that.status,_that.models,_that.selectedModelId,_that.activeModelId,_that.downloadProgress,_that.isEmbeddingDownloading,_that.errorMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +201,10 @@ return $default(_that.status,_that.models,_that.selectedModelId,_that.activeMode
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SelectAIModelStatus status,  List<AIModelEntity> models,  AIModelId? selectedModelId,  AIModelId? activeModelId,  double downloadProgress,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SelectAIModelStatus status,  List<AIModelEntity> models,  AIModelId? selectedModelId,  AIModelId? activeModelId,  double downloadProgress,  bool isEmbeddingDownloading,  String? errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _SelectAIModelState() when $default != null:
-return $default(_that.status,_that.models,_that.selectedModelId,_that.activeModelId,_that.downloadProgress,_that.errorMessage);case _:
+return $default(_that.status,_that.models,_that.selectedModelId,_that.activeModelId,_that.downloadProgress,_that.isEmbeddingDownloading,_that.errorMessage);case _:
   return null;
 
 }
@@ -213,7 +216,7 @@ return $default(_that.status,_that.models,_that.selectedModelId,_that.activeMode
 
 
 class _SelectAIModelState implements SelectAIModelState {
-  const _SelectAIModelState({this.status = SelectAIModelStatus.initial, final  List<AIModelEntity> models = const [], this.selectedModelId, this.activeModelId, this.downloadProgress = 0.0, this.errorMessage}): _models = models;
+  const _SelectAIModelState({this.status = SelectAIModelStatus.initial, final  List<AIModelEntity> models = const [], this.selectedModelId, this.activeModelId, this.downloadProgress = 0.0, this.isEmbeddingDownloading = false, this.errorMessage}): _models = models;
   
 
 @override@JsonKey() final  SelectAIModelStatus status;
@@ -229,6 +232,9 @@ class _SelectAIModelState implements SelectAIModelState {
 /// The model that is already downloaded and active.
 @override final  AIModelId? activeModelId;
 @override@JsonKey() final  double downloadProgress;
+/// True while the embedding model (all-MiniLM-L6-v2) is downloading
+/// after the first LLM install. False once downloaded or already present.
+@override@JsonKey() final  bool isEmbeddingDownloading;
 @override final  String? errorMessage;
 
 /// Create a copy of SelectAIModelState
@@ -241,16 +247,16 @@ _$SelectAIModelStateCopyWith<_SelectAIModelState> get copyWith => __$SelectAIMod
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SelectAIModelState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._models, _models)&&(identical(other.selectedModelId, selectedModelId) || other.selectedModelId == selectedModelId)&&(identical(other.activeModelId, activeModelId) || other.activeModelId == activeModelId)&&(identical(other.downloadProgress, downloadProgress) || other.downloadProgress == downloadProgress)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SelectAIModelState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._models, _models)&&(identical(other.selectedModelId, selectedModelId) || other.selectedModelId == selectedModelId)&&(identical(other.activeModelId, activeModelId) || other.activeModelId == activeModelId)&&(identical(other.downloadProgress, downloadProgress) || other.downloadProgress == downloadProgress)&&(identical(other.isEmbeddingDownloading, isEmbeddingDownloading) || other.isEmbeddingDownloading == isEmbeddingDownloading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_models),selectedModelId,activeModelId,downloadProgress,errorMessage);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_models),selectedModelId,activeModelId,downloadProgress,isEmbeddingDownloading,errorMessage);
 
 @override
 String toString() {
-  return 'SelectAIModelState(status: $status, models: $models, selectedModelId: $selectedModelId, activeModelId: $activeModelId, downloadProgress: $downloadProgress, errorMessage: $errorMessage)';
+  return 'SelectAIModelState(status: $status, models: $models, selectedModelId: $selectedModelId, activeModelId: $activeModelId, downloadProgress: $downloadProgress, isEmbeddingDownloading: $isEmbeddingDownloading, errorMessage: $errorMessage)';
 }
 
 
@@ -261,7 +267,7 @@ abstract mixin class _$SelectAIModelStateCopyWith<$Res> implements $SelectAIMode
   factory _$SelectAIModelStateCopyWith(_SelectAIModelState value, $Res Function(_SelectAIModelState) _then) = __$SelectAIModelStateCopyWithImpl;
 @override @useResult
 $Res call({
- SelectAIModelStatus status, List<AIModelEntity> models, AIModelId? selectedModelId, AIModelId? activeModelId, double downloadProgress, String? errorMessage
+ SelectAIModelStatus status, List<AIModelEntity> models, AIModelId? selectedModelId, AIModelId? activeModelId, double downloadProgress, bool isEmbeddingDownloading, String? errorMessage
 });
 
 
@@ -278,14 +284,15 @@ class __$SelectAIModelStateCopyWithImpl<$Res>
 
 /// Create a copy of SelectAIModelState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? models = null,Object? selectedModelId = freezed,Object? activeModelId = freezed,Object? downloadProgress = null,Object? errorMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? models = null,Object? selectedModelId = freezed,Object? activeModelId = freezed,Object? downloadProgress = null,Object? isEmbeddingDownloading = null,Object? errorMessage = freezed,}) {
   return _then(_SelectAIModelState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as SelectAIModelStatus,models: null == models ? _self._models : models // ignore: cast_nullable_to_non_nullable
 as List<AIModelEntity>,selectedModelId: freezed == selectedModelId ? _self.selectedModelId : selectedModelId // ignore: cast_nullable_to_non_nullable
 as AIModelId?,activeModelId: freezed == activeModelId ? _self.activeModelId : activeModelId // ignore: cast_nullable_to_non_nullable
 as AIModelId?,downloadProgress: null == downloadProgress ? _self.downloadProgress : downloadProgress // ignore: cast_nullable_to_non_nullable
-as double,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as double,isEmbeddingDownloading: null == isEmbeddingDownloading ? _self.isEmbeddingDownloading : isEmbeddingDownloading // ignore: cast_nullable_to_non_nullable
+as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

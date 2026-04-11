@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uniun/data/models/ai_model_selection_model.dart';
+import 'package:uniun/data/models/app_settings_model.dart';
 import 'package:uniun/data/models/followed_note_model.dart';
 import 'package:uniun/data/models/channel_model.dart';
 import 'package:uniun/data/models/note_model.dart';
@@ -28,6 +29,7 @@ abstract class IsarModule {
         OutboundEventModelSchema,
         SavedNoteModelSchema,
         AIModelSelectionModelSchema,
+        AppSettingsModelSchema,
         ShivConversationModelSchema,
         ShivMessageModelSchema,
         ChannelModelSchema,

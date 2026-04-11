@@ -180,4 +180,19 @@ class NoteRepositoryImpl extends NoteRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, List<NoteEntity>>> getOwnNotes(
+      String pubkeyHex) async {
+    try {
+      final notes = await isar.noteModels
+          .filter()
+          .authorPubkeyEqualTo(pubkeyHex)
+          .sortByCreatedDesc()
+          .findAll();
+      return Right(notes.map((m) => m.toDomain()).toList());
+    } catch (e) {
+      return Left(Failure.errorFailure(e.toString()));
+    }
+  }
+
 }

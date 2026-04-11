@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:isar_community/isar.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/data/models/ai_model_selection_model.dart';
+import 'package:uniun/data/models/app_settings_model.dart';
 import 'package:uniun/domain/entities/ai_model/ai_model_entity.dart';
 import 'package:uniun/domain/repositories/ai_model_repository.dart';
 import 'package:path/path.dart' as p;
@@ -26,121 +27,104 @@ class AIModelRepositoryImpl implements AIModelRepository {
   //
   // Gemma 4 E2B/E4B use .litertlm (LiteRT-LM). All others use .task.
 
-  static const _catalog = [
-    (
+  static final List<AIModelEntity> _catalog = [
+    const AIModelEntity(
       modelId: AIModelId.qwen25_05b,
       sizeLabel: '0.5 GB',
       sizeBytes: 536870912,
       tier: AIModelTier.lite,
       isRecommended: false,
       optimization: AIModelOptimization.cpu,
-      modelType: ModelType.qwen,
-      fileType: ModelFileType.task,
-      // No HuggingFace token required — public litert-community repo.
       downloadUrl:
           'https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/Qwen2.5-0.5B-Instruct_multi-prefill-seq_q8_ekv1280.task',
     ),
-    (
+    const AIModelEntity(
       modelId: AIModelId.deepseekR1,
       sizeLabel: '1.7 GB',
       sizeBytes: 1825964032,
       tier: AIModelTier.balanced,
       isRecommended: true,
       optimization: AIModelOptimization.cpu,
-      modelType: ModelType.deepSeek,
-      fileType: ModelFileType.task,
-      // No HuggingFace token required — public litert-community repo.
       downloadUrl:
           'https://huggingface.co/litert-community/DeepSeek-R1-Distill-Qwen-1.5B/resolve/main/deepseek_q8_ekv1280.task',
     ),
-    (
+    const AIModelEntity(
       modelId: AIModelId.gemma4E2b,
       sizeLabel: '2.4 GB',
       sizeBytes: 2576980377,
       tier: AIModelTier.performance,
       isRecommended: false,
       optimization: AIModelOptimization.gpuCpu,
-      modelType: ModelType.gemmaIt,
-      fileType: ModelFileType.litertlm,
-      // No HuggingFace token required — public litert-community repo.
       downloadUrl:
           'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm',
     ),
-    (
+    const AIModelEntity(
       modelId: AIModelId.gemma4E4b,
       sizeLabel: '4.3 GB',
       sizeBytes: 4617089638,
       tier: AIModelTier.flagship,
       isRecommended: false,
       optimization: AIModelOptimization.gpu,
-      modelType: ModelType.gemmaIt,
-      fileType: ModelFileType.litertlm,
-      // No HuggingFace token required — public litert-community repo.
       downloadUrl:
           'https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm',
     ),
   ];
 
+  /// flutter_gemma engine params — separate from the public entity fields.
+  static const Map<AIModelId, ({ModelType modelType, ModelFileType fileType})>
+      _gemmaParams = {
+    AIModelId.qwen25_05b: (
+      modelType: ModelType.qwen,
+      fileType: ModelFileType.task
+    ),
+    AIModelId.deepseekR1: (
+      modelType: ModelType.deepSeek,
+      fileType: ModelFileType.task
+    ),
+    AIModelId.gemma4E2b: (
+      modelType: ModelType.gemmaIt,
+      fileType: ModelFileType.litertlm
+    ),
+    AIModelId.gemma4E4b: (
+      modelType: ModelType.gemmaIt,
+      fileType: ModelFileType.litertlm
+    ),
+  };
+
   @override
-  List<AIModelEntity> getAvailableModels() {
-    return _catalog
-        .map((m) => AIModelEntity(
-              modelId: m.modelId,
-              sizeLabel: m.sizeLabel,
-              sizeBytes: m.sizeBytes,
-              tier: m.tier,
-              isRecommended: m.isRecommended,
-              optimization: m.optimization,
-              downloadUrl: m.downloadUrl,
-            ))
-        .toList();
-  }
+  List<AIModelEntity> getAvailableModels() => List.unmodifiable(_catalog);
 
   // ── Active model ─────────────────────────────────────────────────────────────
 
   @override
   Future<Either<Failure, AIModelEntity?>> getActiveModel() async {
     try {
-      final row = await _isar.aIModelSelectionModels
-          .filter()
-          .isActiveEqualTo(true)
-          .findFirst();
+      final settings = await _isar.appSettingsModels.get(1);
+      final activeId = settings?.activeModelId;
+      if (activeId == null) return const Right(null);
 
-      if (row == null) return const Right(null);
-
-      final entry =
-          _catalog.where((m) => m.modelId == row.modelId).firstOrNull;
+      final entry = _catalog.where((m) => m.modelId == activeId).firstOrNull;
       if (entry == null) return const Right(null);
 
-      // Derive the filename flutter_gemma uses — basename of the download URL.
+      final params = _gemmaParams[activeId]!;
       final filename = p.basename(Uri.parse(entry.downloadUrl).path);
       final isInstalled = await FlutterGemma.isModelInstalled(filename);
 
       if (!isInstalled) {
-        // Files cleared (app reinstall / storage wipe) — reset Isar record.
+        // Files cleared (app reinstall / storage wipe) — reset active model.
         await clearActiveModel();
         return const Right(null);
       }
 
       // Restore flutter_gemma's in-memory active model state.
-      // install() is a no-op when already installed — just re-sets active.
       if (!FlutterGemma.hasActiveModel()) {
         await FlutterGemma.installModel(
-          modelType: entry.modelType,
-          fileType: entry.fileType,
+          modelType: params.modelType,
+          fileType: params.fileType,
         ).fromNetwork(entry.downloadUrl).install();
       }
 
-      return Right(AIModelEntity(
-        modelId: entry.modelId,
-        sizeLabel: entry.sizeLabel,
-        sizeBytes: entry.sizeBytes,
-        tier: entry.tier,
-        isRecommended: entry.isRecommended,
-        optimization: entry.optimization,
-        downloadUrl: entry.downloadUrl,
-        isDownloaded: true,
-      ));
+      return Right(entry.copyWith(isDownloaded: true));
     } catch (e) {
       return Left(Failure.errorFailure(e.toString()));
     }
@@ -150,14 +134,10 @@ class AIModelRepositoryImpl implements AIModelRepository {
   Future<Either<Failure, Unit>> clearActiveModel() async {
     try {
       await _isar.writeTxn(() async {
-        final rows = await _isar.aIModelSelectionModels
-            .filter()
-            .isActiveEqualTo(true)
-            .findAll();
-        for (final row in rows) {
-          row.isActive = false;
-          await _isar.aIModelSelectionModels.put(row);
-        }
+        final settings =
+            await _isar.appSettingsModels.get(1) ?? AppSettingsModel();
+        settings.activeModelId = null;
+        await _isar.appSettingsModels.put(settings);
       });
       return const Right(unit);
     } catch (e) {
@@ -170,19 +150,18 @@ class AIModelRepositoryImpl implements AIModelRepository {
   @override
   Stream<AIModelDownloadEvent> downloadAndActivateModel(
       AIModelId modelId) async* {
-    final entry =
-        _catalog.where((m) => m.modelId == modelId).firstOrNull;
+    final entry = _catalog.where((m) => m.modelId == modelId).firstOrNull;
     if (entry == null) {
       yield AIModelDownloadEvent.failed('Unknown model: ${modelId.name}');
       return;
     }
 
-    // Bridge flutter_gemma's progress callback to our stream.
+    final params = _gemmaParams[modelId]!;
     final progressController = StreamController<int>();
 
     FlutterGemma.installModel(
-      modelType: entry.modelType,
-      fileType: entry.fileType,
+      modelType: params.modelType,
+      fileType: params.fileType,
     )
         .fromNetwork(entry.downloadUrl)
         .withProgress((percent) {
@@ -211,27 +190,23 @@ class AIModelRepositoryImpl implements AIModelRepository {
     // install() completed — persist selection to Isar.
     try {
       await _isar.writeTxn(() async {
-        final existing = await _isar.aIModelSelectionModels
-            .filter()
-            .isActiveEqualTo(true)
-            .findAll();
-        for (final row in existing) {
-          row.isActive = false;
-          await _isar.aIModelSelectionModels.put(row);
-        }
-
+        // Record that this model is downloaded.
         final prev = await _isar.aIModelSelectionModels
             .filter()
             .modelIdEqualTo(modelId)
             .findFirst();
-
         final model = prev ?? AIModelSelectionModel();
         model.modelId = modelId;
         model.modelName = modelId.name;
-        model.modelPath = modelId.name; // flutter_gemma manages file storage
+        model.modelPath = modelId.name;
         model.downloadedAt = DateTime.now();
-        model.isActive = true;
         await _isar.aIModelSelectionModels.put(model);
+
+        // Set as active model in settings singleton.
+        final settings =
+            await _isar.appSettingsModels.get(1) ?? AppSettingsModel();
+        settings.activeModelId = modelId;
+        await _isar.appSettingsModels.put(settings);
       });
 
       yield AIModelDownloadEvent.complete(modelId);

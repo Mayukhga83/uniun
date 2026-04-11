@@ -7,7 +7,9 @@ abstract class ShivConversationEntity with _$ShivConversationEntity {
   const factory ShivConversationEntity({
     required String conversationId,
     required String title,
-    required String activeBranchId,
+    /// The messageId of the current leaf node (last message in active branch).
+    /// null = conversation has no messages yet.
+    String? activeLeafMessageId,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _ShivConversationEntity;

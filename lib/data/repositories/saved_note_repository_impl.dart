@@ -88,4 +88,5 @@ class SavedNoteRepositoryImpl extends SavedNoteRepository {
       return Left(Failure.errorFailure(e.toString()));
     }
   }
+
 }

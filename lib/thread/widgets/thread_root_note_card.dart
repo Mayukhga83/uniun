@@ -7,6 +7,7 @@ import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
+import 'package:uniun/domain/usecases/vector_usecases.dart';
 import 'package:uniun/followed_notes/cubit/followed_notes_cubit.dart';
 import 'package:uniun/thread/bloc/thread_bloc.dart';
 import 'package:uniun/thread/utils/thread_formatters.dart';
@@ -199,7 +200,10 @@ class _ThreadRootNoteCardState extends State<ThreadRootNoteCard> {
                     final result = await getIt<SaveNoteUseCase>().call(widget.note);
                     result.fold(
                       (_) { if (mounted) setState(() => _isSaved = false); },
-                      (_) {},
+                      (saved) {
+                        getIt<EmbedAndStoreNoteUseCase>()
+                            .call((saved.eventId, saved.content));
+                      },
                     );
                   } else {
                     final result = await getIt<UnsaveNoteUseCase>().call(widget.note.id);

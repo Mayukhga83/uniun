@@ -30,5 +30,13 @@ abstract class ShivAIState with _$ShivAIState {
     String? streamingMessageId,
 
     String? errorMessage,
+
+    /// How many saved notes were injected as RAG context for the last reply.
+    /// 0 = embedding model not loaded or no matching notes found.
+    /// Shown as a debug badge in the chat header.
+    @Default(0) int ragContextCount,
+
+    /// True while the embedding model is loading on first Shiv tab open.
+    @Default(false) bool isRagInitializing,
   }) = _ShivAIState;
 }

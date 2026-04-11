@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:injectable/injectable.dart';
@@ -7,6 +9,7 @@ import 'package:uniun/domain/inputs/note_input.dart';
 import 'package:uniun/domain/usecases/note_usecases.dart' hide SaveNoteUseCase;
 import 'package:uniun/domain/usecases/profile_usecases.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
+import 'package:uniun/domain/usecases/vector_usecases.dart';
 
 part 'vishnu_feed_event.dart';
 part 'vishnu_feed_state.dart';
@@ -21,6 +24,7 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
   final GetAllSavedNotesUseCase _getAllSavedNotes;
   final SaveNoteUseCase _saveNote;
   final UnsaveNoteUseCase _unsaveNote;
+  final EmbedAndStoreNoteUseCase _embedAndStore;
 
   VishnuFeedBloc(
     this._getFeed,
@@ -29,6 +33,7 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
     this._getAllSavedNotes,
     this._saveNote,
     this._unsaveNote,
+    this._embedAndStore,
   ) : super(const VishnuFeedState()) {
     on<LoadFeedEvent>(_onLoad, transformer: droppable());
     on<RefreshFeedEvent>(_onRefresh, transformer: droppable());
@@ -81,7 +86,11 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
         final rollback = Set<String>.from(state.savedIds)..remove(event.note.id);
         emit(state.copyWith(savedIds: rollback));
       },
-      (_) {},
+      (savedNote) {
+        // Fire-and-forget: generate embedding in background.
+        // Does not block UI — errors are silently ignored.
+        unawaited(_embedAndStore.call((savedNote.eventId, savedNote.content)));
+      },
     );
   }
 
@@ -131,8 +140,11 @@ class VishnuFeedBloc extends Bloc<VishnuFeedEvent, VishnuFeedState> {
           r.fold((_) {}, (p) => profiles[pubkey] = p);
         }
 
-        // Reply counts
-        final counts = Map<String, int>.from(state.replyCounts);
+        // Reply counts — on refresh/initial load start fresh so stale counts
+        // from a previous session are not served after new replies arrive.
+        final counts = append
+            ? Map<String, int>.from(state.replyCounts)
+            : <String, int>{};
         for (final note in newNotes) {
           if (!counts.containsKey(note.id)) {
             final r = await _getThreadReplyCount.call(note.id);

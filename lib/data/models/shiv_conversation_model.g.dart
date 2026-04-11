@@ -18,9 +18,9 @@ const ShivConversationModelSchema = CollectionSchema(
   name: r'ShivConversation',
   id: -7222099193943843694,
   properties: {
-    r'activeBranchId': PropertySchema(
+    r'activeLeafMessageId': PropertySchema(
       id: 0,
-      name: r'activeBranchId',
+      name: r'activeLeafMessageId',
       type: IsarType.string,
     ),
     r'conversationId': PropertySchema(
@@ -89,7 +89,12 @@ int _shivConversationModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.activeBranchId.length * 3;
+  {
+    final value = object.activeLeafMessageId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.conversationId.length * 3;
   bytesCount += 3 + object.title.length * 3;
   return bytesCount;
@@ -101,7 +106,7 @@ void _shivConversationModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.activeBranchId);
+  writer.writeString(offsets[0], object.activeLeafMessageId);
   writer.writeString(offsets[1], object.conversationId);
   writer.writeDateTime(offsets[2], object.createdAt);
   writer.writeString(offsets[3], object.title);
@@ -115,7 +120,7 @@ ShivConversationModel _shivConversationModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = ShivConversationModel();
-  object.activeBranchId = reader.readString(offsets[0]);
+  object.activeLeafMessageId = reader.readStringOrNull(offsets[0]);
   object.conversationId = reader.readString(offsets[1]);
   object.createdAt = reader.readDateTime(offsets[2]);
   object.id = id;
@@ -132,7 +137,7 @@ P _shivConversationModelDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
@@ -490,11 +495,37 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdEqualTo(String value, {bool caseSensitive = true}) {
+  activeLeafMessageIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'activeLeafMessageId'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    ShivConversationModel,
+    ShivConversationModel,
+    QAfterFilterCondition
+  >
+  activeLeafMessageIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'activeLeafMessageId'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    ShivConversationModel,
+    ShivConversationModel,
+    QAfterFilterCondition
+  >
+  activeLeafMessageIdEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(
-          property: r'activeBranchId',
+          property: r'activeLeafMessageId',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -507,8 +538,8 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdGreaterThan(
-    String value, {
+  activeLeafMessageIdGreaterThan(
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -516,7 +547,7 @@ extension ShivConversationModelQueryFilter
       return query.addFilterCondition(
         FilterCondition.greaterThan(
           include: include,
-          property: r'activeBranchId',
+          property: r'activeLeafMessageId',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -529,8 +560,8 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdLessThan(
-    String value, {
+  activeLeafMessageIdLessThan(
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -538,7 +569,7 @@ extension ShivConversationModelQueryFilter
       return query.addFilterCondition(
         FilterCondition.lessThan(
           include: include,
-          property: r'activeBranchId',
+          property: r'activeLeafMessageId',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -551,9 +582,9 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdBetween(
-    String lower,
-    String upper, {
+  activeLeafMessageIdBetween(
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -561,7 +592,7 @@ extension ShivConversationModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.between(
-          property: r'activeBranchId',
+          property: r'activeLeafMessageId',
           lower: lower,
           includeLower: includeLower,
           upper: upper,
@@ -577,11 +608,11 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdStartsWith(String value, {bool caseSensitive = true}) {
+  activeLeafMessageIdStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.startsWith(
-          property: r'activeBranchId',
+          property: r'activeLeafMessageId',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -594,11 +625,11 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdEndsWith(String value, {bool caseSensitive = true}) {
+  activeLeafMessageIdEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.endsWith(
-          property: r'activeBranchId',
+          property: r'activeLeafMessageId',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -611,11 +642,11 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdContains(String value, {bool caseSensitive = true}) {
+  activeLeafMessageIdContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.contains(
-          property: r'activeBranchId',
+          property: r'activeLeafMessageId',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -628,11 +659,11 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdMatches(String pattern, {bool caseSensitive = true}) {
+  activeLeafMessageIdMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.matches(
-          property: r'activeBranchId',
+          property: r'activeLeafMessageId',
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -645,10 +676,10 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdIsEmpty() {
+  activeLeafMessageIdIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'activeBranchId', value: ''),
+        FilterCondition.equalTo(property: r'activeLeafMessageId', value: ''),
       );
     });
   }
@@ -658,10 +689,13 @@ extension ShivConversationModelQueryFilter
     ShivConversationModel,
     QAfterFilterCondition
   >
-  activeBranchIdIsNotEmpty() {
+  activeLeafMessageIdIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
-        FilterCondition.greaterThan(property: r'activeBranchId', value: ''),
+        FilterCondition.greaterThan(
+          property: r'activeLeafMessageId',
+          value: '',
+        ),
       );
     });
   }
@@ -1261,16 +1295,16 @@ extension ShivConversationModelQueryLinks
 extension ShivConversationModelQuerySortBy
     on QueryBuilder<ShivConversationModel, ShivConversationModel, QSortBy> {
   QueryBuilder<ShivConversationModel, ShivConversationModel, QAfterSortBy>
-  sortByActiveBranchId() {
+  sortByActiveLeafMessageId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'activeBranchId', Sort.asc);
+      return query.addSortBy(r'activeLeafMessageId', Sort.asc);
     });
   }
 
   QueryBuilder<ShivConversationModel, ShivConversationModel, QAfterSortBy>
-  sortByActiveBranchIdDesc() {
+  sortByActiveLeafMessageIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'activeBranchId', Sort.desc);
+      return query.addSortBy(r'activeLeafMessageId', Sort.desc);
     });
   }
 
@@ -1334,16 +1368,16 @@ extension ShivConversationModelQuerySortBy
 extension ShivConversationModelQuerySortThenBy
     on QueryBuilder<ShivConversationModel, ShivConversationModel, QSortThenBy> {
   QueryBuilder<ShivConversationModel, ShivConversationModel, QAfterSortBy>
-  thenByActiveBranchId() {
+  thenByActiveLeafMessageId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'activeBranchId', Sort.asc);
+      return query.addSortBy(r'activeLeafMessageId', Sort.asc);
     });
   }
 
   QueryBuilder<ShivConversationModel, ShivConversationModel, QAfterSortBy>
-  thenByActiveBranchIdDesc() {
+  thenByActiveLeafMessageIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'activeBranchId', Sort.desc);
+      return query.addSortBy(r'activeLeafMessageId', Sort.desc);
     });
   }
 
@@ -1421,10 +1455,10 @@ extension ShivConversationModelQuerySortThenBy
 extension ShivConversationModelQueryWhereDistinct
     on QueryBuilder<ShivConversationModel, ShivConversationModel, QDistinct> {
   QueryBuilder<ShivConversationModel, ShivConversationModel, QDistinct>
-  distinctByActiveBranchId({bool caseSensitive = true}) {
+  distinctByActiveLeafMessageId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(
-        r'activeBranchId',
+        r'activeLeafMessageId',
         caseSensitive: caseSensitive,
       );
     });
@@ -1475,10 +1509,10 @@ extension ShivConversationModelQueryProperty
     });
   }
 
-  QueryBuilder<ShivConversationModel, String, QQueryOperations>
-  activeBranchIdProperty() {
+  QueryBuilder<ShivConversationModel, String?, QQueryOperations>
+  activeLeafMessageIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'activeBranchId');
+      return query.addPropertyName(r'activeLeafMessageId');
     });
   }
 

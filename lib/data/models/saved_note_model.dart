@@ -34,6 +34,10 @@ class SavedNoteModel {
 
   @Index()
   late DateTime savedAt;
+
+  /// 384-dim L2-normalised float vector from all-MiniLM-L6-v2.
+  /// Null until [EmbeddingService] processes this note in the background.
+  List<double>? embedding;
 }
 
 extension SavedNoteModelExtension on SavedNoteModel {
@@ -48,5 +52,6 @@ extension SavedNoteModelExtension on SavedNoteModel {
         tTags: tTags,
         created: created,
         savedAt: savedAt,
+        embedding: embedding,
       );
 }

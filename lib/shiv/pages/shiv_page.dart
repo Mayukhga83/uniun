@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniun/common/locator.dart';
+import 'package:uniun/core/router/app_routes.dart';
 import 'package:uniun/core/theme/app_theme.dart';
+import 'package:uniun/domain/usecases/ai_model_usecases.dart';
 import 'package:uniun/l10n/app_localizations.dart';
 import 'package:uniun/shiv/chat/bloc/shiv_ai_bloc.dart';
 import 'package:uniun/shiv/chat/pages/shiv_chat_page.dart';
 import 'package:uniun/shiv/chat/pages/shiv_history_page.dart';
+import 'package:uniun/shiv/model_select/pages/ai_model_selection_page.dart';
+import 'package:uniun/shiv/services/ai_model_runner.dart';
 
 /// Shiv AI assistant tab root.
 ///
@@ -13,16 +17,60 @@ import 'package:uniun/shiv/chat/pages/shiv_history_page.dart';
 /// - If no conversation is active → landing screen with "New Chat" + history button.
 /// - If a conversation is active → [ShivChatPage].
 ///
-/// Model availability is guaranteed by [HomePage] before this tab is shown.
-class ShivPage extends StatelessWidget {
+/// Redirects to the AI model selection screen if no model is installed.
+class ShivPage extends StatefulWidget {
   const ShivPage({super.key});
 
   @override
+  State<ShivPage> createState() => _ShivPageState();
+}
+
+class _ShivPageState extends State<ShivPage> {
+  bool? _hasModel;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkModel());
+  }
+
+  Future<void> _checkModel() async {
+    if (!mounted) return;
+    final result = await getIt<GetActiveAIModelUseCase>().call();
+    final hasModel = result.fold((_) => false, (m) => m != null);
+    if (mounted) {
+      setState(() => _hasModel = hasModel);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<ShivAIBloc>()
-        ..add(const ShivAIEvent.loadConversations()),
-      child: const _ShivRoot(),
+    // Show model selection if no model exists
+    if (_hasModel == false) {
+      return WillPopScope(
+        onWillPop: () async {
+          // When returning from model selection, re-check for model
+          await _checkModel();
+          return false;
+        },
+        child: const AIModelSelectionPage(),
+      );
+    }
+
+    // Show Shiv UI once model exists
+    if (_hasModel == true) {
+      return BlocProvider(
+        create: (_) =>
+            getIt<ShivAIBloc>()..add(const ShivAIEvent.loadConversations()),
+        child: const _ShivRoot(),
+      );
+    }
+
+    // Loading state
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }
@@ -34,7 +82,8 @@ class _ShivRoot extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ShivAIBloc, ShivAIState>(
       buildWhen: (prev, curr) =>
-          (prev.activeConversation == null) != (curr.activeConversation == null),
+          (prev.activeConversation == null) !=
+          (curr.activeConversation == null),
       builder: (context, state) {
         if (state.activeConversation != null) {
           return const ShivChatPage();
@@ -61,8 +110,12 @@ class _ShivLanding extends StatelessWidget {
         children: [
           // Header
           Container(
-            padding:
-                EdgeInsets.only(left: 20, right: 8, top: top + 12, bottom: 12),
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 8,
+              top: top + 12,
+              bottom: 12,
+            ),
             decoration: BoxDecoration(
               color: AppColors.surface.withValues(alpha: 0.85),
               boxShadow: [
@@ -120,15 +173,60 @@ class _ShivLanding extends StatelessWidget {
               ],
             ),
           ),
+          // RAG initializing banner
+          BlocSelector<ShivAIBloc, ShivAIState, bool>(
+            selector: (s) => s.isRagInitializing,
+            builder: (context, isInitializing) {
+              if (!isInitializing) return const SizedBox.shrink();
+              final l10n = AppLocalizations.of(context)!;
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                color: AppColors.secondaryContainer.withValues(alpha: 0.5),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      l10n.aiEmbeddingSetupInProgress,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           // Body
           Expanded(
             child: BlocBuilder<ShivAIBloc, ShivAIState>(
               builder: (context, state) {
                 return _LandingBody(
                   conversationCount: state.conversations.length,
-                  onNewChat: () => context
-                      .read<ShivAIBloc>()
-                      .add(const ShivAIEvent.createConversation()),
+                  onNewChat: () {
+                    // Check if model is active before creating conversation
+                    if (!getIt<AIModelRunner>().hasActiveModel) {
+                      Navigator.of(context).pushNamed(AppRoutes.aiModelSelection);
+                    } else {
+                      context.read<ShivAIBloc>().add(
+                        const ShivAIEvent.createConversation(),
+                      );
+                    }
+                  },
                   onHistory: () => ShivHistoryPage.show(context),
                 );
               },
@@ -155,109 +253,115 @@ class _LandingBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Halo avatar
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.secondaryContainer.withValues(alpha: 0.25),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    blurRadius: 40,
-                    spreadRadius: 10,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.smart_toy_outlined,
-                size: 36,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              l10n.shivName,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 4,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.shivLandingBody,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                height: 1.6,
-                color: AppColors.onSurfaceVariant,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 40),
-            // New chat CTA
-            SizedBox(
-              width: double.infinity,
-              child: GestureDetector(
-                onTap: onNewChat,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.25),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add_rounded, color: AppColors.onPrimary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        l10n.shivNewConversation,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.onPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Halo avatar
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.secondaryContainer.withValues(alpha: 0.25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      blurRadius: 40,
+                      spreadRadius: 10,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.smart_toy_outlined,
+                  size: 36,
+                  color: AppColors.primary,
                 ),
               ),
-            ),
-            if (conversationCount > 0) ...[
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: onHistory,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    l10n.shivViewConversations(conversationCount),
-                    style: const TextStyle(
-                      fontSize: 14,
+              const SizedBox(height: 24),
+              Text(
+                l10n.shivName,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 4,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.shivLandingBody,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.6,
+                  color: AppColors.onSurfaceVariant,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 40),
+              // New chat CTA
+              SizedBox(
+                width: double.infinity,
+                child: GestureDetector(
+                  onTap: onNewChat,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
                       color: AppColors.primary,
-                      fontWeight: FontWeight.w500,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.add_rounded,
+                          color: AppColors.onPrimary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.shivNewConversation,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.onPrimary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
+              if (conversationCount > 0) ...[
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: onHistory,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      l10n.shivViewConversations(conversationCount),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

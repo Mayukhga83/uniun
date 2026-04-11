@@ -17,34 +17,29 @@ const ShivMessageModelSchema = CollectionSchema(
   name: r'ShivMessage',
   id: 595659823644172610,
   properties: {
-    r'branchId': PropertySchema(
-      id: 0,
-      name: r'branchId',
-      type: IsarType.string,
-    ),
-    r'content': PropertySchema(id: 1, name: r'content', type: IsarType.string),
+    r'content': PropertySchema(id: 0, name: r'content', type: IsarType.string),
     r'conversationId': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'conversationId',
       type: IsarType.string,
     ),
     r'createdAt': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'messageId': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'messageId',
       type: IsarType.string,
     ),
     r'parentId': PropertySchema(
-      id: 5,
+      id: 4,
       name: r'parentId',
       type: IsarType.string,
     ),
     r'role': PropertySchema(
-      id: 6,
+      id: 5,
       name: r'role',
       type: IsarType.string,
       enumMap: _ShivMessageModelroleEnumValueMap,
@@ -83,19 +78,6 @@ const ShivMessageModelSchema = CollectionSchema(
         ),
       ],
     ),
-    r'branchId': IndexSchema(
-      id: 2037049677925728410,
-      name: r'branchId',
-      unique: false,
-      replace: false,
-      properties: [
-        IndexPropertySchema(
-          name: r'branchId',
-          type: IndexType.hash,
-          caseSensitive: true,
-        ),
-      ],
-    ),
     r'createdAt': IndexSchema(
       id: -3433535483987302584,
       name: r'createdAt',
@@ -125,7 +107,6 @@ int _shivMessageModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.branchId.length * 3;
   bytesCount += 3 + object.content.length * 3;
   bytesCount += 3 + object.conversationId.length * 3;
   bytesCount += 3 + object.messageId.length * 3;
@@ -145,13 +126,12 @@ void _shivMessageModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.branchId);
-  writer.writeString(offsets[1], object.content);
-  writer.writeString(offsets[2], object.conversationId);
-  writer.writeDateTime(offsets[3], object.createdAt);
-  writer.writeString(offsets[4], object.messageId);
-  writer.writeString(offsets[5], object.parentId);
-  writer.writeString(offsets[6], object.role.name);
+  writer.writeString(offsets[0], object.content);
+  writer.writeString(offsets[1], object.conversationId);
+  writer.writeDateTime(offsets[2], object.createdAt);
+  writer.writeString(offsets[3], object.messageId);
+  writer.writeString(offsets[4], object.parentId);
+  writer.writeString(offsets[5], object.role.name);
 }
 
 ShivMessageModel _shivMessageModelDeserialize(
@@ -161,15 +141,14 @@ ShivMessageModel _shivMessageModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = ShivMessageModel();
-  object.branchId = reader.readString(offsets[0]);
-  object.content = reader.readString(offsets[1]);
-  object.conversationId = reader.readString(offsets[2]);
-  object.createdAt = reader.readDateTime(offsets[3]);
+  object.content = reader.readString(offsets[0]);
+  object.conversationId = reader.readString(offsets[1]);
+  object.createdAt = reader.readDateTime(offsets[2]);
   object.id = id;
-  object.messageId = reader.readString(offsets[4]);
-  object.parentId = reader.readStringOrNull(offsets[5]);
+  object.messageId = reader.readString(offsets[3]);
+  object.parentId = reader.readStringOrNull(offsets[4]);
   object.role =
-      _ShivMessageModelroleValueEnumMap[reader.readStringOrNull(offsets[6])] ??
+      _ShivMessageModelroleValueEnumMap[reader.readStringOrNull(offsets[5])] ??
       MessageRole.user;
   return object;
 }
@@ -186,14 +165,12 @@ P _shivMessageModelDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
-    case 3:
       return (reader.readDateTime(offset)) as P;
-    case 4:
+    case 3:
       return (reader.readString(offset)) as P;
-    case 5:
+    case 4:
       return (reader.readStringOrNull(offset)) as P;
-    case 6:
+    case 5:
       return (_ShivMessageModelroleValueEnumMap[reader.readStringOrNull(
                 offset,
               )] ??
@@ -482,58 +459,6 @@ extension ShivMessageModelQueryWhere
   }
 
   QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterWhereClause>
-  branchIdEqualTo(String branchId) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        IndexWhereClause.equalTo(indexName: r'branchId', value: [branchId]),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterWhereClause>
-  branchIdNotEqualTo(String branchId) {
-    return QueryBuilder.apply(this, (query) {
-      if (query.whereSort == Sort.asc) {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'branchId',
-                lower: [],
-                upper: [branchId],
-                includeUpper: false,
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'branchId',
-                lower: [branchId],
-                includeLower: false,
-                upper: [],
-              ),
-            );
-      } else {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'branchId',
-                lower: [branchId],
-                includeLower: false,
-                upper: [],
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'branchId',
-                lower: [],
-                upper: [branchId],
-                includeUpper: false,
-              ),
-            );
-      }
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterWhereClause>
   createdAtEqualTo(DateTime createdAt) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
@@ -636,147 +561,6 @@ extension ShivMessageModelQueryWhere
 
 extension ShivMessageModelQueryFilter
     on QueryBuilder<ShivMessageModel, ShivMessageModel, QFilterCondition> {
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdEqualTo(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.equalTo(
-          property: r'branchId',
-          value: value,
-          caseSensitive: caseSensitive,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.greaterThan(
-          include: include,
-          property: r'branchId',
-          value: value,
-          caseSensitive: caseSensitive,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.lessThan(
-          include: include,
-          property: r'branchId',
-          value: value,
-          caseSensitive: caseSensitive,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.between(
-          property: r'branchId',
-          lower: lower,
-          includeLower: includeLower,
-          upper: upper,
-          includeUpper: includeUpper,
-          caseSensitive: caseSensitive,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdStartsWith(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.startsWith(
-          property: r'branchId',
-          value: value,
-          caseSensitive: caseSensitive,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdEndsWith(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.endsWith(
-          property: r'branchId',
-          value: value,
-          caseSensitive: caseSensitive,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.contains(
-          property: r'branchId',
-          value: value,
-          caseSensitive: caseSensitive,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.matches(
-          property: r'branchId',
-          wildcard: pattern,
-          caseSensitive: caseSensitive,
-        ),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'branchId', value: ''),
-      );
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
-  branchIdIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.greaterThan(property: r'branchId', value: ''),
-      );
-    });
-  }
-
   QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterFilterCondition>
   contentEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1620,20 +1404,6 @@ extension ShivMessageModelQueryLinks
 extension ShivMessageModelQuerySortBy
     on QueryBuilder<ShivMessageModel, ShivMessageModel, QSortBy> {
   QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterSortBy>
-  sortByBranchId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'branchId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterSortBy>
-  sortByBranchIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'branchId', Sort.desc);
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterSortBy>
   sortByContent() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'content', Sort.asc);
@@ -1719,20 +1489,6 @@ extension ShivMessageModelQuerySortBy
 
 extension ShivMessageModelQuerySortThenBy
     on QueryBuilder<ShivMessageModel, ShivMessageModel, QSortThenBy> {
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterSortBy>
-  thenByBranchId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'branchId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterSortBy>
-  thenByBranchIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'branchId', Sort.desc);
-    });
-  }
-
   QueryBuilder<ShivMessageModel, ShivMessageModel, QAfterSortBy>
   thenByContent() {
     return QueryBuilder.apply(this, (query) {
@@ -1833,13 +1589,6 @@ extension ShivMessageModelQuerySortThenBy
 extension ShivMessageModelQueryWhereDistinct
     on QueryBuilder<ShivMessageModel, ShivMessageModel, QDistinct> {
   QueryBuilder<ShivMessageModel, ShivMessageModel, QDistinct>
-  distinctByBranchId({bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'branchId', caseSensitive: caseSensitive);
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, ShivMessageModel, QDistinct>
   distinctByContent({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'content', caseSensitive: caseSensitive);
@@ -1891,12 +1640,6 @@ extension ShivMessageModelQueryProperty
   QueryBuilder<ShivMessageModel, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
-    });
-  }
-
-  QueryBuilder<ShivMessageModel, String, QQueryOperations> branchIdProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'branchId');
     });
   }
 

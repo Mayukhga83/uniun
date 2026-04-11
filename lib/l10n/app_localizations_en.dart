@@ -391,6 +391,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Maximum accuracy multimodal model. Best on flagship devices with 8 GB+ RAM.';
 
   @override
+  String get aiEmbeddingSetupInProgress => 'Setting up AI features…';
+
+  @override
   String get editProfileTitle => 'Edit Profile';
 
   @override
