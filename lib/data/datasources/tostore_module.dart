@@ -23,11 +23,6 @@ const TableSchema _embeddingsSchema = TableSchema(
   ),
   fields: [
     FieldSchema(
-      name: embeddingsIdField,
-      type: DataType.text,
-      unique: true,
-    ),
-    FieldSchema(
       name: embeddingsVectorField,
       type: DataType.vector,
       vectorConfig: VectorFieldConfig(

@@ -158,30 +158,33 @@ class ExtractKnowledgeUseCase
   /// Parses the LLM output into [_Extraction]. Returns null on any failure.
   /// Tolerates surrounding prose / markdown fences by scanning for the first
   /// '{' and last '}' and parsing that slice.
+  ///
+  /// Falls back to regex-based field extraction when the full JSON is invalid
+  /// (e.g. malformed relation objects like `{"A","B","uses"}` that small models
+  /// sometimes produce instead of `{"source":"A","target":"B","type":"uses"}`).
   _Extraction? _parseExtractionJson(String raw) {
     final start = raw.indexOf('{');
     final end = raw.lastIndexOf('}');
     if (start == -1 || end == -1 || end <= start) return null;
     final slice = raw.substring(start, end + 1);
+
+    // ── Fast path: valid JSON ────────────────────────────────────────────────
     try {
       final map = jsonDecode(slice) as Map<String, dynamic>;
-      final summary = (map['summary'] as String?)?.trim() ?? '';
-      final keyPoints = _stringList(map['keyPoints']);
-      final concepts = _stringList(map['concepts']);
-      final links = _stringList(map['links']);
-      final relations = <_Relation>[];
-      final rawRelations = map['relations'];
-      if (rawRelations is List) {
-        for (final r in rawRelations) {
-          if (r is! Map) continue;
-          final s = (r['source'] as String?)?.trim() ?? '';
-          final t = (r['target'] as String?)?.trim() ?? '';
-          final ty = (r['type'] as String?)?.trim() ?? '';
-          if (s.isNotEmpty && t.isNotEmpty && ty.isNotEmpty) {
-            relations.add(_Relation(source: s, target: t, type: ty));
-          }
-        }
-      }
+      return _extractionFromMap(map);
+    } catch (_) {
+      // Fall through to repair path.
+    }
+
+    // ── Repair path: model emitted partially-invalid JSON ───────────────────
+    // Extract only the well-formed relation objects via regex, reconstruct the
+    // rest of the fields from a cleaned slice.
+    try {
+      final relations = _regexRelations(slice);
+      final summary = _regexStringField(slice, 'summary') ?? '';
+      final keyPoints = _regexStringArray(slice, 'keyPoints');
+      final concepts = _regexStringArray(slice, 'concepts');
+      final links = _regexStringArray(slice, 'links');
       if (summary.isEmpty && concepts.isEmpty && relations.isEmpty) return null;
       return _Extraction(
         summary: summary,
@@ -193,6 +196,64 @@ class ExtractKnowledgeUseCase
     } catch (_) {
       return null;
     }
+  }
+
+  _Extraction? _extractionFromMap(Map<String, dynamic> map) {
+    final summary = (map['summary'] as String?)?.trim() ?? '';
+    final keyPoints = _stringList(map['keyPoints']);
+    final concepts = _stringList(map['concepts']);
+    final links = _stringList(map['links']);
+    final relations = <_Relation>[];
+    final rawRelations = map['relations'];
+    if (rawRelations is List) {
+      for (final r in rawRelations) {
+        if (r is! Map) continue;
+        final s = (r['source'] as String?)?.trim() ?? '';
+        final t = (r['target'] as String?)?.trim() ?? '';
+        final ty = (r['type'] as String?)?.trim() ?? '';
+        if (s.isNotEmpty && t.isNotEmpty && ty.isNotEmpty) {
+          relations.add(_Relation(source: s, target: t, type: ty));
+        }
+      }
+    }
+    if (summary.isEmpty && concepts.isEmpty && relations.isEmpty) return null;
+    return _Extraction(
+      summary: summary,
+      keyPoints: keyPoints,
+      concepts: concepts,
+      relations: relations,
+      links: links,
+    );
+  }
+
+  /// Extracts only the well-formed relation objects: {"source":"…","target":"…","type":"…"}.
+  /// Silently drops malformed objects like {"A","B","uses"}.
+  List<_Relation> _regexRelations(String json) {
+    final pattern = RegExp(
+      r'\{\s*"source"\s*:\s*"([^"]+)"\s*,\s*"target"\s*:\s*"([^"]+)"\s*,\s*"type"\s*:\s*"([^"]+)"\s*\}',
+    );
+    return pattern
+        .allMatches(json)
+        .map((m) => _Relation(source: m.group(1)!, target: m.group(2)!, type: m.group(3)!))
+        .toList();
+  }
+
+  /// Extracts a top-level string field value from a JSON string.
+  String? _regexStringField(String json, String field) {
+    final m = RegExp('"$field"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"').firstMatch(json);
+    return m?.group(1);
+  }
+
+  /// Extracts a top-level string-array field from a JSON string.
+  List<String> _regexStringArray(String json, String field) {
+    final arrMatch = RegExp('"$field"\\s*:\\s*\\[([^\\]]*)\\]').firstMatch(json);
+    if (arrMatch == null) return const [];
+    final inner = arrMatch.group(1) ?? '';
+    return RegExp(r'"((?:[^"\\]|\\.)*)"')
+        .allMatches(inner)
+        .map((m) => m.group(1)!.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
   List<String> _stringList(dynamic v) {
