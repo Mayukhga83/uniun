@@ -17,6 +17,8 @@ class PromptBudget {
     required this.topNotesTokens,
     required this.graphRelationsTokens,
     required this.memoriesTokens,
+    required this.topK,
+    required this.maxHops,
   });
 
   final int maxTokens;
@@ -25,21 +27,36 @@ class PromptBudget {
   final int graphRelationsTokens;
   final int memoriesTokens;
 
+  /// How many vector seed notes to retrieve. Larger models can handle more context.
+  final int topK;
+
+  /// Graph traversal depth. 1-hop for small models (speed + context limit),
+  /// 2-hop for larger models (richer multi-hop reasoning).
+  final int maxHops;
+
   /// Returns the recommended budget for a given model. Falls back to a
   /// conservative 2k budget when no model is active.
   factory PromptBudget.forModel(AIModelId? modelId) {
     final int max;
+    final int topK;
+    final int maxHops;
     switch (modelId) {
       case AIModelId.gemma4E4b:
         max = 8192;
+        topK = 10;
+        maxHops = 2;
         break;
       case AIModelId.gemma4E2b:
       case AIModelId.deepseekR1:
         max = 4096;
+        topK = 5;
+        maxHops = 2;
         break;
       case AIModelId.qwen25_05b:
       case null:
         max = 2048;
+        topK = 3;
+        maxHops = 1;
     }
     // Recommended split from wikiAI.md:
     //   query 5-10%, topNotes 30-40%, graphRelations 15-20%, summaries 10-20%.
@@ -49,6 +66,8 @@ class PromptBudget {
       topNotesTokens: (max * 0.35).round(),
       graphRelationsTokens: (max * 0.20).round(),
       memoriesTokens: (max * 0.15).round(),
+      topK: topK,
+      maxHops: maxHops,
     );
   }
 

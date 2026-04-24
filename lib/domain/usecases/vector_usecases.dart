@@ -12,16 +12,18 @@ import 'package:uniun/shiv/rag/embedding/embedding_service.dart';
 
 @lazySingleton
 class SearchVectorNotesUseCase
-    extends UseCase<Either<Failure, List<ScoredNote>>, List<double>> {
+    extends UseCase<Either<Failure, List<ScoredNote>>, (List<double>, int, double)> {
   final VectorRepository _repository;
 
   SearchVectorNotesUseCase(this._repository);
 
   @override
-  Future<Either<Failure, List<ScoredNote>>> call(List<double> input,
+  Future<Either<Failure, List<ScoredNote>>> call(
+      (List<double>, int, double) input,
       {bool cached = false}) async {
     try {
-      final result = await _repository.search(input);
+      final (vec, topK, minScore) = input;
+      final result = await _repository.search(vec, topK: topK, minScore: minScore);
       return Right(result);
     } catch (e) {
       return Left(Failure.errorFailure(e.toString()));

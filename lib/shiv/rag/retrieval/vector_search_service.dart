@@ -17,7 +17,7 @@ class VectorSearchService {
     int topK = 5,
     double minScore = 0.3,
   }) async {
-    final result = await _searchUseCase(queryVector);
+    final result = await _searchUseCase((queryVector, topK, minScore));
     return result.fold(
       (failure) => [],
       (notes) => notes,

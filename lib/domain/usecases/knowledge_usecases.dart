@@ -57,7 +57,7 @@ class ExtractKnowledgeUseCase
     debugPrint('🔎 Extract: start $shortId');
 
     try {
-      final similarResult = await _searchVector.call(queryVec);
+      final similarResult = await _searchVector.call((queryVec, 5, 0.3));
       final similar = similarResult
           .fold<List<ScoredNote>>((_) => const [], (s) => s)
           .where((s) => s.noteId != noteId)
@@ -310,16 +310,18 @@ class GetMemoriesByNoteIdsUseCase
 
 @lazySingleton
 class GetGraphNeighboursUseCase
-    extends UseCase<Either<Failure, List<GraphEdgeEntity>>, List<String>> {
+    extends UseCase<Either<Failure, List<GraphEdgeEntity>>, (List<String>, int)> {
   final GraphRepository _graph;
   GetGraphNeighboursUseCase(this._graph);
 
   @override
   Future<Either<Failure, List<GraphEdgeEntity>>> call(
-    List<String> keys, {
+    (List<String>, int) input, {
     bool cached = false,
-  }) =>
-      _graph.getNeighbours(keys);
+  }) {
+    final (keys, maxHops) = input;
+    return _graph.getNeighbours(keys, maxHops: maxHops);
+  }
 }
 
 @lazySingleton

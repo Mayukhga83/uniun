@@ -93,8 +93,8 @@ class RagPipeline {
   /// budget-aware assembly. Do NOT pass conversation history —
   /// [InferenceChat] manages it internally.
   Future<RagMessage> buildMessage({required String userQuestion}) async {
-    final context = await _retrieveContext(userQuestion);
     final budget = PromptBudget.forModel(await _activeModelId());
+    final context = await _retrieveContext(userQuestion, topK: budget.topK, maxHops: budget.maxHops);
     final userMessage = _promptBuilder.buildUserMessage(
       userQuestion: userQuestion,
       context: context,
@@ -115,13 +115,13 @@ class RagPipeline {
 
   // ── Internals ──────────────────────────────────────────────────────────────
 
-  Future<EnrichedContext> _retrieveContext(String query) async {
+  Future<EnrichedContext> _retrieveContext(String query, {int topK = 5, int maxHops = 1}) async {
     try {
       final vec = await _embedding.embed(query);
       if (vec.isEmpty) return EnrichedContext.empty;
 
       // 1. Vector seed.
-      final seedNotes = await _vectorSearch.search(queryVector: vec);
+      final seedNotes = await _vectorSearch.search(queryVector: vec, topK: topK);
       if (seedNotes.isEmpty) return EnrichedContext.empty;
 
       // 2. Memory for seeds → collect concept keys.
@@ -134,7 +134,7 @@ class RagPipeline {
       }.toList();
 
       // 3. Graph expand.
-      final edgesResult = await _getNeighbours.call(conceptKeys);
+      final edgesResult = await _getNeighbours.call((conceptKeys, maxHops));
       final edges =
           edgesResult.fold((_) => <GraphEdgeEntity>[], (e) => e);
 

@@ -154,20 +154,19 @@ class PromptBuilder {
     final sections = <String>[];
     var used = PromptBudget.estimateTokens(userQuestion);
 
-    // ── 1. Top 1-2 seed notes (always try to include if present) ───────────
-    final topNotes = context.seedNotes.take(2).toList();
-    final restNotes = context.seedNotes.skip(2).toList();
-    final topSection = _renderNotesSection(
-      'Relevant Notes',
-      topNotes,
-      budget.topNotesTokens ~/ 2,
+    // ── 1. Memory summaries (highest signal-to-token ratio — inject first) ──
+    // Distilled meaning helps small models understand context before seeing raw
+    // notes. Based on Microsoft GraphRAG + MobileRAG research recommendations.
+    final memSection = _renderMemoriesSection(
+      context.memories,
+      budget.memoriesTokens,
     );
-    if (topSection != null) {
-      sections.add(topSection);
-      used += PromptBudget.estimateTokens(topSection);
+    if (memSection != null) {
+      sections.add(memSection);
+      used += PromptBudget.estimateTokens(memSection);
     }
 
-    // ── 2. Strong graph relations ──────────────────────────────────────────
+    // ── 2. Graph relations ─────────────────────────────────────────────────
     final relSection = _renderRelationsSection(
       context.graphEdges,
       context.graphNodes,
@@ -179,7 +178,21 @@ class PromptBuilder {
       used += PromptBudget.estimateTokens(relSection);
     }
 
-    // ── 3. Remaining seed notes ────────────────────────────────────────────
+    // ── 3. Top 1-2 seed notes ──────────────────────────────────────────────
+    final topNotes = context.seedNotes.take(2).toList();
+    final restNotes = context.seedNotes.skip(2).toList();
+    final topSection = _renderNotesSection(
+      'Relevant Notes',
+      topNotes,
+      budget.topNotesTokens ~/ 2,
+    );
+    if (topSection != null &&
+        used + PromptBudget.estimateTokens(topSection) <= budget.maxTokens) {
+      sections.add(topSection);
+      used += PromptBudget.estimateTokens(topSection);
+    }
+
+    // ── 4. Remaining seed notes ────────────────────────────────────────────
     final restSection = _renderNotesSection(
       'Additional Notes',
       restNotes,
@@ -189,16 +202,6 @@ class PromptBuilder {
         used + PromptBudget.estimateTokens(restSection) <= budget.maxTokens) {
       sections.add(restSection);
       used += PromptBudget.estimateTokens(restSection);
-    }
-
-    // ── 4. Memory summaries ────────────────────────────────────────────────
-    final memSection = _renderMemoriesSection(
-      context.memories,
-      budget.memoriesTokens,
-    );
-    if (memSection != null &&
-        used + PromptBudget.estimateTokens(memSection) <= budget.maxTokens) {
-      sections.add(memSection);
     }
 
     if (sections.isEmpty) return userQuestion;
