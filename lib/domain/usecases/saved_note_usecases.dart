@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uniun/core/error/failures.dart';
@@ -5,7 +7,7 @@ import 'package:uniun/core/usecases/usecase.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/saved_note/saved_note_entity.dart';
 import 'package:uniun/domain/repositories/saved_note_repository.dart';
-import 'package:uniun/domain/repositories/vector_repository.dart';
+import 'package:uniun/domain/usecases/knowledge_usecases.dart';
 
 // ── SaveNoteUseCase ───────────────────────────────────────────────────────────
 
@@ -28,11 +30,18 @@ class SaveNoteUseCase extends UseCase<Either<Failure, SavedNoteEntity>, NoteEnti
 @lazySingleton
 class UnsaveNoteUseCase extends UseCase<Either<Failure, Unit>, String> {
   final SavedNoteRepository _repository;
-  const UnsaveNoteUseCase(this._repository);
+  final DeleteKnowledgeForNoteUseCase _deleteKnowledge;
+  const UnsaveNoteUseCase(this._repository, this._deleteKnowledge);
 
   @override
-  Future<Either<Failure, Unit>> call(String eventId, {bool cached = false}) {
-    return _repository.unsaveNote(eventId);
+  Future<Either<Failure, Unit>> call(String eventId, {bool cached = false}) async {
+    final result = await _repository.unsaveNote(eventId);
+    // Fire-and-forget knowledge cleanup — graph edges + memory row for this
+    // note are removed so the AI knowledge layer doesn't hold orphan entries.
+    // Own-authored notes are never unsaved (no UnsaveNoteUseCase path), so
+    // their knowledge persists — matches Feed Freedom.
+    unawaited(_deleteKnowledge.call(eventId));
+    return result;
   }
 }
 
@@ -62,31 +71,6 @@ class GetAllSavedNotesUseCase
     return _repository.getAll();
   }
 }
-
-// ── UpdateEmbeddingUseCase ────────────────────────────────────────────────────
-
-/// Persists a precomputed embedding vector via [VectorRepository].
-/// Input: (id, embedding) tuple — works for saved notes and own authored notes.
-@lazySingleton
-class UpdateEmbeddingUseCase
-    extends UseCase<Either<Failure, Unit>, (String, List<double>)> {
-  final VectorRepository _vectorRepository;
-  const UpdateEmbeddingUseCase(this._vectorRepository);
-
-  @override
-  Future<Either<Failure, Unit>> call(
-    (String, List<double>) input, {
-    bool cached = false,
-  }) async {
-    try {
-      await _vectorRepository.upsert(input.$1, input.$2);
-      return const Right(unit);
-    } catch (e) {
-      return Left(Failure.errorFailure(e.toString()));
-    }
-  }
-}
-
 
 @lazySingleton
 class GetSavedReplyCountUseCase extends UseCase<Either<Failure, int>, String> {

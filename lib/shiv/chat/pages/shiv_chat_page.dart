@@ -103,8 +103,12 @@ class _ShivChatPageState extends State<ShivChatPage> {
                 ),
                 ShivInputComposer(
                   isStreaming: isStreaming,
-                  onSend: (text) =>
-                      context.read<ShivAIBloc>().add(ShivAIEvent.sendMessage(text)),
+                  onSend: (text) => context
+                      .read<ShivAIBloc>()
+                      .add(ShivAIEvent.sendMessage(text)),
+                  onStop: () => context
+                      .read<ShivAIBloc>()
+                      .add(const ShivAIEvent.stopStreaming()),
                 ),
               ],
               ), // close Builder

@@ -28,7 +28,7 @@ class FloatingNav extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: AppColors.outlineVariant),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(
@@ -70,7 +70,7 @@ class _NavTab extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
         decoration: BoxDecoration(
           color: selected
               ? AppColors.primary.withValues(alpha: 0.10)
@@ -81,15 +81,15 @@ class _NavTab extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 50,
-              height: 50,
+              width: 28,
+              height: 28,
               child: SvgPicture.asset(
                 item.asset,
                 fit: BoxFit.contain,
                 colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
               ),
             ),
-
+            const SizedBox(height: 2),
             Text(
               item.label,
               style: TextStyle(

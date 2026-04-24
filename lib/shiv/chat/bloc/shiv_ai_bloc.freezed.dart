@@ -55,7 +55,7 @@ extension ShivAIEventPatterns on ShivAIEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _LoadConversations value)?  loadConversations,TResult Function( _CreateConversation value)?  createConversation,TResult Function( _OpenConversation value)?  openConversation,TResult Function( _CloseConversation value)?  closeConversation,TResult Function( _DeleteConversation value)?  deleteConversation,TResult Function( _SendMessage value)?  sendMessage,TResult Function( _TokenReceived value)?  tokenReceived,TResult Function( _StreamDone value)?  streamDone,TResult Function( _StreamError value)?  streamError,TResult Function( _SwitchBranch value)?  switchBranch,TResult Function( _CreateBranchFrom value)?  createBranchFrom,TResult Function( _SelectGraphNode value)?  selectGraphNode,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _LoadConversations value)?  loadConversations,TResult Function( _CreateConversation value)?  createConversation,TResult Function( _OpenConversation value)?  openConversation,TResult Function( _CloseConversation value)?  closeConversation,TResult Function( _DeleteConversation value)?  deleteConversation,TResult Function( _SendMessage value)?  sendMessage,TResult Function( _StopStreaming value)?  stopStreaming,TResult Function( _TokenReceived value)?  tokenReceived,TResult Function( _StreamDone value)?  streamDone,TResult Function( _StreamError value)?  streamError,TResult Function( _SwitchBranch value)?  switchBranch,TResult Function( _CreateBranchFrom value)?  createBranchFrom,TResult Function( _SelectGraphNode value)?  selectGraphNode,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case _LoadConversations() when loadConversations != null:
@@ -64,7 +64,8 @@ return createConversation(_that);case _OpenConversation() when openConversation 
 return openConversation(_that);case _CloseConversation() when closeConversation != null:
 return closeConversation(_that);case _DeleteConversation() when deleteConversation != null:
 return deleteConversation(_that);case _SendMessage() when sendMessage != null:
-return sendMessage(_that);case _TokenReceived() when tokenReceived != null:
+return sendMessage(_that);case _StopStreaming() when stopStreaming != null:
+return stopStreaming(_that);case _TokenReceived() when tokenReceived != null:
 return tokenReceived(_that);case _StreamDone() when streamDone != null:
 return streamDone(_that);case _StreamError() when streamError != null:
 return streamError(_that);case _SwitchBranch() when switchBranch != null:
@@ -88,7 +89,7 @@ return selectGraphNode(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _LoadConversations value)  loadConversations,required TResult Function( _CreateConversation value)  createConversation,required TResult Function( _OpenConversation value)  openConversation,required TResult Function( _CloseConversation value)  closeConversation,required TResult Function( _DeleteConversation value)  deleteConversation,required TResult Function( _SendMessage value)  sendMessage,required TResult Function( _TokenReceived value)  tokenReceived,required TResult Function( _StreamDone value)  streamDone,required TResult Function( _StreamError value)  streamError,required TResult Function( _SwitchBranch value)  switchBranch,required TResult Function( _CreateBranchFrom value)  createBranchFrom,required TResult Function( _SelectGraphNode value)  selectGraphNode,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _LoadConversations value)  loadConversations,required TResult Function( _CreateConversation value)  createConversation,required TResult Function( _OpenConversation value)  openConversation,required TResult Function( _CloseConversation value)  closeConversation,required TResult Function( _DeleteConversation value)  deleteConversation,required TResult Function( _SendMessage value)  sendMessage,required TResult Function( _StopStreaming value)  stopStreaming,required TResult Function( _TokenReceived value)  tokenReceived,required TResult Function( _StreamDone value)  streamDone,required TResult Function( _StreamError value)  streamError,required TResult Function( _SwitchBranch value)  switchBranch,required TResult Function( _CreateBranchFrom value)  createBranchFrom,required TResult Function( _SelectGraphNode value)  selectGraphNode,}){
 final _that = this;
 switch (_that) {
 case _LoadConversations():
@@ -97,7 +98,8 @@ return createConversation(_that);case _OpenConversation():
 return openConversation(_that);case _CloseConversation():
 return closeConversation(_that);case _DeleteConversation():
 return deleteConversation(_that);case _SendMessage():
-return sendMessage(_that);case _TokenReceived():
+return sendMessage(_that);case _StopStreaming():
+return stopStreaming(_that);case _TokenReceived():
 return tokenReceived(_that);case _StreamDone():
 return streamDone(_that);case _StreamError():
 return streamError(_that);case _SwitchBranch():
@@ -120,7 +122,7 @@ return selectGraphNode(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _LoadConversations value)?  loadConversations,TResult? Function( _CreateConversation value)?  createConversation,TResult? Function( _OpenConversation value)?  openConversation,TResult? Function( _CloseConversation value)?  closeConversation,TResult? Function( _DeleteConversation value)?  deleteConversation,TResult? Function( _SendMessage value)?  sendMessage,TResult? Function( _TokenReceived value)?  tokenReceived,TResult? Function( _StreamDone value)?  streamDone,TResult? Function( _StreamError value)?  streamError,TResult? Function( _SwitchBranch value)?  switchBranch,TResult? Function( _CreateBranchFrom value)?  createBranchFrom,TResult? Function( _SelectGraphNode value)?  selectGraphNode,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _LoadConversations value)?  loadConversations,TResult? Function( _CreateConversation value)?  createConversation,TResult? Function( _OpenConversation value)?  openConversation,TResult? Function( _CloseConversation value)?  closeConversation,TResult? Function( _DeleteConversation value)?  deleteConversation,TResult? Function( _SendMessage value)?  sendMessage,TResult? Function( _StopStreaming value)?  stopStreaming,TResult? Function( _TokenReceived value)?  tokenReceived,TResult? Function( _StreamDone value)?  streamDone,TResult? Function( _StreamError value)?  streamError,TResult? Function( _SwitchBranch value)?  switchBranch,TResult? Function( _CreateBranchFrom value)?  createBranchFrom,TResult? Function( _SelectGraphNode value)?  selectGraphNode,}){
 final _that = this;
 switch (_that) {
 case _LoadConversations() when loadConversations != null:
@@ -129,7 +131,8 @@ return createConversation(_that);case _OpenConversation() when openConversation 
 return openConversation(_that);case _CloseConversation() when closeConversation != null:
 return closeConversation(_that);case _DeleteConversation() when deleteConversation != null:
 return deleteConversation(_that);case _SendMessage() when sendMessage != null:
-return sendMessage(_that);case _TokenReceived() when tokenReceived != null:
+return sendMessage(_that);case _StopStreaming() when stopStreaming != null:
+return stopStreaming(_that);case _TokenReceived() when tokenReceived != null:
 return tokenReceived(_that);case _StreamDone() when streamDone != null:
 return streamDone(_that);case _StreamError() when streamError != null:
 return streamError(_that);case _SwitchBranch() when switchBranch != null:
@@ -152,7 +155,7 @@ return selectGraphNode(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loadConversations,TResult Function()?  createConversation,TResult Function( String conversationId)?  openConversation,TResult Function()?  closeConversation,TResult Function( String conversationId)?  deleteConversation,TResult Function( String text)?  sendMessage,TResult Function( String token)?  tokenReceived,TResult Function()?  streamDone,TResult Function( String message)?  streamError,TResult Function( String leafMessageId)?  switchBranch,TResult Function( String parentMessageId)?  createBranchFrom,TResult Function( String? messageId)?  selectGraphNode,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loadConversations,TResult Function()?  createConversation,TResult Function( String conversationId)?  openConversation,TResult Function()?  closeConversation,TResult Function( String conversationId)?  deleteConversation,TResult Function( String text)?  sendMessage,TResult Function()?  stopStreaming,TResult Function( String token)?  tokenReceived,TResult Function()?  streamDone,TResult Function( String message)?  streamError,TResult Function( String leafMessageId)?  switchBranch,TResult Function( String parentMessageId)?  createBranchFrom,TResult Function( String? messageId)?  selectGraphNode,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LoadConversations() when loadConversations != null:
 return loadConversations();case _CreateConversation() when createConversation != null:
@@ -160,7 +163,8 @@ return createConversation();case _OpenConversation() when openConversation != nu
 return openConversation(_that.conversationId);case _CloseConversation() when closeConversation != null:
 return closeConversation();case _DeleteConversation() when deleteConversation != null:
 return deleteConversation(_that.conversationId);case _SendMessage() when sendMessage != null:
-return sendMessage(_that.text);case _TokenReceived() when tokenReceived != null:
+return sendMessage(_that.text);case _StopStreaming() when stopStreaming != null:
+return stopStreaming();case _TokenReceived() when tokenReceived != null:
 return tokenReceived(_that.token);case _StreamDone() when streamDone != null:
 return streamDone();case _StreamError() when streamError != null:
 return streamError(_that.message);case _SwitchBranch() when switchBranch != null:
@@ -184,7 +188,7 @@ return selectGraphNode(_that.messageId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loadConversations,required TResult Function()  createConversation,required TResult Function( String conversationId)  openConversation,required TResult Function()  closeConversation,required TResult Function( String conversationId)  deleteConversation,required TResult Function( String text)  sendMessage,required TResult Function( String token)  tokenReceived,required TResult Function()  streamDone,required TResult Function( String message)  streamError,required TResult Function( String leafMessageId)  switchBranch,required TResult Function( String parentMessageId)  createBranchFrom,required TResult Function( String? messageId)  selectGraphNode,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loadConversations,required TResult Function()  createConversation,required TResult Function( String conversationId)  openConversation,required TResult Function()  closeConversation,required TResult Function( String conversationId)  deleteConversation,required TResult Function( String text)  sendMessage,required TResult Function()  stopStreaming,required TResult Function( String token)  tokenReceived,required TResult Function()  streamDone,required TResult Function( String message)  streamError,required TResult Function( String leafMessageId)  switchBranch,required TResult Function( String parentMessageId)  createBranchFrom,required TResult Function( String? messageId)  selectGraphNode,}) {final _that = this;
 switch (_that) {
 case _LoadConversations():
 return loadConversations();case _CreateConversation():
@@ -192,7 +196,8 @@ return createConversation();case _OpenConversation():
 return openConversation(_that.conversationId);case _CloseConversation():
 return closeConversation();case _DeleteConversation():
 return deleteConversation(_that.conversationId);case _SendMessage():
-return sendMessage(_that.text);case _TokenReceived():
+return sendMessage(_that.text);case _StopStreaming():
+return stopStreaming();case _TokenReceived():
 return tokenReceived(_that.token);case _StreamDone():
 return streamDone();case _StreamError():
 return streamError(_that.message);case _SwitchBranch():
@@ -215,7 +220,7 @@ return selectGraphNode(_that.messageId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loadConversations,TResult? Function()?  createConversation,TResult? Function( String conversationId)?  openConversation,TResult? Function()?  closeConversation,TResult? Function( String conversationId)?  deleteConversation,TResult? Function( String text)?  sendMessage,TResult? Function( String token)?  tokenReceived,TResult? Function()?  streamDone,TResult? Function( String message)?  streamError,TResult? Function( String leafMessageId)?  switchBranch,TResult? Function( String parentMessageId)?  createBranchFrom,TResult? Function( String? messageId)?  selectGraphNode,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loadConversations,TResult? Function()?  createConversation,TResult? Function( String conversationId)?  openConversation,TResult? Function()?  closeConversation,TResult? Function( String conversationId)?  deleteConversation,TResult? Function( String text)?  sendMessage,TResult? Function()?  stopStreaming,TResult? Function( String token)?  tokenReceived,TResult? Function()?  streamDone,TResult? Function( String message)?  streamError,TResult? Function( String leafMessageId)?  switchBranch,TResult? Function( String parentMessageId)?  createBranchFrom,TResult? Function( String? messageId)?  selectGraphNode,}) {final _that = this;
 switch (_that) {
 case _LoadConversations() when loadConversations != null:
 return loadConversations();case _CreateConversation() when createConversation != null:
@@ -223,7 +228,8 @@ return createConversation();case _OpenConversation() when openConversation != nu
 return openConversation(_that.conversationId);case _CloseConversation() when closeConversation != null:
 return closeConversation();case _DeleteConversation() when deleteConversation != null:
 return deleteConversation(_that.conversationId);case _SendMessage() when sendMessage != null:
-return sendMessage(_that.text);case _TokenReceived() when tokenReceived != null:
+return sendMessage(_that.text);case _StopStreaming() when stopStreaming != null:
+return stopStreaming();case _TokenReceived() when tokenReceived != null:
 return tokenReceived(_that.token);case _StreamDone() when streamDone != null:
 return streamDone();case _StreamError() when streamError != null:
 return streamError(_that.message);case _SwitchBranch() when switchBranch != null:
@@ -530,6 +536,38 @@ as String,
 
 
 }
+
+/// @nodoc
+
+
+class _StopStreaming implements ShivAIEvent {
+  const _StopStreaming();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StopStreaming);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ShivAIEvent.stopStreaming()';
+}
+
+
+}
+
+
+
 
 /// @nodoc
 

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:injectable/injectable.dart';
 
@@ -14,6 +17,14 @@ class AIModelRunner {
   InferenceChat? _chat;
   String? _pendingSystemInstruction;
   bool _firstMessageSent = false;
+
+  /// Mutex for stateless one-shot inference calls. flutter_gemma's native
+  /// MediaPipe session only allows one active invocation at a time — firing
+  /// a second extraction while the first is still running throws
+  /// `IllegalStateException: Previous invocation still processing`. We
+  /// serialize all one-shot calls through a Future chain so concurrent
+  /// saves queue up instead of colliding.
+  Future<void> _oneShotLock = Future.value();
 
   bool get hasActiveModel => FlutterGemma.hasActiveModel();
   bool get hasChatSession => _chat != null;
@@ -71,5 +82,53 @@ class AIModelRunner {
   Future<void> close() async {
     await _chat?.close();
     _chat = null;
+  }
+
+  /// Stateless one-shot completion. Creates a throwaway chat, sends the
+  /// prompt, accumulates the full response, closes the session.
+  ///
+  /// Used by extraction tasks (entities/relations/summary). Does NOT touch the
+  /// user-facing chat session in [_chat]. Returns null when no model is active
+  /// so callers can safely fire-and-forget during graceful-degradation paths.
+  Future<String?> generateOneShot(String prompt, {int maxTokens = 1024}) async {
+    if (!FlutterGemma.hasActiveModel()) {
+      debugPrint('⏭️ generateOneShot: no active model');
+      return null;
+    }
+    // Serialise: wait for any in-flight one-shot to finish before starting.
+    final previous = _oneShotLock;
+    final gate = Completer<void>();
+    _oneShotLock = gate.future;
+    try {
+      await previous;
+      return await _doGenerateOneShot(prompt, maxTokens);
+    } finally {
+      gate.complete();
+    }
+  }
+
+  Future<String?> _doGenerateOneShot(String prompt, int maxTokens) async {
+    InferenceChat? oneShot;
+    try {
+      debugPrint('🧪 generateOneShot: opening throwaway chat…');
+      final model = await FlutterGemma.getActiveModel(maxTokens: maxTokens);
+      oneShot = await model.createChat(
+        temperature: 0.2,
+        topK: 20,
+        tokenBuffer: 256,
+      );
+      await oneShot.addQuery(Message.text(text: prompt));
+      final buffer = StringBuffer();
+      await for (final response in oneShot.generateChatResponseAsync()) {
+        if (response is TextResponse) buffer.write(response.token);
+      }
+      debugPrint('🧪 generateOneShot: done (${buffer.length} chars)');
+      return buffer.toString();
+    } catch (e, st) {
+      debugPrint('❌ generateOneShot failed: $e\n$st');
+      return null;
+    } finally {
+      await oneShot?.close();
+    }
   }
 }

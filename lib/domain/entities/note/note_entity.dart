@@ -26,8 +26,6 @@ abstract class NoteEntity with _$NoteEntity {
     String? replyToEventId,
     /// Denormalised reply count from NoteModel — updated by Gateway and saveNote.
     @Default(0) int cachedReplyCount,
-    /// 384-dim embedding vector. Non-null only for own notes after RAG init.
-    List<double>? embedding,
   }) = _NoteEntity;
 
   factory NoteEntity.fromJson(Map<String, dynamic> json) =>

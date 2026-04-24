@@ -9,10 +9,12 @@ class ShivInputComposer extends StatefulWidget {
   const ShivInputComposer({
     super.key,
     required this.onSend,
+    required this.onStop,
     required this.isStreaming,
   });
 
   final void Function(String text) onSend;
+  final VoidCallback onStop;
   final bool isStreaming;
 
   @override
@@ -48,6 +50,7 @@ class _ShivInputComposerState extends State<ShivInputComposer> {
   @override
   Widget build(BuildContext context) {
     final canSend = _hasText && !widget.isStreaming;
+    final isStreaming = widget.isStreaming;
     final l10n = AppLocalizations.of(context)!;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     // When keyboard is open: pad by keyboard height + 10px gap so input sits above keyboard.
@@ -97,19 +100,24 @@ class _ShivInputComposerState extends State<ShivInputComposer> {
                 ),
               ),
             ),
-            // Send button
+            // Send / Stop button — swaps while streaming so the user can
+            // interrupt long responses.
             Padding(
               padding: const EdgeInsets.all(6),
               child: GestureDetector(
-                onTap: canSend ? _submit : null,
+                onTap: isStreaming
+                    ? widget.onStop
+                    : (canSend ? _submit : null),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: canSend ? AppColors.primary : AppColors.surfaceContainerHigh,
+                    color: isStreaming || canSend
+                        ? AppColors.primary
+                        : AppColors.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(14),
-                    boxShadow: canSend
+                    boxShadow: (isStreaming || canSend)
                         ? [
                             BoxShadow(
                               color: AppColors.primary.withValues(alpha: 0.25),
@@ -120,9 +128,13 @@ class _ShivInputComposerState extends State<ShivInputComposer> {
                         : null,
                   ),
                   child: Icon(
-                    Icons.send_rounded,
-                    size: 18,
-                    color: canSend ? AppColors.onPrimary : AppColors.onSurfaceVariant,
+                    isStreaming
+                        ? Icons.stop_rounded
+                        : Icons.send_rounded,
+                    size: isStreaming ? 20 : 18,
+                    color: (isStreaming || canSend)
+                        ? AppColors.onPrimary
+                        : AppColors.onSurfaceVariant,
                   ),
                 ),
               ),
