@@ -45,6 +45,8 @@ import 'package:uniun/data/repositories/subscription_record_repository_impl.dart
 import 'package:uniun/data/repositories/tostore_vector_repository_impl.dart'
     as _i831;
 import 'package:uniun/data/repositories/user_repository_impl.dart' as _i582;
+import 'package:uniun/dm/chat/bloc/dm_chat_bloc.dart' as _i1032;
+import 'package:uniun/dm/create/bloc/create_dm_bloc.dart' as _i101;
 import 'package:uniun/domain/repositories/ai_model_repository.dart' as _i646;
 import 'package:uniun/domain/repositories/channel_message_repository.dart'
     as _i964;
@@ -73,6 +75,7 @@ import 'package:uniun/domain/usecases/ai_model_usecases.dart' as _i894;
 import 'package:uniun/domain/usecases/create_channel_message_usecase.dart'
     as _i524;
 import 'package:uniun/domain/usecases/create_channel_usecase.dart' as _i1033;
+import 'package:uniun/domain/usecases/dm_usecases.dart' as _i1023;
 import 'package:uniun/domain/usecases/draft_usecases.dart' as _i537;
 import 'package:uniun/domain/usecases/followed_note_usecases.dart' as _i561;
 import 'package:uniun/domain/usecases/get_channel_by_id_usecase.dart' as _i263;
@@ -201,6 +204,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i722.GetChannelsUseCase>(
       () => _i722.GetChannelsUseCase(gh<_i127.ChannelRepository>()),
     );
+    gh.lazySingleton<_i1023.CreateDmConversationUseCase>(
+      () => _i1023.CreateDmConversationUseCase(
+        gh<_i189.DmConversationRepository>(),
+      ),
+    );
     gh.factory<_i964.ChannelMessageRepository>(
       () => _i929.ChannelMessageRepositoryImpl(isar: gh<_i214.Isar>()),
     );
@@ -271,6 +279,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i240.StorageRepository>(
       () => _i209.StorageRepositoryImpl(isar: gh<_i214.Isar>()),
     );
+    gh.lazySingleton<_i1023.FetchDmUseCase>(
+      () => _i1023.FetchDmUseCase(
+        gh<_i189.DmConversationRepository>(),
+        gh<_i551.DmMessageRepository>(),
+      ),
+    );
     gh.lazySingleton<_i475.GetFeedUseCase>(
       () => _i475.GetFeedUseCase(gh<_i47.NoteRepository>()),
     );
@@ -332,6 +346,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i964.ChannelMessageRepository>(),
       ),
     );
+    gh.factory<_i801.DrawerBloc>(
+      () => _i801.DrawerBloc(
+        gh<_i799.GetActiveUserUseCase>(),
+        gh<_i391.GetOwnProfileUseCase>(),
+        gh<_i561.GetAllFollowedNotesUseCase>(),
+        gh<_i722.GetChannelsUseCase>(),
+        gh<_i214.Isar>(),
+      ),
+    );
     gh.lazySingleton<_i58.GetStorageStatsUseCase>(
       () => _i58.GetStorageStatsUseCase(gh<_i240.StorageRepository>()),
     );
@@ -380,14 +403,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i194.SubscriptionRecordRepository>(),
       ),
     );
-    gh.factory<_i801.DrawerBloc>(
-      () => _i801.DrawerBloc(
-        gh<_i799.GetActiveUserUseCase>(),
-        gh<_i391.GetOwnProfileUseCase>(),
-        gh<_i561.GetAllFollowedNotesUseCase>(),
-        gh<_i722.GetChannelsUseCase>(),
-      ),
-    );
     gh.lazySingleton<_i179.ExtractKnowledgeUseCase>(
       () => _i179.ExtractKnowledgeUseCase(
         gh<_i761.AIModelRunner>(),
@@ -395,6 +410,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i756.SearchVectorNotesUseCase>(),
         gh<_i649.GraphRepository>(),
         gh<_i331.MemoryRepository>(),
+      ),
+    );
+    gh.factory<_i101.CreateDmBloc>(
+      () => _i101.CreateDmBloc(
+        gh<_i993.RelayRepository>(),
+        gh<_i1023.CreateDmConversationUseCase>(),
       ),
     );
     gh.lazySingleton<_i475.PublishNoteUseCase>(
@@ -421,13 +442,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i561.FollowNoteUseCase>(),
         gh<_i561.UnfollowNoteUseCase>(),
         gh<_i561.ClearNewReferencesUseCase>(),
-      ),
-    );
-    gh.factory<_i195.EditProfileCubit>(
-      () => _i195.EditProfileCubit(
-        gh<_i799.GetActiveUserUseCase>(),
-        gh<_i391.GetOwnProfileUseCase>(),
-        gh<_i391.SaveProfileUseCase>(),
       ),
     );
     gh.lazySingleton<_i285.VectorSearchService>(
@@ -474,6 +488,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i799.GetActiveUserUseCase>(),
       ),
     );
+    gh.lazySingleton<_i1023.SendDmUseCase>(
+      () => _i1023.SendDmUseCase(
+        gh<_i214.Isar>(),
+        gh<_i799.GetActiveUserKeysUseCase>(),
+        gh<_i189.DmConversationRepository>(),
+      ),
+    );
     gh.lazySingleton<_i179.GetMemoriesByNoteIdsUseCase>(
       () => _i179.GetMemoriesByNoteIdsUseCase(gh<_i331.MemoryRepository>()),
     );
@@ -481,6 +502,18 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i799.GetActiveUserProfileUseCase(
         gh<_i103.UserRepository>(),
         gh<_i967.ProfileRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i391.PublishProfileMetadataUseCase>(
+      () => _i391.PublishProfileMetadataUseCase(
+        gh<_i1039.EventQueueRepository>(),
+        gh<_i799.GetActiveUserKeysUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i1023.GetDmUseCase>(
+      () => _i1023.GetDmUseCase(
+        gh<_i214.Isar>(),
+        gh<_i799.GetActiveUserKeysUseCase>(),
       ),
     );
     gh.lazySingleton<_i1067.RagPipeline>(
@@ -494,6 +527,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i179.GetGraphNeighboursUseCase>(),
         gh<_i179.GetGraphNodesByKeysUseCase>(),
         gh<_i894.GetActiveAIModelUseCase>(),
+      ),
+    );
+    gh.factory<_i1032.DmChatBloc>(
+      () => _i1032.DmChatBloc(
+        gh<_i1023.FetchDmUseCase>(),
+        gh<_i1023.SendDmUseCase>(),
+        gh<_i1023.GetDmUseCase>(),
+        gh<_i214.Isar>(),
       ),
     );
     gh.factory<_i334.ShivAIBloc>(
@@ -540,6 +581,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i537.DeleteDraftUseCase>(),
         gh<_i475.SearchNotesUseCase>(),
         gh<_i475.GetNoteByIdUseCase>(),
+      ),
+    );
+    gh.factory<_i195.EditProfileCubit>(
+      () => _i195.EditProfileCubit(
+        gh<_i799.GetActiveUserUseCase>(),
+        gh<_i391.GetOwnProfileUseCase>(),
+        gh<_i391.SaveProfileUseCase>(),
+        gh<_i391.PublishProfileMetadataUseCase>(),
       ),
     );
     gh.factory<_i118.ThreadBloc>(
