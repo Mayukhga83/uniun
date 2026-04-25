@@ -18,4 +18,6 @@ abstract class AppRoutes {
   static const createDm = '/create-dm';
   static const chatDm = '/chat-dm';
   static const brahmaCreate = '/brahma-create';
+  static const scanCard = '/scan-card';
+  static const scanQr = '/scan-qr';
 }

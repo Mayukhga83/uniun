@@ -6,10 +6,12 @@ import 'package:uniun/channels/feed/bloc/channel_feed_state.dart';
 import 'package:uniun/channels/feed/widgets/channel_message_composer.dart';
 import 'package:uniun/channels/thread/pages/channel_thread_page.dart';
 import 'package:uniun/common/locator.dart';
+import 'package:uniun/core/router/app_routes.dart';
 import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/domain/entities/channel_message/channel_message_entity.dart';
 import 'package:uniun/domain/usecases/user_usecases.dart';
 import 'package:uniun/followed_notes/cubit/followed_notes_cubit.dart';
+import 'package:uniun/core/scan/uniun_qr_card.dart';
 import 'package:uniun/vishnu/widgets/note_card.dart';
 
 class ChannelFeedPage extends StatelessWidget {
@@ -164,6 +166,32 @@ class _ChannelFeedViewState extends State<_ChannelFeedView> {
                   ),
               ],
             ),
+            actions: [
+              // Show this channel as a scannable card
+              if (state.channel != null)
+                IconButton(
+                  icon: const Icon(Icons.badge_rounded,
+                      size: 20, color: AppColors.onSurfaceVariant),
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => UniunQrCard.channel(
+                      name: state.channel!.name,
+                      about: state.channel!.about,
+                      channelId: state.channel!.channelId,
+                      creatorPubKey: state.channel!.creatorPubKey,
+                      picture: state.channel!.picture,
+                      createdAt: state.channel!.createdAt,
+                    ),
+                  ),
+                ),
+              // Scan another channel card
+              IconButton(
+                icon: const Icon(Icons.qr_code_scanner_rounded,
+                    size: 20, color: AppColors.onSurfaceVariant),
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.scanQr),
+              ),
+            ],
           ),
           body: Column(
             children: [

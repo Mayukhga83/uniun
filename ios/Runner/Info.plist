@@ -68,5 +68,7 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSCameraUsageDescription</key>
+		<string>UNIUN uses the camera to scan channel and user cards.</string>
 	</dict>
 </plist>

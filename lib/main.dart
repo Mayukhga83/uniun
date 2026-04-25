@@ -19,6 +19,8 @@ import 'package:uniun/onboarding/pages/welcome_page.dart';
 import 'package:uniun/onboarding/pages/your_identity_keys_page.dart';
 import 'package:uniun/channels/create/pages/create_channel_page.dart';
 import 'package:uniun/channels/feed/pages/channel_feed_page.dart';
+import 'package:uniun/core/scan/text_scanner_page.dart';
+import 'package:uniun/core/scan/qr_scanner_page.dart';
 import 'package:uniun/saved_notes/pages/saved_notes_page.dart';
 import 'package:uniun/dm/create/pages/create_dm_page.dart';
 import 'package:uniun/dm/chat/pages/dm_chat_page.dart';
@@ -94,6 +96,8 @@ class UniunApp extends StatelessWidget {
         AppRoutes.graph: (_) => const GraphPage(),
         AppRoutes.createDm: (_) => const CreateDmPage(),
         AppRoutes.chatDm: (_) => const DmChatPage(),
+        AppRoutes.scanCard: (_) => const TextScannerPage(),
+        AppRoutes.scanQr: (_) => const QrScannerPage(),
         AppRoutes.graph: (_) => MultiBlocProvider(
               providers: [
                 BlocProvider(

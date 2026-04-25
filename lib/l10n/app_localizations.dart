@@ -250,7 +250,7 @@ abstract class AppLocalizations {
   /// **'No messages yet'**
   String get drawerNoMessages;
 
-  /// QR sheet action button
+  /// Card sheet action button
   ///
   /// In en, this message translates to:
   /// **'Copy npub'**
@@ -261,6 +261,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'npub copied'**
   String get drawerNpubCopied;
+
+  /// Drawer header tooltip — show profile card
+  ///
+  /// In en, this message translates to:
+  /// **'My Card'**
+  String get drawerShowCard;
+
+  /// Drawer header tooltip — scan a UNIUN card
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get drawerScanCard;
+
+  /// Title of the ML Kit text scanner page
+  ///
+  /// In en, this message translates to:
+  /// **'Scan UNIUN Card'**
+  String get scanPageTitle;
+
+  /// Hint label on the scanner page
+  ///
+  /// In en, this message translates to:
+  /// **'Point camera at a UNIUN card'**
+  String get scanPageHint;
+
+  /// Snackbar when a channel card is scanned
+  ///
+  /// In en, this message translates to:
+  /// **'Channel found'**
+  String get scanChannelFound;
+
+  /// Snackbar when a user card is scanned
+  ///
+  /// In en, this message translates to:
+  /// **'User found'**
+  String get scanUserFound;
+
+  /// Snackbar when scan finds unrecognised text
+  ///
+  /// In en, this message translates to:
+  /// **'No UNIUN card detected'**
+  String get scanInvalid;
+
+  /// Snackbar when camera permission denied
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission required to scan'**
+  String get scanPermissionDenied;
+
+  /// Machine-readable header on user card (must stay uppercase, scanner detects this exact text)
+  ///
+  /// In en, this message translates to:
+  /// **'UNIUN USER CARD'**
+  String get cardUserHeader;
+
+  /// Machine-readable header on channel card (must stay uppercase, scanner detects this exact text)
+  ///
+  /// In en, this message translates to:
+  /// **'UNIUN CHANNEL CARD'**
+  String get cardChannelHeader;
+
+  /// Title label on the channel info card widget
+  ///
+  /// In en, this message translates to:
+  /// **'Channel Card'**
+  String get channelCardTitle;
+
+  /// Title label on the user profile card widget
+  ///
+  /// In en, this message translates to:
+  /// **'User Card'**
+  String get userCardTitle;
+
+  /// Hint under any UNIUN card
+  ///
+  /// In en, this message translates to:
+  /// **'Scan this card with UNIUN to connect'**
+  String get userCardScanHint;
+
+  /// Bottom sheet title when a UNIUN card is scanned
+  ///
+  /// In en, this message translates to:
+  /// **'Card Detected'**
+  String get scanResultTitle;
+
+  /// Label above the raw OCR dump in the scan result sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned data'**
+  String get scanResultRawLabel;
+
+  /// Type badge in scan result sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Type: Channel'**
+  String get scanResultChannelLabel;
+
+  /// Type badge in scan result sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Type: User'**
+  String get scanResultUserLabel;
+
+  /// Close button on scan result sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get scanResultClose;
+
+  /// CTA on channel scan result sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Open Channel'**
+  String get scanResultOpenChannel;
 
   /// Snackbar for unimplemented features
   ///

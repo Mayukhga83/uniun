@@ -80,10 +80,67 @@
   "@drawerNoMessages": { "description": "Empty state for DMs in drawer" },
 
   "drawerCopyNpub": "Copy npub",
-  "@drawerCopyNpub": { "description": "QR sheet action button" },
+  "@drawerCopyNpub": { "description": "Card sheet action button" },
 
   "drawerNpubCopied": "npub copied",
   "@drawerNpubCopied": { "description": "Snackbar after copying npub" },
+
+  "drawerShowCard": "My Card",
+  "@drawerShowCard": { "description": "Drawer header tooltip — show profile card" },
+
+  "drawerScanCard": "Scan",
+  "@drawerScanCard": { "description": "Drawer header tooltip — scan a UNIUN card" },
+
+  "scanPageTitle": "Scan UNIUN Card",
+  "@scanPageTitle": { "description": "Title of the ML Kit text scanner page" },
+
+  "scanPageHint": "Point camera at a UNIUN card",
+  "@scanPageHint": { "description": "Hint label on the scanner page" },
+
+  "scanChannelFound": "Channel found",
+  "@scanChannelFound": { "description": "Snackbar when a channel card is scanned" },
+
+  "scanUserFound": "User found",
+  "@scanUserFound": { "description": "Snackbar when a user card is scanned" },
+
+  "scanInvalid": "No UNIUN card detected",
+  "@scanInvalid": { "description": "Snackbar when scan finds unrecognised text" },
+
+  "scanPermissionDenied": "Camera permission required to scan",
+  "@scanPermissionDenied": { "description": "Snackbar when camera permission denied" },
+
+  "cardUserHeader": "UNIUN USER CARD",
+  "@cardUserHeader": { "description": "Machine-readable header on user card (must stay uppercase, scanner detects this exact text)" },
+
+  "cardChannelHeader": "UNIUN CHANNEL CARD",
+  "@cardChannelHeader": { "description": "Machine-readable header on channel card (must stay uppercase, scanner detects this exact text)" },
+
+  "channelCardTitle": "Channel Card",
+  "@channelCardTitle": { "description": "Title label on the channel info card widget" },
+
+  "userCardTitle": "User Card",
+  "@userCardTitle": { "description": "Title label on the user profile card widget" },
+
+  "userCardScanHint": "Scan this card with UNIUN to connect",
+  "@userCardScanHint": { "description": "Hint under any UNIUN card" },
+
+  "scanResultTitle": "Card Detected",
+  "@scanResultTitle": { "description": "Bottom sheet title when a UNIUN card is scanned" },
+
+  "scanResultRawLabel": "Scanned data",
+  "@scanResultRawLabel": { "description": "Label above the raw OCR dump in the scan result sheet" },
+
+  "scanResultChannelLabel": "Type: Channel",
+  "@scanResultChannelLabel": { "description": "Type badge in scan result sheet" },
+
+  "scanResultUserLabel": "Type: User",
+  "@scanResultUserLabel": { "description": "Type badge in scan result sheet" },
+
+  "scanResultClose": "Close",
+  "@scanResultClose": { "description": "Close button on scan result sheet" },
+
+  "scanResultOpenChannel": "Open Channel",
+  "@scanResultOpenChannel": { "description": "CTA on channel scan result sheet" },
 
   "drawerComingSoon": "{feature} — coming soon",
   "@drawerComingSoon": {

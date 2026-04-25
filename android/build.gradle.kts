@@ -3,6 +3,17 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    // Suppress "source/target value 8 is obsolete" warnings from dependency libraries
+    plugins.withType<JavaPlugin> {
+        extensions.configure<JavaPluginExtension> {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+        }
+    }
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.addAll(listOf("-Xlint:-options"))
+    }
 }
 
 val newBuildDir: Directory =

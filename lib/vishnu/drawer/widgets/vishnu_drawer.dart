@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniun/l10n/app_localizations.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:uniun/common/widgets/user_avatar.dart';
 import 'package:uniun/core/router/app_routes.dart';
 import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/common/locator.dart';
 import 'package:uniun/domain/usecases/followed_note_usecases.dart';
+import 'package:uniun/core/scan/uniun_qr_card.dart';
 import 'package:uniun/thread/pages/thread_page.dart';
 import 'package:uniun/vishnu/drawer/bloc/drawer_bloc.dart' as app_drawer;
 
@@ -187,132 +186,91 @@ class _DrawerHeader extends StatelessWidget {
   final String pubkeyHex;
   final String? avatarUrl;
 
-  void _showQr(BuildContext context) {
+  void _showCard(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (_) => Dialog(
-        backgroundColor: AppColors.surface,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                npub,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              QrImageView(
-                data: pubkeyHex.isEmpty ? 'uniun' : 'nostr:$npub',
-                version: QrVersions.auto,
-                size: 200,
-                backgroundColor: Colors.white,
-                eyeStyle: const QrEyeStyle(
-                  eyeShape: QrEyeShape.square,
-                  color: Colors.black,
-                ),
-                dataModuleStyle: const QrDataModuleStyle(
-                  dataModuleShape: QrDataModuleShape.square,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: npub));
-                  Navigator.pop(context);
-                  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                    SnackBar(
-                      content: Text(AppLocalizations.of(context)!.drawerNpubCopied),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.copy_rounded, size: 16),
-                label: Text(AppLocalizations.of(context)!.drawerCopyNpub),
-              ),
-            ],
-          ),
-        ),
-      ),
+      builder: (_) => UniunQrCard.user(name: name, pubkeyHex: pubkeyHex),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showQr(context),
-      child: Container(
-        padding: EdgeInsets.fromLTRB(
-            16, MediaQuery.of(context).padding.top + 16, 16, 16),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.outlineVariant.withValues(alpha: 0.4),
-            ),
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          16, MediaQuery.of(context).padding.top + 16, 16, 16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.outlineVariant.withValues(alpha: 0.4),
           ),
         ),
-        child: Row(
-          children: [
-            Stack(
-              children: [
-                UserAvatar(
-                  seed: pubkeyHex,
-                  photoUrl: avatarUrl,
-                  size: 40,
-                  borderRadius: 10,
-                ),
-                Positioned(
-                  bottom: -1,
-                  right: -1,
-                  child: Container(
-                    width: 11,
-                    height: 11,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF22C55E),
-                      border: Border.all(color: AppColors.surface, width: 2),
-                    ),
+      ),
+      child: Row(
+        children: [
+          Stack(
+            children: [
+              UserAvatar(
+                seed: pubkeyHex,
+                photoUrl: avatarUrl,
+                size: 40,
+                borderRadius: 10,
+              ),
+              Positioned(
+                bottom: -1,
+                right: -1,
+                child: Container(
+                  width: 11,
+                  height: 11,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF22C55E),
+                    border: Border.all(color: AppColors.surface, width: 2),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.onSurface,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.onSurface,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            const Icon(
-              Icons.qr_code_rounded,
-              color: AppColors.onSurfaceVariant,
-              size: 18,
+          ),
+          // My card button
+          Tooltip(
+            message: l10n.drawerShowCard,
+            child: IconButton(
+              onPressed: () => _showCard(context),
+              icon: const Icon(Icons.badge_rounded,
+                  color: AppColors.onSurfaceVariant, size: 18),
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.all(4),
+              visualDensity: VisualDensity.compact,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 2),
+          // Scan button
+          Tooltip(
+            message: l10n.drawerScanCard,
+            child: IconButton(
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.scanQr),
+              icon: const Icon(Icons.qr_code_scanner_rounded,
+                  color: AppColors.onSurfaceVariant, size: 18),
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.all(4),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ],
       ),
     );
   }

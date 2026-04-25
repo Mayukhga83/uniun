@@ -93,6 +93,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get drawerNpubCopied => 'npub copied';
 
   @override
+  String get drawerShowCard => 'My Card';
+
+  @override
+  String get drawerScanCard => 'Scan';
+
+  @override
+  String get scanPageTitle => 'Scan UNIUN Card';
+
+  @override
+  String get scanPageHint => 'Point camera at a UNIUN card';
+
+  @override
+  String get scanChannelFound => 'Channel found';
+
+  @override
+  String get scanUserFound => 'User found';
+
+  @override
+  String get scanInvalid => 'No UNIUN card detected';
+
+  @override
+  String get scanPermissionDenied => 'Camera permission required to scan';
+
+  @override
+  String get cardUserHeader => 'UNIUN USER CARD';
+
+  @override
+  String get cardChannelHeader => 'UNIUN CHANNEL CARD';
+
+  @override
+  String get channelCardTitle => 'Channel Card';
+
+  @override
+  String get userCardTitle => 'User Card';
+
+  @override
+  String get userCardScanHint => 'Scan this card with UNIUN to connect';
+
+  @override
+  String get scanResultTitle => 'Card Detected';
+
+  @override
+  String get scanResultRawLabel => 'Scanned data';
+
+  @override
+  String get scanResultChannelLabel => 'Type: Channel';
+
+  @override
+  String get scanResultUserLabel => 'Type: User';
+
+  @override
+  String get scanResultClose => 'Close';
+
+  @override
+  String get scanResultOpenChannel => 'Open Channel';
+
+  @override
   String drawerComingSoon(String feature) {
     return '$feature — coming soon';
   }
