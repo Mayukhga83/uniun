@@ -6,7 +6,6 @@ import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/inputs/note_input.dart';
 import 'package:uniun/domain/repositories/event_queue_repository.dart';
 import 'package:uniun/domain/repositories/note_repository.dart';
-import 'package:uniun/domain/repositories/vector_repository.dart';
 
 // ── GetFeedUseCase ────────────────────────────────────────────────────────────
 
@@ -234,26 +233,3 @@ class PublishNoteUseCase
   }
 }
 
-// ── UpdateNoteEmbeddingUseCase ─────────────────────────────────────────────────
-
-/// Persists a precomputed embedding vector via [VectorRepository] (own notes).
-/// Input: (eventId, embedding) tuple.
-@lazySingleton
-class UpdateNoteEmbeddingUseCase
-    extends UseCase<Either<Failure, Unit>, (String, List<double>)> {
-  final VectorRepository _vectorRepository;
-  const UpdateNoteEmbeddingUseCase(this._vectorRepository);
-
-  @override
-  Future<Either<Failure, Unit>> call(
-    (String, List<double>) input, {
-    bool cached = false,
-  }) async {
-    try {
-      await _vectorRepository.upsert(input.$1, input.$2);
-      return const Right(unit);
-    } catch (e) {
-      return Left(Failure.errorFailure(e.toString()));
-    }
-  }
-}

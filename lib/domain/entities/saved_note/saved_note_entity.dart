@@ -19,8 +19,6 @@ abstract class SavedNoteEntity with _$SavedNoteEntity {
     required DateTime savedAt,
     /// Mirror of NoteModel.cachedReplyCount for saved-notes list display.
     @Default(0) int cachedReplyCount,
-    /// 384-dim embedding vector. Null until the background EmbeddingService runs.
-    List<double>? embedding,
   }) = _SavedNoteEntity;
 }
 

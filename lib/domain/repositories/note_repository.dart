@@ -38,8 +38,4 @@ abstract class NoteRepository {
   /// Case-insensitive substring search over note content stored locally.
   /// Used by Brahma's mention picker to find notes to reference.
   Future<Either<Failure, List<NoteEntity>>> searchNotes(String query);
-
-  /// Stores a precomputed embedding vector on a NoteModel (own published notes).
-  Future<Either<Failure, Unit>> updateNoteEmbedding(
-      String eventId, List<double> embedding);
 }

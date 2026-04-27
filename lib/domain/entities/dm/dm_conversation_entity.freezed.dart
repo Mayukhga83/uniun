@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DmConversationEntity {
 
- int? get id; String get otherPubkey; String? get relayUrl;
+ int get id; String get otherPubkey; List<String> get relays;
 /// Create a copy of DmConversationEntity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $DmConversationEntityCopyWith<DmConversationEntity> get copyWith => _$DmConversa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DmConversationEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.otherPubkey, otherPubkey) || other.otherPubkey == otherPubkey)&&(identical(other.relayUrl, relayUrl) || other.relayUrl == relayUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DmConversationEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.otherPubkey, otherPubkey) || other.otherPubkey == otherPubkey)&&const DeepCollectionEquality().equals(other.relays, relays));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,otherPubkey,relayUrl);
+int get hashCode => Object.hash(runtimeType,id,otherPubkey,const DeepCollectionEquality().hash(relays));
 
 @override
 String toString() {
-  return 'DmConversationEntity(id: $id, otherPubkey: $otherPubkey, relayUrl: $relayUrl)';
+  return 'DmConversationEntity(id: $id, otherPubkey: $otherPubkey, relays: $relays)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $DmConversationEntityCopyWith<$Res>  {
   factory $DmConversationEntityCopyWith(DmConversationEntity value, $Res Function(DmConversationEntity) _then) = _$DmConversationEntityCopyWithImpl;
 @useResult
 $Res call({
- int? id, String otherPubkey, String? relayUrl
+ int id, String otherPubkey, List<String> relays
 });
 
 
@@ -62,12 +62,12 @@ class _$DmConversationEntityCopyWithImpl<$Res>
 
 /// Create a copy of DmConversationEntity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? otherPubkey = null,Object? relayUrl = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? otherPubkey = null,Object? relays = null,}) {
   return _then(_self.copyWith(
-id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int?,otherPubkey: null == otherPubkey ? _self.otherPubkey : otherPubkey // ignore: cast_nullable_to_non_nullable
-as String,relayUrl: freezed == relayUrl ? _self.relayUrl : relayUrl // ignore: cast_nullable_to_non_nullable
-as String?,
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,otherPubkey: null == otherPubkey ? _self.otherPubkey : otherPubkey // ignore: cast_nullable_to_non_nullable
+as String,relays: null == relays ? _self.relays : relays // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 
@@ -152,10 +152,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? id,  String otherPubkey,  String? relayUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String otherPubkey,  List<String> relays)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DmConversationEntity() when $default != null:
-return $default(_that.id,_that.otherPubkey,_that.relayUrl);case _:
+return $default(_that.id,_that.otherPubkey,_that.relays);case _:
   return orElse();
 
 }
@@ -173,10 +173,10 @@ return $default(_that.id,_that.otherPubkey,_that.relayUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? id,  String otherPubkey,  String? relayUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String otherPubkey,  List<String> relays)  $default,) {final _that = this;
 switch (_that) {
 case _DmConversationEntity():
-return $default(_that.id,_that.otherPubkey,_that.relayUrl);case _:
+return $default(_that.id,_that.otherPubkey,_that.relays);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -193,10 +193,10 @@ return $default(_that.id,_that.otherPubkey,_that.relayUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? id,  String otherPubkey,  String? relayUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String otherPubkey,  List<String> relays)?  $default,) {final _that = this;
 switch (_that) {
 case _DmConversationEntity() when $default != null:
-return $default(_that.id,_that.otherPubkey,_that.relayUrl);case _:
+return $default(_that.id,_that.otherPubkey,_that.relays);case _:
   return null;
 
 }
@@ -208,12 +208,18 @@ return $default(_that.id,_that.otherPubkey,_that.relayUrl);case _:
 
 
 class _DmConversationEntity implements DmConversationEntity {
-  const _DmConversationEntity({this.id, required this.otherPubkey, this.relayUrl});
+  const _DmConversationEntity({required this.id, required this.otherPubkey, final  List<String> relays = const []}): _relays = relays;
   
 
-@override final  int? id;
+@override final  int id;
 @override final  String otherPubkey;
-@override final  String? relayUrl;
+ final  List<String> _relays;
+@override@JsonKey() List<String> get relays {
+  if (_relays is EqualUnmodifiableListView) return _relays;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_relays);
+}
+
 
 /// Create a copy of DmConversationEntity
 /// with the given fields replaced by the non-null parameter values.
@@ -225,16 +231,16 @@ _$DmConversationEntityCopyWith<_DmConversationEntity> get copyWith => __$DmConve
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DmConversationEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.otherPubkey, otherPubkey) || other.otherPubkey == otherPubkey)&&(identical(other.relayUrl, relayUrl) || other.relayUrl == relayUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DmConversationEntity&&(identical(other.id, id) || other.id == id)&&(identical(other.otherPubkey, otherPubkey) || other.otherPubkey == otherPubkey)&&const DeepCollectionEquality().equals(other._relays, _relays));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,otherPubkey,relayUrl);
+int get hashCode => Object.hash(runtimeType,id,otherPubkey,const DeepCollectionEquality().hash(_relays));
 
 @override
 String toString() {
-  return 'DmConversationEntity(id: $id, otherPubkey: $otherPubkey, relayUrl: $relayUrl)';
+  return 'DmConversationEntity(id: $id, otherPubkey: $otherPubkey, relays: $relays)';
 }
 
 
@@ -245,7 +251,7 @@ abstract mixin class _$DmConversationEntityCopyWith<$Res> implements $DmConversa
   factory _$DmConversationEntityCopyWith(_DmConversationEntity value, $Res Function(_DmConversationEntity) _then) = __$DmConversationEntityCopyWithImpl;
 @override @useResult
 $Res call({
- int? id, String otherPubkey, String? relayUrl
+ int id, String otherPubkey, List<String> relays
 });
 
 
@@ -262,12 +268,12 @@ class __$DmConversationEntityCopyWithImpl<$Res>
 
 /// Create a copy of DmConversationEntity
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? otherPubkey = null,Object? relayUrl = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? otherPubkey = null,Object? relays = null,}) {
   return _then(_DmConversationEntity(
-id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int?,otherPubkey: null == otherPubkey ? _self.otherPubkey : otherPubkey // ignore: cast_nullable_to_non_nullable
-as String,relayUrl: freezed == relayUrl ? _self.relayUrl : relayUrl // ignore: cast_nullable_to_non_nullable
-as String?,
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,otherPubkey: null == otherPubkey ? _self.otherPubkey : otherPubkey // ignore: cast_nullable_to_non_nullable
+as String,relays: null == relays ? _self._relays : relays // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 

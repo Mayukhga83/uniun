@@ -23,10 +23,10 @@ const DmConversationModelSchema = CollectionSchema(
       name: r'otherPubkey',
       type: IsarType.string,
     ),
-    r'relayUrl': PropertySchema(
+    r'relays': PropertySchema(
       id: 1,
-      name: r'relayUrl',
-      type: IsarType.string,
+      name: r'relays',
+      type: IsarType.stringList,
     ),
   },
 
@@ -66,10 +66,11 @@ int _dmConversationModelEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.otherPubkey.length * 3;
+  bytesCount += 3 + object.relays.length * 3;
   {
-    final value = object.relayUrl;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
+    for (var i = 0; i < object.relays.length; i++) {
+      final value = object.relays[i];
+      bytesCount += value.length * 3;
     }
   }
   return bytesCount;
@@ -82,7 +83,7 @@ void _dmConversationModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.otherPubkey);
-  writer.writeString(offsets[1], object.relayUrl);
+  writer.writeStringList(offsets[1], object.relays);
 }
 
 DmConversationModel _dmConversationModelDeserialize(
@@ -94,7 +95,7 @@ DmConversationModel _dmConversationModelDeserialize(
   final object = DmConversationModel();
   object.id = id;
   object.otherPubkey = reader.readString(offsets[0]);
-  object.relayUrl = reader.readStringOrNull(offsets[1]);
+  object.relays = reader.readStringList(offsets[1]) ?? [];
   return object;
 }
 
@@ -108,7 +109,7 @@ P _dmConversationModelDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -531,29 +532,11 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        const FilterCondition.isNull(property: r'relayUrl'),
-      );
-    });
-  }
-
-  QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        const FilterCondition.isNotNull(property: r'relayUrl'),
-      );
-    });
-  }
-
-  QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlEqualTo(String? value, {bool caseSensitive = true}) {
+  relaysElementEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(
-          property: r'relayUrl',
+          property: r'relays',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -562,8 +545,8 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlGreaterThan(
-    String? value, {
+  relaysElementGreaterThan(
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -571,7 +554,7 @@ extension DmConversationModelQueryFilter
       return query.addFilterCondition(
         FilterCondition.greaterThan(
           include: include,
-          property: r'relayUrl',
+          property: r'relays',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -580,8 +563,8 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlLessThan(
-    String? value, {
+  relaysElementLessThan(
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -589,7 +572,7 @@ extension DmConversationModelQueryFilter
       return query.addFilterCondition(
         FilterCondition.lessThan(
           include: include,
-          property: r'relayUrl',
+          property: r'relays',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -598,9 +581,9 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlBetween(
-    String? lower,
-    String? upper, {
+  relaysElementBetween(
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -608,7 +591,7 @@ extension DmConversationModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.between(
-          property: r'relayUrl',
+          property: r'relays',
           lower: lower,
           includeLower: includeLower,
           upper: upper,
@@ -620,11 +603,11 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlStartsWith(String value, {bool caseSensitive = true}) {
+  relaysElementStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.startsWith(
-          property: r'relayUrl',
+          property: r'relays',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -633,11 +616,11 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlEndsWith(String value, {bool caseSensitive = true}) {
+  relaysElementEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.endsWith(
-          property: r'relayUrl',
+          property: r'relays',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -646,11 +629,11 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlContains(String value, {bool caseSensitive = true}) {
+  relaysElementContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.contains(
-          property: r'relayUrl',
+          property: r'relays',
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -659,11 +642,11 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlMatches(String pattern, {bool caseSensitive = true}) {
+  relaysElementMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.matches(
-          property: r'relayUrl',
+          property: r'relays',
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -672,19 +655,72 @@ extension DmConversationModelQueryFilter
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlIsEmpty() {
+  relaysElementIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'relayUrl', value: ''),
+        FilterCondition.equalTo(property: r'relays', value: ''),
       );
     });
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
-  relayUrlIsNotEmpty() {
+  relaysElementIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
-        FilterCondition.greaterThan(property: r'relayUrl', value: ''),
+        FilterCondition.greaterThan(property: r'relays', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
+  relaysLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'relays', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
+  relaysIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'relays', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
+  relaysIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'relays', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
+  relaysLengthLessThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'relays', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
+  relaysLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'relays', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<DmConversationModel, DmConversationModel, QAfterFilterCondition>
+  relaysLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'relays',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
       );
     });
   }
@@ -721,20 +757,6 @@ extension DmConversationModelQuerySortBy
       return query.addSortBy(r'otherPubkey', Sort.desc);
     });
   }
-
-  QueryBuilder<DmConversationModel, DmConversationModel, QAfterSortBy>
-  sortByRelayUrl() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'relayUrl', Sort.asc);
-    });
-  }
-
-  QueryBuilder<DmConversationModel, DmConversationModel, QAfterSortBy>
-  sortByRelayUrlDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'relayUrl', Sort.desc);
-    });
-  }
 }
 
 extension DmConversationModelQuerySortThenBy
@@ -766,20 +788,6 @@ extension DmConversationModelQuerySortThenBy
       return query.addSortBy(r'otherPubkey', Sort.desc);
     });
   }
-
-  QueryBuilder<DmConversationModel, DmConversationModel, QAfterSortBy>
-  thenByRelayUrl() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'relayUrl', Sort.asc);
-    });
-  }
-
-  QueryBuilder<DmConversationModel, DmConversationModel, QAfterSortBy>
-  thenByRelayUrlDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'relayUrl', Sort.desc);
-    });
-  }
 }
 
 extension DmConversationModelQueryWhereDistinct
@@ -792,9 +800,9 @@ extension DmConversationModelQueryWhereDistinct
   }
 
   QueryBuilder<DmConversationModel, DmConversationModel, QDistinct>
-  distinctByRelayUrl({bool caseSensitive = true}) {
+  distinctByRelays() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'relayUrl', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'relays');
     });
   }
 }
@@ -814,10 +822,10 @@ extension DmConversationModelQueryProperty
     });
   }
 
-  QueryBuilder<DmConversationModel, String?, QQueryOperations>
-  relayUrlProperty() {
+  QueryBuilder<DmConversationModel, List<String>, QQueryOperations>
+  relaysProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'relayUrl');
+      return query.addPropertyName(r'relays');
     });
   }
 }

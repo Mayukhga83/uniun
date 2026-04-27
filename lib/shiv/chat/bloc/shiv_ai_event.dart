@@ -22,6 +22,10 @@ abstract class ShivAIEvent with _$ShivAIEvent {
   /// User submitted a message — triggers RAG + inference pipeline.
   const factory ShivAIEvent.sendMessage(String text) = _SendMessage;
 
+  /// User tapped stop during a streaming response — cancel the native stream
+  /// and persist whatever has already been generated.
+  const factory ShivAIEvent.stopStreaming() = _StopStreaming;
+
   /// Internal: BLoC appends each streamed token.
   const factory ShivAIEvent.tokenReceived(String token) = _TokenReceived;
 

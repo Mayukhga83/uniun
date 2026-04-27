@@ -49,6 +49,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
     on<_CloseConversation>(_onCloseConversation);
     on<_DeleteConversation>(_onDeleteConversation, transformer: sequential());
     on<_SendMessage>(_onSendMessage, transformer: sequential());
+    on<_StopStreaming>(_onStopStreaming);
     on<_TokenReceived>(_onTokenReceived, transformer: sequential());
     on<_StreamDone>(_onStreamDone);
     on<_StreamError>(_onStreamError);
@@ -220,6 +221,40 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       onError: (Object e) => add(ShivAIEvent.streamError(e.toString())),
       cancelOnError: true,
     );
+  }
+
+  /// User tapped stop during streaming. Cancel the native token stream, keep
+  /// whatever's already been generated, and persist it as the final assistant
+  /// message so the conversation stays coherent on next open.
+  Future<void> _onStopStreaming(
+      _StopStreaming event, Emitter<ShivAIState> emit) async {
+    if (state.status != ShivChatStatus.streaming) return;
+    await _streamSub?.cancel();
+    _streamSub = null;
+
+    final msgId = state.streamingMessageId;
+    final partial = _stripThinking(state.streamingContent ?? '').trim();
+    final finalContent = partial.isEmpty ? '(stopped)' : partial;
+
+    if (msgId != null) {
+      await _updateMessageContent.call((msgId, finalContent));
+      final updatedMessages = state.messages.map((m) {
+        if (m.messageId == msgId) return m.copyWith(content: finalContent);
+        return m;
+      }).toList();
+      emit(state.copyWith(
+        status: ShivChatStatus.chatIdle,
+        messages: updatedMessages,
+        streamingContent: null,
+        streamingMessageId: null,
+      ));
+    } else {
+      emit(state.copyWith(
+        status: ShivChatStatus.chatIdle,
+        streamingContent: null,
+        streamingMessageId: null,
+      ));
+    }
   }
 
   void _onTokenReceived(_TokenReceived event, Emitter<ShivAIState> emit) {

@@ -20,6 +20,9 @@ import 'package:uniun/data/models/channel_model.dart';
 import 'package:uniun/data/models/channel_message_model.dart';
 import 'package:uniun/data/models/subscription_record_model.dart';
 import 'package:uniun/data/models/missing_profile_pubkey_model.dart';
+import 'package:uniun/data/models/graph_node_model.dart';
+import 'package:uniun/data/models/graph_edge_model.dart';
+import 'package:uniun/data/models/memory_node_model.dart';
 
 final List<CollectionSchema> isarSchemas = [
   NoteModelSchema,
@@ -41,4 +44,7 @@ final List<CollectionSchema> isarSchemas = [
   SubscriptionRecordModelSchema,
   EncryptedDmModelSchema,
   MissingProfilePubkeyModelSchema,
+  GraphNodeModelSchema,
+  GraphEdgeModelSchema,
+  MemoryNodeModelSchema,
 ];
