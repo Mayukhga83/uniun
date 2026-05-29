@@ -159,24 +159,6 @@ class VishnuDrawer extends StatelessWidget {
                             },
                           )),
 
-                    const SizedBox(height: 16),
-
-                    // ── Apps ──────────────────────────────────────────────
-                    _SectionHeader(label: l10n.drawerApps),
-                    const SizedBox(height: 4),
-                    _AppRow(
-                      label: l10n.drawerAiAssistant,
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [AppColors.primary, Color(0xFF1A5CB8)],
-                      ),
-                      icon: Icons.smart_toy_rounded,
-                      onTap: () {
-                        _close(context);
-                        onSwitchTab(2);
-                      },
-                    ),
                   ],
                 ),
               ),
@@ -901,54 +883,6 @@ class _DmRow extends StatelessWidget {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── App row ────────────────────────────────────────────────────────────────────
-
-class _AppRow extends StatelessWidget {
-  const _AppRow({
-    required this.label,
-    required this.gradient,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final Gradient gradient;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(icon, size: 14, color: AppColors.onPrimary),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
           ],
         ),
       ),
