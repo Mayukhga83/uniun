@@ -268,9 +268,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i775.DeletedNoteRepository>(
       () => _i438.DeletedNoteRepositoryImpl(isar: gh<_i214.Isar>()),
     );
-    gh.factory<_i170.DraftRepository>(
-      () => _i640.DraftRepositoryImpl(isar: gh<_i214.Isar>()),
-    );
     gh.lazySingleton<_i761.MarmotTransportService>(
       () => _i761.MarmotTransportService(
         gh<_i214.Isar>(),
@@ -301,18 +298,6 @@ extension GetItInjectableX on _i174.GetIt {
         isar: gh<_i214.Isar>(),
         relations: gh<_i1017.NoteRelationRepository>(),
       ),
-    );
-    gh.lazySingleton<_i537.SaveDraftUseCase>(
-      () => _i537.SaveDraftUseCase(gh<_i170.DraftRepository>()),
-    );
-    gh.lazySingleton<_i537.GetDraftsUseCase>(
-      () => _i537.GetDraftsUseCase(gh<_i170.DraftRepository>()),
-    );
-    gh.lazySingleton<_i537.GetDraftByIdUseCase>(
-      () => _i537.GetDraftByIdUseCase(gh<_i170.DraftRepository>()),
-    );
-    gh.lazySingleton<_i537.DeleteDraftUseCase>(
-      () => _i537.DeleteDraftUseCase(gh<_i170.DraftRepository>()),
     );
     gh.lazySingleton<_i937.AIModelRunner>(
       () => _i937.AIModelRunner(
@@ -544,6 +529,13 @@ extension GetItInjectableX on _i174.GetIt {
         getActiveUserKeys: gh<_i799.GetActiveUserKeysUseCase>(),
       ),
     );
+    gh.factory<_i170.DraftRepository>(
+      () => _i640.DraftRepositoryImpl(
+        isar: gh<_i214.Isar>(),
+        eventQueue: gh<_i1039.EventQueueRepository>(),
+        getActiveUserKeys: gh<_i799.GetActiveUserKeysUseCase>(),
+      ),
+    );
     gh.factory<_i646.AIModelRepository>(
       () => _i72.AIModelRepositoryImpl(
         gh<_i214.Isar>(),
@@ -685,6 +677,18 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i58.DeleteAllChatHistoryUseCase>(),
         gh<_i799.GetActiveUserUseCase>(),
       ),
+    );
+    gh.lazySingleton<_i537.SaveDraftUseCase>(
+      () => _i537.SaveDraftUseCase(gh<_i170.DraftRepository>()),
+    );
+    gh.lazySingleton<_i537.GetDraftsUseCase>(
+      () => _i537.GetDraftsUseCase(gh<_i170.DraftRepository>()),
+    );
+    gh.lazySingleton<_i537.GetDraftByIdUseCase>(
+      () => _i537.GetDraftByIdUseCase(gh<_i170.DraftRepository>()),
+    );
+    gh.lazySingleton<_i537.DeleteDraftUseCase>(
+      () => _i537.DeleteDraftUseCase(gh<_i170.DraftRepository>()),
     );
     gh.lazySingleton<_i1023.SendDmUseCase>(
       () => _i1023.SendDmUseCase(

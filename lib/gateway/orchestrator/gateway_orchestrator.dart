@@ -6,6 +6,7 @@ import 'package:uniun/data/models/relay_model.dart';
 import 'package:uniun/data/repositories/relay_repository_impl.dart';
 import 'package:uniun/gateway/inbound/handlers/kind0_profile_handler.dart';
 import 'package:uniun/gateway/inbound/handlers/kind1059_dm_handler.dart';
+import 'package:uniun/gateway/inbound/handlers/kind31234_draft_handler.dart';
 import 'package:uniun/gateway/inbound/handlers/kind3_contact_list_handler.dart';
 import 'package:uniun/gateway/inbound/handlers/kind1_note_handler.dart';
 import 'package:uniun/gateway/inbound/handlers/kind40_handler.dart';
@@ -25,6 +26,7 @@ import 'package:uniun/gateway/outbound/temp_session_coordinator.dart';
 import 'package:uniun/gateway/subscriptions/nip77_synchronizer.dart';
 import 'package:uniun/gateway/subscriptions/providers/channels_subscription.dart';
 import 'package:uniun/gateway/subscriptions/providers/dms_subscription.dart';
+import 'package:uniun/gateway/subscriptions/providers/drafts_subscription.dart';
 import 'package:uniun/gateway/subscriptions/providers/feed_notes_subscription.dart';
 import 'package:uniun/gateway/subscriptions/providers/followed_notes_subscription.dart';
 import 'package:uniun/gateway/subscriptions/providers/private_channels_subscription.dart';
@@ -47,6 +49,7 @@ import 'package:uniun/gateway/watchers/isar_watcher_hub.dart';
 class GatewayOrchestrator {
   final Isar _isar;
   final String? _activePubkey;
+  final String? _activePrivkey;
 
   late final EventRouter _router;
   late final RelayRegistry _registry;
@@ -57,9 +60,13 @@ class GatewayOrchestrator {
   int _lastHandledQueueId = 0;
   Timer? _dequeueTimer;
 
-  GatewayOrchestrator({required Isar isar, String? activePubkey})
-      : _isar = isar,
-        _activePubkey = activePubkey;
+  GatewayOrchestrator({
+    required Isar isar,
+    String? activePubkey,
+    String? activePrivkey,
+  })  : _isar = isar,
+        _activePubkey = activePubkey,
+        _activePrivkey = activePrivkey;
 
   Future<void> start() async {
     var relays = await _isar.relayModels.where().findAll();
@@ -90,6 +97,10 @@ class GatewayOrchestrator {
         Kind1NoteHandler(activePubkey: _activePubkey),
         Kind0ProfileHandler(),
         Kind3ContactListHandler(activePubkey: _activePubkey),
+        Kind31234DraftHandler(
+          activePubkey: _activePubkey,
+          activePrivkey: _activePrivkey,
+        ),
         Kind40Handler(),
         Kind41Handler(),
         Kind42Handler(activePubkey: _activePubkey),
@@ -174,6 +185,7 @@ class GatewayOrchestrator {
 
   List<SubscriptionProvider> _subscriptionProviders() => [
         DmsSubscription(),
+        DraftsSubscription(),
         ProfilesSubscription(),
         FollowedNotesSubscription(),
         FeedNotesSubscription(),

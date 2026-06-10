@@ -29,24 +29,34 @@ const DraftModelSchema = CollectionSchema(
       name: r'eTagRefs',
       type: IsarType.stringList,
     ),
-    r'pTagRefs': PropertySchema(
+    r'lastSyncedCreatedAt': PropertySchema(
       id: 4,
+      name: r'lastSyncedCreatedAt',
+      type: IsarType.dateTime,
+    ),
+    r'lastSyncedEventId': PropertySchema(
+      id: 5,
+      name: r'lastSyncedEventId',
+      type: IsarType.string,
+    ),
+    r'pTagRefs': PropertySchema(
+      id: 6,
       name: r'pTagRefs',
       type: IsarType.stringList,
     ),
     r'replyToEventId': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'replyToEventId',
       type: IsarType.string,
     ),
     r'rootEventId': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'rootEventId',
       type: IsarType.string,
     ),
-    r'tTags': PropertySchema(id: 7, name: r'tTags', type: IsarType.stringList),
+    r'tTags': PropertySchema(id: 9, name: r'tTags', type: IsarType.stringList),
     r'updatedAt': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -96,6 +106,12 @@ int _draftModelEstimateSize(
       bytesCount += value.length * 3;
     }
   }
+  {
+    final value = object.lastSyncedEventId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.pTagRefs.length * 3;
   {
     for (var i = 0; i < object.pTagRefs.length; i++) {
@@ -135,11 +151,13 @@ void _draftModelSerialize(
   writer.writeDateTime(offsets[1], object.createdAt);
   writer.writeString(offsets[2], object.draftId);
   writer.writeStringList(offsets[3], object.eTagRefs);
-  writer.writeStringList(offsets[4], object.pTagRefs);
-  writer.writeString(offsets[5], object.replyToEventId);
-  writer.writeString(offsets[6], object.rootEventId);
-  writer.writeStringList(offsets[7], object.tTags);
-  writer.writeDateTime(offsets[8], object.updatedAt);
+  writer.writeDateTime(offsets[4], object.lastSyncedCreatedAt);
+  writer.writeString(offsets[5], object.lastSyncedEventId);
+  writer.writeStringList(offsets[6], object.pTagRefs);
+  writer.writeString(offsets[7], object.replyToEventId);
+  writer.writeString(offsets[8], object.rootEventId);
+  writer.writeStringList(offsets[9], object.tTags);
+  writer.writeDateTime(offsets[10], object.updatedAt);
 }
 
 DraftModel _draftModelDeserialize(
@@ -154,11 +172,13 @@ DraftModel _draftModelDeserialize(
   object.draftId = reader.readString(offsets[2]);
   object.eTagRefs = reader.readStringList(offsets[3]) ?? [];
   object.id = id;
-  object.pTagRefs = reader.readStringList(offsets[4]) ?? [];
-  object.replyToEventId = reader.readStringOrNull(offsets[5]);
-  object.rootEventId = reader.readStringOrNull(offsets[6]);
-  object.tTags = reader.readStringList(offsets[7]) ?? [];
-  object.updatedAt = reader.readDateTime(offsets[8]);
+  object.lastSyncedCreatedAt = reader.readDateTimeOrNull(offsets[4]);
+  object.lastSyncedEventId = reader.readStringOrNull(offsets[5]);
+  object.pTagRefs = reader.readStringList(offsets[6]) ?? [];
+  object.replyToEventId = reader.readStringOrNull(offsets[7]);
+  object.rootEventId = reader.readStringOrNull(offsets[8]);
+  object.tTags = reader.readStringList(offsets[9]) ?? [];
+  object.updatedAt = reader.readDateTime(offsets[10]);
   return object;
 }
 
@@ -178,14 +198,18 @@ P _draftModelDeserializeProp<P>(
     case 3:
       return (reader.readStringList(offset) ?? []) as P;
     case 4:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
       return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
-    case 7:
       return (reader.readStringList(offset) ?? []) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 10:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1004,6 +1028,238 @@ extension DraftModelQueryFilter
   }
 
   QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedCreatedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'lastSyncedCreatedAt'),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedCreatedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'lastSyncedCreatedAt'),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedCreatedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'lastSyncedCreatedAt', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedCreatedAtGreaterThan(DateTime? value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'lastSyncedCreatedAt',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedCreatedAtLessThan(DateTime? value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'lastSyncedCreatedAt',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedCreatedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'lastSyncedCreatedAt',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'lastSyncedEventId'),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'lastSyncedEventId'),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'lastSyncedEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'lastSyncedEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'lastSyncedEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'lastSyncedEventId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'lastSyncedEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'lastSyncedEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'lastSyncedEventId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'lastSyncedEventId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'lastSyncedEventId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
+  lastSyncedEventIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'lastSyncedEventId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterFilterCondition>
   pTagRefsElementEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1810,6 +2066,33 @@ extension DraftModelQuerySortBy
     });
   }
 
+  QueryBuilder<DraftModel, DraftModel, QAfterSortBy>
+  sortByLastSyncedCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedCreatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterSortBy>
+  sortByLastSyncedCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedCreatedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterSortBy> sortByLastSyncedEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedEventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterSortBy>
+  sortByLastSyncedEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedEventId', Sort.desc);
+    });
+  }
+
   QueryBuilder<DraftModel, DraftModel, QAfterSortBy> sortByReplyToEventId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'replyToEventId', Sort.asc);
@@ -1898,6 +2181,33 @@ extension DraftModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<DraftModel, DraftModel, QAfterSortBy>
+  thenByLastSyncedCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedCreatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterSortBy>
+  thenByLastSyncedCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedCreatedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterSortBy> thenByLastSyncedEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedEventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QAfterSortBy>
+  thenByLastSyncedEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedEventId', Sort.desc);
+    });
+  }
+
   QueryBuilder<DraftModel, DraftModel, QAfterSortBy> thenByReplyToEventId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'replyToEventId', Sort.asc);
@@ -1963,6 +2273,24 @@ extension DraftModelQueryWhereDistinct
   QueryBuilder<DraftModel, DraftModel, QDistinct> distinctByETagRefs() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'eTagRefs');
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QDistinct>
+  distinctByLastSyncedCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastSyncedCreatedAt');
+    });
+  }
+
+  QueryBuilder<DraftModel, DraftModel, QDistinct> distinctByLastSyncedEventId({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'lastSyncedEventId',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
@@ -2033,6 +2361,20 @@ extension DraftModelQueryProperty
   QueryBuilder<DraftModel, List<String>, QQueryOperations> eTagRefsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'eTagRefs');
+    });
+  }
+
+  QueryBuilder<DraftModel, DateTime?, QQueryOperations>
+  lastSyncedCreatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastSyncedCreatedAt');
+    });
+  }
+
+  QueryBuilder<DraftModel, String?, QQueryOperations>
+  lastSyncedEventIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastSyncedEventId');
     });
   }
 

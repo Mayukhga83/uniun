@@ -18,10 +18,7 @@ mixin _$SavedNoteEntity {
  int get cachedReplyCount;/// Saved-scoped outgoing reference count (saved notes this one references).
  int get referenceCount;/// Source channel id if the saved item was a Kind-42 public channel msg.
  String? get sourceChannelId;/// Source group id if the saved item was a NIP-29 private channel msg.
- String? get sourcePrivateGroupId;/// NIP-18 quote tag of the saved note. The quoted note is resolved live
-/// against the main `Note` collection — not stored on the saved copy.
- String? get quoteEventId;/// Lazily-populated quoted note (resolved at query time by
-/// [SavedNoteRepository]). Null when the quote isn't in Isar.
+ String? get sourcePrivateGroupId; String? get quoteEventId;/// Resolved at read time from the live `Note` collection. Null when missed.
  NoteEntity? get quotedNote;
 /// Create a copy of SavedNoteEntity
 /// with the given fields replaced by the non-null parameter values.
@@ -280,11 +277,8 @@ class _SavedNoteEntity implements SavedNoteEntity {
 @override final  String? sourceChannelId;
 /// Source group id if the saved item was a NIP-29 private channel msg.
 @override final  String? sourcePrivateGroupId;
-/// NIP-18 quote tag of the saved note. The quoted note is resolved live
-/// against the main `Note` collection — not stored on the saved copy.
 @override final  String? quoteEventId;
-/// Lazily-populated quoted note (resolved at query time by
-/// [SavedNoteRepository]). Null when the quote isn't in Isar.
+/// Resolved at read time from the live `Note` collection. Null when missed.
 @override final  NoteEntity? quotedNote;
 
 /// Create a copy of SavedNoteEntity

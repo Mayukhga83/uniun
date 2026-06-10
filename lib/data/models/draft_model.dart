@@ -22,6 +22,16 @@ class DraftModel {
 
   late DateTime createdAt;
   late DateTime updatedAt;
+
+  /// `created_at` of the last NIP-37 Kind 31234 wrap we accepted for this
+  /// draft. Used by the inbound handler for last-write-wins reconciliation.
+  /// Null on rows created locally that haven't been seen back from the relay.
+  DateTime? lastSyncedCreatedAt;
+
+  /// Event id of that same wrap. Seeded into [DraftsSubscription.localIndex]
+  /// so NIP-77 negentropy recognises drafts we already hold and the relay
+  /// doesn't re-stream them on every reconnect.
+  String? lastSyncedEventId;
 }
 
 extension DraftModelExtension on DraftModel {

@@ -16,3 +16,8 @@ const int kChannelMessageKind = 42;
 const int kDmTextKind = 14;
 const int kDmFileKind = 15;
 const int kPrivateChannelKind = 9023;
+
+/// NIP-37 draft wrap. Parameterized replaceable; `["d", draftId]` keys it. The
+/// inner draft event (Kind 1 unsigned payload) is JSON-stringified, NIP-44
+/// self-encrypted, and placed in `.content`. Empty content signals deletion.
+const int kDraftWrapKind = 31234;

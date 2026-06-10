@@ -61,7 +61,7 @@ class OutboundPump {
     }
 
     session.pendingAck.arm(next.eventId, next.id);
-    final frame = next.isPrivateChannelEvent
+    final frame = next.isRawPassthroughEvent
         ? next.toRawRelayMessage()
         : next.toSerializedRelayMessage();
     session.sendRaw(frame);

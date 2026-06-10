@@ -35,13 +35,10 @@ mixin _$NoteEntity {
 ///   - `🔒 <name>` for private channel messages
 ///   - `null`     for native Kind-1 Vishnu notes
 /// Resolved by [FeedRepository] at query time from the channel/group rows.
- String? get sourceLabel;/// NIP-18 quote tag — id of the note this one shares/quotes. The renderer
-/// uses this (not content parsing) to decide whether to embed the original.
- String? get quoteEventId;/// The quoted note's full entity, pre-resolved at the repository layer
-/// (one batched lookup per query, not per render). Renderers read this
-/// directly — no async work in widget code. One level deep only:
-/// [quotedNote.quotedNote] is always null. Tapping the embed opens the
-/// quoted note's own thread, where its own quote (if any) renders.
+ String? get sourceLabel;/// NIP-18 quote tag id.
+ String? get quoteEventId;/// Pre-resolved one level deep ([quotedNote.quotedNote] is always null).
+/// Null when [quoteEventId] is non-null but resolution missed (encrypted
+/// or absent) — renderer shows "Note not available".
  NoteEntity? get quotedNote;
 /// Create a copy of NoteEntity
 /// with the given fields replaced by the non-null parameter values.
@@ -328,14 +325,11 @@ class _NoteEntity implements NoteEntity {
 ///   - `null`     for native Kind-1 Vishnu notes
 /// Resolved by [FeedRepository] at query time from the channel/group rows.
 @override final  String? sourceLabel;
-/// NIP-18 quote tag — id of the note this one shares/quotes. The renderer
-/// uses this (not content parsing) to decide whether to embed the original.
+/// NIP-18 quote tag id.
 @override final  String? quoteEventId;
-/// The quoted note's full entity, pre-resolved at the repository layer
-/// (one batched lookup per query, not per render). Renderers read this
-/// directly — no async work in widget code. One level deep only:
-/// [quotedNote.quotedNote] is always null. Tapping the embed opens the
-/// quoted note's own thread, where its own quote (if any) renders.
+/// Pre-resolved one level deep ([quotedNote.quotedNote] is always null).
+/// Null when [quoteEventId] is non-null but resolution missed (encrypted
+/// or absent) — renderer shows "Note not available".
 @override final  NoteEntity? quotedNote;
 
 /// Create a copy of NoteEntity
