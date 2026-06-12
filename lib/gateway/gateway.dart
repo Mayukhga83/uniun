@@ -33,6 +33,7 @@ Future<void> gatewayEntryPoint(GatewayInitMessage init) async {
     final orchestrator = GatewayOrchestrator(
       isar: isar,
       activePubkey: init.pubkeyHex,
+      activePrivkey: init.privkeyHex,
     );
     final nip17Service = Nip17EncryptionService(
       isar,

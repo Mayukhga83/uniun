@@ -19,6 +19,12 @@ part 'event_queue_model.g.dart';
 /// Kinds used by the Marmot private channel protocol.
 const _privateChannelKinds = {9002, 9021, 9022, 9023, 9024, 9025};
 
+/// Superset of [_privateChannelKinds] plus other kinds whose full signed event
+/// JSON is stored in [EventQueueModel.content] and sent to the relay as-is via
+/// [toRawRelayMessage] — needed for tag shapes the shaped serializer cannot
+/// produce. NIP-37 draft wraps (`d` / `k` / `expiration` tags) join this set.
+const _rawPassthroughKinds = {..._privateChannelKinds, 31234};
+
 @Collection(ignore: {'copyWith'})
 @Name('EventQueue')
 class EventQueueModel {
@@ -134,13 +140,14 @@ extension EventQueueModelExtension on EventQueueModel {
   }
 }
 
-extension EventQueuePrivateChannelExt on EventQueueModel {
-  /// Returns true when this queue entry carries a Marmot private-channel event.
-  ///
-  /// For these events the full signed Nostr event JSON is stored in [content]
-  /// (rather than just the event's content string) so we can preserve the
-  /// `["h", groupId]` tag that [toSerializedRelayMessage] cannot produce.
+extension EventQueueRawPassthroughExt on EventQueueModel {
+  /// True only for Marmot private-channel events. Used by the routing strategy
+  /// that extracts the `h` tag — drafts must NOT match here.
   bool get isPrivateChannelEvent => _privateChannelKinds.contains(kind);
+
+  /// True for any kind that stores its full signed event JSON in [content] and
+  /// must be sent to the relay as-is via [toRawRelayMessage].
+  bool get isRawPassthroughEvent => _rawPassthroughKinds.contains(kind);
 
   /// Converts this entry to the relay wire format `["EVENT", {signed-event}]`.
   ///
