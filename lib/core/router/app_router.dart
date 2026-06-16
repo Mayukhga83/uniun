@@ -30,6 +30,7 @@ import 'package:uniun/features/private_channels/entry/pages/private_channel_entr
 import 'package:uniun/features/private_channels/join/pages/join_private_channel_page.dart';
 import 'package:uniun/features/profile/pages/user_profile_page.dart';
 import 'package:uniun/features/saved_notes/pages/saved_notes_page.dart';
+import 'package:uniun/features/surrounding/pages/surrounding_feed_page.dart';
 import 'package:uniun/features/settings/pages/blocked_users_page.dart';
 import 'package:uniun/features/settings/pages/edit_profile_page.dart';
 import 'package:uniun/features/settings/pages/privacy_policy_page.dart';
@@ -128,6 +129,11 @@ final GoRouter appRouter = GoRouter(
       name: AppRoutes.savedNotes,
       path: '/saved-notes',
       builder: (_, __) => const SavedNotesPage(),
+    ),
+    GoRoute(
+      name: AppRoutes.surrounding,
+      path: '/surrounding',
+      builder: (_, __) => const SurroundingFeedPage(),
     ),
     GoRoute(
       name: AppRoutes.blockedUsers,

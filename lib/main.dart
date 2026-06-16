@@ -12,6 +12,16 @@ import 'package:uniun/core/router/app_router.dart';
 import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/common/locator.dart';
 import 'package:uniun/domain/services/marmot_transport_service.dart';
+import 'package:uniun/features/mesh/engine/mesh_engine_main.dart';
+import 'package:uniun/features/mesh/service/mesh_service.dart';
+
+/// Entry point for the **headless mesh `FlutterEngine`**, invoked natively by the
+/// Android foreground service / the iOS-macOS AppDelegate. It MUST live in the root
+/// library (alongside `main`) because native `DartEntrypoint` / `run(withEntrypoint:)`
+/// resolve entry-point function names only in the root library. Delegates to
+/// [runMeshEngine]; `@pragma('vm:entry-point')` keeps it past tree-shaking.
+@pragma('vm:entry-point')
+Future<void> meshEngineMain() => runMeshEngine();
 
 Future<void> main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +40,10 @@ Future<void> main() async {
 
   await configureDependencies();
   getIt<MarmotTransportService>().start();
+  // Offline multi-transport mesh (LAN → BLE → Multipeer). No-op unless the user has
+  // opted in and is logged in. MeshService waits for the app to be foreground before
+  // touching the native host (Android's foreground-service start rule).
+  getIt<MeshService>().start();
 
   // Remove native splash immediately → SplashPage takes over
   FlutterNativeSplash.remove();

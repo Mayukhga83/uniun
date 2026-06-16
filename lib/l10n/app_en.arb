@@ -1353,5 +1353,41 @@
   "@actionReadMore": { "description": "Button that expands a note's text when it is longer than the collapsed line limit" },
 
   "actionReadLess": "Read less",
-  "@actionReadLess": { "description": "Button that collapses a previously expanded note's text" }
+  "@actionReadLess": { "description": "Button that collapses a previously expanded note's text" },
+
+  "settingsNearbySync": "Nearby Sync",
+  "@settingsNearbySync": { "description": "Settings section label for nearby-device sync" },
+
+  "meshTitle": "Sync with nearby devices",
+  "@meshTitle": { "description": "Title of the nearby-device sync toggle in settings" },
+
+  "meshSubtitle": "Beta · Sync your notes with your other devices on the same Wi-Fi — no internet needed.",
+  "@meshSubtitle": { "description": "Subtitle explaining the nearby-device sync toggle" },
+
+  "meshConnected": "{count} connected",
+  "@meshConnected": {
+    "description": "Live count of connected nearby devices",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "drawerSurrounding": "Surrounding",
+  "@drawerSurrounding": { "description": "Drawer entry opening the Surrounding (nearby) feed" },
+
+  "surroundingTitle": "Surrounding",
+  "@surroundingTitle": { "description": "App bar title of the Surrounding feed" },
+
+  "surroundingEmpty": "Nothing nearby yet",
+  "@surroundingEmpty": { "description": "Empty state title for the Surrounding feed" },
+
+  "surroundingEmptySub": "Notes broadcast by nearby devices on the mesh will appear here. They're cleared each day.",
+  "@surroundingEmptySub": { "description": "Empty state subtitle for the Surrounding feed" },
+
+  "surroundingSave": "Keep",
+  "@surroundingSave": { "description": "Button that saves a surrounding note before it is evicted" },
+
+  "surroundingSaved": "Saved",
+  "@surroundingSaved": { "description": "Snackbar shown after keeping a surrounding note" },
+
+  "surroundingSourceLabel": "📍 Nearby",
+  "@surroundingSourceLabel": { "description": "Source tag shown on a note received from a nearby device in the Surrounding feed" }
 }

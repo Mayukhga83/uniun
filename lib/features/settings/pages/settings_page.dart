@@ -9,6 +9,7 @@ import 'package:uniun/features/settings/cubit/storage_cubit.dart';
 import 'package:uniun/features/settings/widgets/ai_card.dart';
 import 'package:uniun/features/settings/widgets/cloud_provider_card.dart';
 import 'package:uniun/features/settings/widgets/identity_card.dart';
+import 'package:uniun/features/settings/widgets/mesh_card.dart';
 import 'package:uniun/features/settings/widgets/profile_card.dart';
 import 'package:uniun/features/settings/widgets/section_label.dart';
 import 'package:uniun/features/settings/widgets/settings_app_bar.dart';
@@ -100,6 +101,16 @@ class _SettingsContent extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const StorageCard(),
+
+              const SizedBox(height: 16),
+
+              // ── Nearby Sync ───────────────────────────────────────────────
+              SettingsSectionLabel(
+                l10n.settingsNearbySync,
+                icon: Icons.wifi_tethering_rounded,
+              ),
+              const SizedBox(height: 12),
+              const MeshCard(),
 
               const SizedBox(height: 36),
 

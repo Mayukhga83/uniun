@@ -1458,4 +1458,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionReadLess => 'Read less';
+
+  @override
+  String get settingsNearbySync => 'Nearby Sync';
+
+  @override
+  String get meshTitle => 'Sync with nearby devices';
+
+  @override
+  String get meshSubtitle =>
+      'Beta · Sync your notes with your other devices on the same Wi-Fi — no internet needed.';
+
+  @override
+  String meshConnected(int count) {
+    return '$count connected';
+  }
+
+  @override
+  String get drawerSurrounding => 'Surrounding';
+
+  @override
+  String get surroundingTitle => 'Surrounding';
+
+  @override
+  String get surroundingEmpty => 'Nothing nearby yet';
+
+  @override
+  String get surroundingEmptySub =>
+      'Notes broadcast by nearby devices on the mesh will appear here. They\'re cleared each day.';
+
+  @override
+  String get surroundingSave => 'Keep';
+
+  @override
+  String get surroundingSaved => 'Saved';
+
+  @override
+  String get surroundingSourceLabel => '📍 Nearby';
 }

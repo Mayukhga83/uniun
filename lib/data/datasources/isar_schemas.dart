@@ -27,6 +27,8 @@ import 'package:uniun/data/models/note_relation_model.dart';
 import 'package:uniun/data/models/notes/unread_note_model.dart';
 import 'package:uniun/data/models/blocked_user_model.dart';
 import 'package:uniun/data/models/deleted_note_model.dart';
+import 'package:uniun/data/models/surrounding_note_model.dart';
+import 'package:uniun/data/models/mesh/mesh_peer_state_model.dart';
 
 final List<CollectionSchema> isarSchemas = [
   NoteModelSchema,
@@ -55,5 +57,7 @@ final List<CollectionSchema> isarSchemas = [
   UnreadNoteModelSchema,
   BlockedUserModelSchema,
   DeletedNoteModelSchema,
+  SurroundingNoteModelSchema,
+  MeshPeerStateModelSchema,
 ];
 

@@ -20,6 +20,7 @@ abstract class AppRoutes {
   static const createChannel = 'createChannel';
   static const joinChannel = 'joinChannel';
   static const savedNotes = 'savedNotes';
+  static const surrounding = 'surrounding';
   static const blockedUsers = 'blockedUsers';
   static const channelDetail = 'channelDetail';
   static const graph = 'graph';

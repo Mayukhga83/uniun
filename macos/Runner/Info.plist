@@ -28,5 +28,13 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>UNIUN uses the local network to sync your notes directly with your other nearby devices, without the internet.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_uniun-sync._tcp</string>
+	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>UNIUN uses Bluetooth to sync your notes directly with nearby devices, without the internet.</string>
 </dict>
 </plist>

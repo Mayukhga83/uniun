@@ -13,6 +13,7 @@ abstract class SharedPreferencesModule {
 @singleton
 class AppSettingsStore {
   static const _kActiveModelId = 'app_settings.active_model_id';
+  static const _kMeshEnabled = 'app_settings.mesh_enabled';
 
   final SharedPreferences _prefs;
 
@@ -34,6 +35,13 @@ class AppSettingsStore {
       await _prefs.setString(_kActiveModelId, id.name);
     }
   }
+
+  /// Whether the offline Bluetooth/Wi-Fi mesh is enabled. Default off — opt-in for
+  /// privacy and battery.
+  bool get meshEnabled => _prefs.getBool(_kMeshEnabled) ?? false;
+
+  Future<void> setMeshEnabled(bool enabled) =>
+      _prefs.setBool(_kMeshEnabled, enabled);
 }
 
 /// Holds the logged-in user's public identity (pubkeyHex, npub, createdAt).

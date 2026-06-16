@@ -30,6 +30,8 @@ import 'package:uniun/data/datasources/llm/local_llm_data_source.dart' as _i937;
 import 'package:uniun/data/datasources/llm/local_llm_runner.dart' as _i937;
 import 'package:uniun/data/datasources/llm/remote_llm_data_source.dart'
     as _i141;
+import 'package:uniun/data/datasources/surrounding_read_state_store.dart'
+    as _i156;
 import 'package:uniun/data/datasources/tostore_module.dart' as _i740;
 import 'package:uniun/data/repositories/ai_model_repository_impl.dart' as _i72;
 import 'package:uniun/data/repositories/blocked_user_repository_impl.dart'
@@ -74,6 +76,8 @@ import 'package:uniun/data/repositories/shiv_repository_impl.dart' as _i412;
 import 'package:uniun/data/repositories/source_label_repository_impl.dart'
     as _i395;
 import 'package:uniun/data/repositories/storage_repository_impl.dart' as _i209;
+import 'package:uniun/data/repositories/surrounding_note_repository_impl.dart'
+    as _i670;
 import 'package:uniun/data/repositories/tostore_vector_repository_impl.dart'
     as _i831;
 import 'package:uniun/data/repositories/unread_repository_impl.dart' as _i1024;
@@ -119,6 +123,8 @@ import 'package:uniun/domain/repositories/shiv_repository.dart' as _i266;
 import 'package:uniun/domain/repositories/source_label_repository.dart'
     as _i633;
 import 'package:uniun/domain/repositories/storage_repository.dart' as _i240;
+import 'package:uniun/domain/repositories/surrounding_note_repository.dart'
+    as _i956;
 import 'package:uniun/domain/repositories/unread_repository.dart' as _i497;
 import 'package:uniun/domain/repositories/user_repository.dart' as _i103;
 import 'package:uniun/domain/repositories/vector_repository.dart' as _i739;
@@ -165,6 +171,7 @@ import 'package:uniun/features/channels/join/bloc/join_channel_bloc.dart'
     as _i750;
 import 'package:uniun/features/dm/chat/bloc/dm_chat_bloc.dart' as _i60;
 import 'package:uniun/features/dm/create/bloc/create_dm_bloc.dart' as _i399;
+import 'package:uniun/features/mesh/service/mesh_service.dart' as _i421;
 import 'package:uniun/features/private_channels/create/bloc/create_private_channel_bloc.dart'
     as _i636;
 import 'package:uniun/features/private_channels/detail/bloc/private_channel_detail_bloc.dart'
@@ -261,6 +268,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i634.LlmPreferencesDataSource>(
       () => _i634.LlmPreferencesDataSource(gh<_i460.SharedPreferences>()),
+    );
+    gh.singleton<_i156.SurroundingReadStateStore>(
+      () => _i156.SurroundingReadStateStore(gh<_i460.SharedPreferences>()),
     );
     gh.factory<_i836.FollowedNoteRepository>(
       () => _i107.FollowedNoteRepositoryImpl(isar: gh<_i214.Isar>()),
@@ -418,6 +428,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i858.GetSavedReferencesUseCase>(
       () => _i858.GetSavedReferencesUseCase(gh<_i43.SavedNoteRepository>()),
     );
+    gh.lazySingleton<_i421.MeshService>(
+      () => _i421.MeshService(
+        gh<_i214.Isar>(),
+        gh<_i103.UserRepository>(),
+        gh<_i107.AppSettingsStore>(),
+      ),
+    );
     gh.factory<_i240.StorageRepository>(
       () => _i209.StorageRepositoryImpl(isar: gh<_i214.Isar>()),
     );
@@ -552,6 +569,12 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i399.CreateDmBloc(
         gh<_i993.RelayRepository>(),
         gh<_i1023.CreateDmConversationUseCase>(),
+      ),
+    );
+    gh.factory<_i956.SurroundingNoteRepository>(
+      () => _i670.SurroundingNoteRepositoryImpl(
+        isar: gh<_i214.Isar>(),
+        readStore: gh<_i156.SurroundingReadStateStore>(),
       ),
     );
     gh.lazySingleton<_i475.PublishNoteUseCase>(

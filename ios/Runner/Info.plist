@@ -32,6 +32,20 @@
 		<string>UNIUN needs access to your photo library so you can attach images to your notes.</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>
 		<string>UNIUN needs permission to save images to your photo library.</string>
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>UNIUN uses the local network to sync your notes directly with your other nearby devices, without the internet.</string>
+		<key>NSBonjourServices</key>
+		<array>
+			<string>_uniun-sync._tcp</string>
+		</array>
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>UNIUN uses Bluetooth to sync your notes directly with nearby devices, without the internet.</string>
+		<!-- Keep already-connected BLE links syncing while backgrounded (central
+		     only; new-peer discovery is foreground). -->
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>bluetooth-central</string>
+		</array>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

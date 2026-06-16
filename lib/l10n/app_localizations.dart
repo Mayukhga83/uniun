@@ -2751,6 +2751,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Read less'**
   String get actionReadLess;
+
+  /// Settings section label for nearby-device sync
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby Sync'**
+  String get settingsNearbySync;
+
+  /// Title of the nearby-device sync toggle in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with nearby devices'**
+  String get meshTitle;
+
+  /// Subtitle explaining the nearby-device sync toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Beta · Sync your notes with your other devices on the same Wi-Fi — no internet needed.'**
+  String get meshSubtitle;
+
+  /// Live count of connected nearby devices
+  ///
+  /// In en, this message translates to:
+  /// **'{count} connected'**
+  String meshConnected(int count);
+
+  /// Drawer entry opening the Surrounding (nearby) feed
+  ///
+  /// In en, this message translates to:
+  /// **'Surrounding'**
+  String get drawerSurrounding;
+
+  /// App bar title of the Surrounding feed
+  ///
+  /// In en, this message translates to:
+  /// **'Surrounding'**
+  String get surroundingTitle;
+
+  /// Empty state title for the Surrounding feed
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing nearby yet'**
+  String get surroundingEmpty;
+
+  /// Empty state subtitle for the Surrounding feed
+  ///
+  /// In en, this message translates to:
+  /// **'Notes broadcast by nearby devices on the mesh will appear here. They\'re cleared each day.'**
+  String get surroundingEmptySub;
+
+  /// Button that saves a surrounding note before it is evicted
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get surroundingSave;
+
+  /// Snackbar shown after keeping a surrounding note
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get surroundingSaved;
+
+  /// Source tag shown on a note received from a nearby device in the Surrounding feed
+  ///
+  /// In en, this message translates to:
+  /// **'📍 Nearby'**
+  String get surroundingSourceLabel;
 }
 
 class _AppLocalizationsDelegate

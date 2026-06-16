@@ -184,11 +184,16 @@ class _YourIdentityKeysPageState extends State<YourIdentityKeysPage> {
                 OnboardingAppBar(onBack: () => Navigator.pop(context)),
 
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  child: LayoutBuilder(
+                    builder: (context, innerC) => SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: ConstrainedBox(
+                        constraints:
+                            BoxConstraints(minHeight: innerC.maxHeight),
+                        child: IntrinsicHeight(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                         SizedBox(height: topGap),
 
                         Text(
@@ -340,7 +345,10 @@ class _YourIdentityKeysPageState extends State<YourIdentityKeysPage> {
                         ),
 
                         const SizedBox(height: 8),
-                      ],
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),

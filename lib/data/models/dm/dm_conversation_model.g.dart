@@ -40,7 +40,7 @@ const DmConversationModelSchema = CollectionSchema(
       id: 9140102187253743011,
       name: r'otherPubkey',
       unique: true,
-      replace: false,
+      replace: true,
       properties: [
         IndexPropertySchema(
           name: r'otherPubkey',
@@ -93,7 +93,6 @@ DmConversationModel _dmConversationModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = DmConversationModel();
-  object.id = id;
   object.otherPubkey = reader.readString(offsets[0]);
   object.relays = reader.readStringList(offsets[1]) ?? [];
   return object;
@@ -129,9 +128,7 @@ void _dmConversationModelAttach(
   IsarCollection<dynamic> col,
   Id id,
   DmConversationModel object,
-) {
-  object.id = id;
-}
+) {}
 
 extension DmConversationModelByIndex on IsarCollection<DmConversationModel> {
   Future<DmConversationModel?> getByOtherPubkey(String otherPubkey) {
