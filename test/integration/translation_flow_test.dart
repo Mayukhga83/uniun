@@ -142,7 +142,7 @@ void main() {
     expect(result.getOrElse(() => null), 'नमस्ते दुनिया');
     expect(llm.lastPrompt, contains('Hindi'));
     expect(llm.lastPrompt, contains('hello world #tag'));
-    expect(llm.lastPrompt, contains('Never translate a URL'));
+    expect(llm.lastPrompt, contains('never translate a URL'));
   });
 
   test('translation runs at the foreground tier, above background producers',

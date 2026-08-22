@@ -211,8 +211,8 @@ class NoteCardCubit extends Cubit<NoteCardState> {
 
   /// Translates the note body into [target] and swaps it into the card.
   ///
-  /// Idempotent per language: re-translating into the language already showing
-  /// just un-hides it rather than burning a second inference call.
+  /// Re-translating into the language already held un-hides it instead of
+  /// spending a second inference call.
   Future<void> translate(TranslationLanguage target) async {
     if (state.isTranslating) return;
     if (state.translation != null && state.translationLanguage == target.code) {
@@ -230,11 +230,8 @@ class NoteCardCubit extends Cubit<NoteCardState> {
         translationError: f.toMessage(),
       )),
       (text) {
-        // null = nothing usable came back: the model emitted the NOOP
-        // sentinel or echoed the source. We CANNOT tell that apart from "the
-        // note was already in that language", so say what we know instead of
-        // guessing — a small model failing on a language it can't write is
-        // the far more common cause.
+        // Not distinguishable from "already in that language" — report the
+        // failure, don't guess a cause.
         if (text == null) {
           emit(state.copyWith(
             isTranslating: false,
@@ -252,8 +249,8 @@ class NoteCardCubit extends Cubit<NoteCardState> {
     );
   }
 
-  /// Flips between the translated body and the original. Free — the
-  /// translation stays in state either way.
+  /// Flips between the translated body and the original; the translation stays
+  /// in state, so neither direction re-runs inference.
   void toggleOriginal() =>
       emit(state.copyWith(showOriginal: !state.showOriginal));
 

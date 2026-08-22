@@ -261,15 +261,12 @@ class TranslateNoteInput {
 
 /// Translates one note into [TranslateNoteInput.target].
 ///
-/// Deliberately a thin wrapper over [LlmRepository.generateOneShot] rather than
-/// a backend of its own: that call already dispatches local-vs-cloud off the
-/// active [LlmBackendType], so translation runs on the on-device model or on
-/// UNIUN Cloud with no branching here.
+/// Wraps [LlmRepository.generateOneShot], which already dispatches
+/// local-vs-cloud off the active [LlmBackendType] — no backend branching here.
 ///
-/// Returns `Right(null)` when no usable translation came back — the model
-/// emitted the NOOP sentinel, or echoed the source unchanged. Both mean "there
-/// is nothing to show", and they are NOT distinguishable from "the note was
-/// already in that language", so the caller must not claim that it was.
+/// `Right(null)` means no usable translation: NOOP sentinel, echoed source,
+/// corrupt bytes, or a repetition loop. These are indistinguishable from "the
+/// note was already in that language", so callers must not report it as such.
 @lazySingleton
 class TranslateNoteUseCase
     extends UseCase<Either<Failure, String?>, TranslateNoteInput> {
@@ -285,9 +282,8 @@ class TranslateNoteUseCase
       content: input.content,
       target: input.target,
     );
-    // Translations run longer than the source: scripts like Devanagari and
-    // Japanese tokenise far less densely than Latin, so budget generously
-    // rather than truncating mid-sentence.
+    // Devanagari/Japanese tokenise less densely than Latin, so the output
+    // needs more room than the source.
     final result = await _repo.generateOneShot(
       prompt: prompt,
       maxTokens: 2048,
@@ -297,13 +293,9 @@ class TranslateNoteUseCase
       final text = raw?.trim();
       if (text == null || text.isEmpty) return null;
       if (text.toUpperCase() == TranslationPrompt.noopSentinel) return null;
-      // Echoing the source back is a failure dressed as success — small models
-      // do this for languages they can't write. Treat it as no translation
-      // rather than swapping the body for an identical copy of itself.
+      // Small models echo the source for languages they can't write.
       if (text == input.content.trim()) return null;
-      // Broken bytes or a repetition loop: an under-sized model pushed into a
-      // script it cannot write. Showing the wreckage as a translation is worse
-      // than telling the user to try a stronger model.
+      // Broken bytes / repetition loop — same failure, different shape.
       if (LlmTextSanitizer.looksCorrupted(text)) return null;
       if (LlmTextSanitizer.looksDegenerate(text)) return null;
       return text;

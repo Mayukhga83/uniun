@@ -1,12 +1,8 @@
-/// Target languages offered by the note-translation feature.
+/// Target languages offered by note translation.
 ///
-/// Deliberately NOT tied to [AppLocalizations.supportedLocales] — that list is
-/// the languages UNIUN's own UI is translated into (currently en + hi), while
-/// this is the set a user may want a *note* rendered in. The model does the
-/// work, so the list is limited only by what the active model handles well.
-///
-/// [nativeName] is what the picker shows: a user looking for their language
-/// scans for "हिन्दी", not "Hindi".
+/// Separate from `AppLocalizations.supportedLocales`, which is the set the UI
+/// itself is translated into (en + hi). The model does the translating, so this
+/// list is bounded by model capability, not by UI localisation.
 class TranslationLanguage {
   const TranslationLanguage(this.code, this.englishName, this.nativeName);
 
@@ -45,9 +41,8 @@ class TranslationLanguage {
     TranslationLanguage('tr', 'Turkish', 'Türkçe'),
   ];
 
-  /// Falls back to English rather than returning null — every caller here has
-  /// to translate into *something*, and a stored code can outlive its entry
-  /// (list trimmed, or a locale like `zh-Hant` narrowed to `zh`).
+  /// Falls back to English rather than null: a stored code can outlive its
+  /// entry, and every caller needs a concrete target.
   static TranslationLanguage fromCode(String? code) {
     if (code == null) return all.first;
     final primary = code.split(RegExp('[-_]')).first.toLowerCase();

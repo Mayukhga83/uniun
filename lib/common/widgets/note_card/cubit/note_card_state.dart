@@ -30,9 +30,8 @@ class NoteCardState {
   /// Whether the user deleted this note locally — the card collapses itself.
   final bool isRemoved;
 
-  /// Translated body, or null if this note hasn't been translated. Held in
-  /// memory only: a translation is a view of the note, never part of it, and
-  /// is never written back to Isar or published.
+  /// Translated body, null if untranslated. In-memory only — never written to
+  /// Isar, published, or embedded.
   final String? translation;
 
   /// BCP-47 code [translation] is in — drives the "Translated to X" footer.
@@ -40,12 +39,11 @@ class NoteCardState {
 
   final bool isTranslating;
 
-  /// User tapped "Show original" — [translation] is kept so toggling back is
-  /// instant and costs no second inference call.
+  /// User tapped "Show original"; [translation] is retained so toggling back
+  /// costs nothing.
   final bool showOriginal;
 
-  /// Set when translation failed, or when the note was already in the target
-  /// language. Surfaced as a snackbar, then cleared.
+  /// Set on failure; surfaced as a snackbar, then cleared.
   final String? translationError;
 
   /// Whether the card should render [translation] in place of the note body.
