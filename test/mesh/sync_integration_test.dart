@@ -304,15 +304,22 @@ void main() {
       final links = createPairedLinks();
       final sessionA = LinkSession(links.a);
       final sessionB = LinkSession(links.b);
+      // Wall-clock guard only — it exists so a wedged reconcile fails instead
+      // of hanging the suite, and is NOT an assertion about how fast sync is.
+      // 5s was tight enough that a loaded CI runner timed out mid-reconcile
+      // (this test drives two real Isar peers across ~10 record scopes plus
+      // signing), leaving B empty and failing the first expect with a bare
+      // "Expected: not null".
+      const kReconcileTimeout = Duration(seconds: 60);
       final reconcilerA = Nip77Reconciler(
         scopes: negScopesA,
         send: sessionA.send,
-        timeout: const Duration(seconds: 5),
+        timeout: kReconcileTimeout,
       );
       final reconcilerB = Nip77Reconciler(
         scopes: negScopesB,
         send: sessionB.send,
-        timeout: const Duration(seconds: 5),
+        timeout: kReconcileTimeout,
       );
       sessionA.onAppMessage(reconcilerA.handleMessage);
       sessionB.onAppMessage(reconcilerB.handleMessage);
