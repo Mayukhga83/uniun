@@ -5600,17 +5600,17 @@ abstract class AppLocalizations {
   /// **'Change'**
   String get translationChangeLanguage;
 
-  /// No description provided for @translationAlreadyInLanguage.
-  ///
-  /// In en, this message translates to:
-  /// **'This note is already in {language}.'**
-  String translationAlreadyInLanguage(String language);
-
   /// No description provided for @translationFailed.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t translate this note. Try again.'**
   String get translationFailed;
+
+  /// No description provided for @translationNotProduced.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI model couldn\'t translate this note. Try a larger model or UNIUN Cloud.'**
+  String get translationNotProduced;
 }
 
 class _AppLocalizationsDelegate

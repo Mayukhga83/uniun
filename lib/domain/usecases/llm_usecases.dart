@@ -265,9 +265,10 @@ class TranslateNoteInput {
 /// active [LlmBackendType], so translation runs on the on-device model or on
 /// UNIUN Cloud with no branching here.
 ///
-/// Returns `Right(null)` when the note is already in the target language (the
-/// model answered with the NOOP sentinel) so the caller can say so instead of
-/// rendering an identical "translation".
+/// Returns `Right(null)` when no usable translation came back — the model
+/// emitted the NOOP sentinel, or echoed the source unchanged. Both mean "there
+/// is nothing to show", and they are NOT distinguishable from "the note was
+/// already in that language", so the caller must not claim that it was.
 @lazySingleton
 class TranslateNoteUseCase
     extends UseCase<Either<Failure, String?>, TranslateNoteInput> {
@@ -295,6 +296,10 @@ class TranslateNoteUseCase
       final text = raw?.trim();
       if (text == null || text.isEmpty) return null;
       if (text.toUpperCase() == TranslationPrompt.noopSentinel) return null;
+      // Echoing the source back is a failure dressed as success — small models
+      // do this for languages they can't write. Treat it as no translation
+      // rather than swapping the body for an identical copy of itself.
+      if (text == input.content.trim()) return null;
       return text;
     });
   }

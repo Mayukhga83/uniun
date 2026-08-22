@@ -38,11 +38,10 @@ class TranslationFooter extends StatelessWidget {
       listener: (context, state) {
         final err = state.translationError;
         if (err == null) return;
-        final lang = TranslationLanguage.fromCode(state.translationLanguage);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-            err == NoteCardCubit.kAlreadyInTargetLanguage
-                ? l10n.translationAlreadyInLanguage(lang.nativeName)
+            err == NoteCardCubit.kNoTranslationProduced
+                ? l10n.translationNotProduced
                 : l10n.translationFailed,
           ),
           behavior: SnackBarBehavior.floating,

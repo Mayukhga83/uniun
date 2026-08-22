@@ -230,12 +230,15 @@ class NoteCardCubit extends Cubit<NoteCardState> {
         translationError: f.toMessage(),
       )),
       (text) {
-        // null = the model reported the note is already in the target
-        // language. Not an error, but the card has nothing to swap in.
+        // null = nothing usable came back: the model emitted the NOOP
+        // sentinel or echoed the source. We CANNOT tell that apart from "the
+        // note was already in that language", so say what we know instead of
+        // guessing — a small model failing on a language it can't write is
+        // the far more common cause.
         if (text == null) {
           emit(state.copyWith(
             isTranslating: false,
-            translationError: kAlreadyInTargetLanguage,
+            translationError: kNoTranslationProduced,
           ));
           return;
         }
@@ -257,10 +260,9 @@ class NoteCardCubit extends Cubit<NoteCardState> {
   void clearTranslationError() =>
       emit(state.copyWith(clearTranslationError: true));
 
-  /// Marker for "already in the target language". The cubit has no
+  /// Marker for "the model returned no usable translation". The cubit has no
   /// BuildContext, so the widget layer swaps this for a localised string.
-  static const String kAlreadyInTargetLanguage =
-      '__already_in_target_language__';
+  static const String kNoTranslationProduced = '__no_translation_produced__';
 
   @override
   Future<void> close() {

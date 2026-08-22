@@ -3087,10 +3087,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translationChangeLanguage => 'Change';
 
   @override
-  String translationAlreadyInLanguage(String language) {
-    return 'This note is already in $language.';
-  }
+  String get translationFailed => 'Couldn\'t translate this note. Try again.';
 
   @override
-  String get translationFailed => 'Couldn\'t translate this note. Try again.';
+  String get translationNotProduced =>
+      'The AI model couldn\'t translate this note. Try a larger model or UNIUN Cloud.';
 }

@@ -121,7 +121,7 @@ void main() {
     expect(captured.target.code, 'ja');
   });
 
-  test('Right(null) — already in that language — is an error, not a body swap',
+  test('Right(null) — no usable translation — is surfaced, not a body swap',
       () async {
     when(() => translate.call(any()))
         .thenAnswer((_) async => const Right(null));
@@ -132,7 +132,7 @@ void main() {
     expect(cubit.state.showsTranslation, isFalse);
     expect(
       cubit.state.translationError,
-      NoteCardCubit.kAlreadyInTargetLanguage,
+      NoteCardCubit.kNoTranslationProduced,
     );
   });
 
@@ -148,7 +148,7 @@ void main() {
     expect(cubit.state.translationError, isNotNull);
     expect(
       cubit.state.translationError,
-      isNot(NoteCardCubit.kAlreadyInTargetLanguage),
+      isNot(NoteCardCubit.kNoTranslationProduced),
     );
   });
 

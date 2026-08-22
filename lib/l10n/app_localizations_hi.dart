@@ -3106,11 +3106,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get translationChangeLanguage => 'बदलें';
 
   @override
-  String translationAlreadyInLanguage(String language) {
-    return 'यह नोट पहले से ही $language में है।';
-  }
-
-  @override
   String get translationFailed =>
       'इस नोट का अनुवाद नहीं हो सका। पुनः प्रयास करें।';
+
+  @override
+  String get translationNotProduced =>
+      'AI मॉडल इस नोट का अनुवाद नहीं कर सका। बड़ा मॉडल या UNIUN Cloud आज़माएँ।';
 }

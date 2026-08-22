@@ -71,17 +71,28 @@ void main() {
     translate = TranslateNoteUseCase(llm);
   });
 
-  /// Mirrors what NoteCardMenu._onTranslate does: reuse the stored language,
-  /// or fall back to the app locale on first run and remember it.
-  Future<TranslationLanguage> resolveTarget(String appLocale) async {
+  /// Mirrors NoteCardMenu._onTranslate: the picker opens every time,
+  /// preselected with the stored language (app locale until one is chosen).
+  /// [pick] stands in for what the user taps — null means they confirmed the
+  /// preselection, which is the one-tap common case.
+  Future<TranslationLanguage> resolveTarget(
+    String appLocale, {
+    String? pick,
+  }) async {
     final stored = (await getLang.call()).fold((_) => null, (c) => c);
-    if (stored != null) return TranslationLanguage.fromCode(stored);
-    final seeded = TranslationLanguage.fromCode(appLocale);
-    await setLang.call(seeded.code);
-    return seeded;
+    final seed = TranslationLanguage.fromCode(stored ?? appLocale);
+    final picked = pick == null ? seed : TranslationLanguage.fromCode(pick);
+    if (picked.code != stored) await setLang.call(picked.code);
+    return picked;
   }
 
-  test('first run seeds from the app locale, persists, and is reused after',
+  /// What the sheet would preselect on the next translate.
+  Future<String> nextSeed(String appLocale) async {
+    final stored = (await getLang.call()).fold((_) => null, (c) => c);
+    return TranslationLanguage.fromCode(stored ?? appLocale).code;
+  }
+
+  test('first run preselects the app locale and persists what is confirmed',
       () async {
     expect((await getLang.call()).getOrElse(() => 'x'), isNull);
 
@@ -89,10 +100,34 @@ void main() {
     expect(first.code, 'hi');
     expect((await getLang.call()).getOrElse(() => null), 'hi');
 
-    // A later note translates with no picker involved — even if the app
-    // locale has since changed, the user's explicit choice wins.
-    final second = await resolveTarget('en');
-    expect(second.code, 'hi');
+    // Even if the app locale later changes, the user's explicit choice is
+    // what the picker comes back preselected with.
+    expect(await nextSeed('en'), 'hi');
+  });
+
+  test('picking a different language sticks — the NEXT translate preselects '
+      'it, and does not fall back to the app locale', () async {
+    // Regression: reported as "picked Gujarati, next note went back to
+    // English". The stored choice must win over the app locale every time.
+    await resolveTarget('en');
+    expect(await nextSeed('en'), 'en');
+
+    final second = await resolveTarget('en', pick: 'gu');
+    expect(second.code, 'gu');
+    expect((await getLang.call()).getOrElse(() => null), 'gu');
+
+    expect(await nextSeed('en'), 'gu');
+    final third = await resolveTarget('en');
+    expect(third.code, 'gu');
+  });
+
+  test('confirming the preselection does not rewrite the stored value',
+      () async {
+    await resolveTarget('en', pick: 'gu');
+    for (var i = 0; i < 3; i++) {
+      expect((await resolveTarget('en')).code, 'gu');
+    }
+    expect((await getLang.call()).getOrElse(() => null), 'gu');
   });
 
   test('the prompt reaching the model names the target and carries the note',
@@ -123,7 +158,7 @@ void main() {
     expect(llm.lastMaxTokens, greaterThan(1024));
   });
 
-  test('a note already in the target language yields null, not echoed text',
+  test('the NOOP sentinel yields null rather than leaking into the card',
       () async {
     llm.reply = TranslationPrompt.noopSentinel;
 
@@ -134,6 +169,28 @@ void main() {
 
     expect(result.isRight(), isTrue);
     expect(result.getOrElse(() => 'sentinel-leaked'), isNull);
+  });
+
+  test('a model that echoes the source back counts as no translation', () async {
+    // Observed on device: Qwen3 0.6B handed back the English source when asked
+    // for Gujarati. Swapping the body for an identical copy would look like a
+    // successful translation.
+    llm.reply = 'hello world';
+    final result = await translate.call(TranslateNoteInput(
+      content: 'hello world',
+      target: TranslationLanguage.fromCode('gu'),
+    ));
+    expect(result.getOrElse(() => 'leaked'), isNull);
+  });
+
+  test('an echo differing only by surrounding whitespace is still an echo',
+      () async {
+    llm.reply = '  hello world \n';
+    final result = await translate.call(TranslateNoteInput(
+      content: 'hello world',
+      target: TranslationLanguage.fromCode('gu'),
+    ));
+    expect(result.getOrElse(() => 'leaked'), isNull);
   });
 
   test('a blank or whitespace-only model answer is treated as no translation',

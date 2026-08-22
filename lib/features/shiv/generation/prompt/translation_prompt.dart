@@ -36,8 +36,23 @@ class TranslationPrompt {
           'body, or an identifier like an npub/hex key.')
       ..writeln('- Keep the original tone and register. Do not summarise, '
           'expand, censor, or answer the note — only translate it.')
-      ..writeln('- If the note is ALREADY entirely in ${target.englishName}, '
-          'output exactly this token and nothing else: $noopSentinel')
+      // Only fires for code-mixed input; a plain single-language note ignores
+      // it. Named explicitly because romanised Hindi has no standard spelling,
+      // so models otherwise tend to transliterate it back instead of reading
+      // it for meaning.
+      ..writeln('- If (and only if) the note is code-mixed or romanised '
+          '(e.g. Hinglish, Arabizi — a language typed in Latin script and '
+          'mixed with English), read it for MEANING rather than script: '
+          'translate what the author is actually saying, never transliterate '
+          'word-for-word.')
+      // Deliberately NOT an "already in this language" escape: a small model
+      // reaches for the easiest exit, so a 0.6B asked for a language it cannot
+      // write would emit the sentinel and we'd wrongly tell the user their
+      // note was already in that language. Reserved for a genuine inability,
+      // which the caller reports honestly.
+      ..writeln('- Always produce a translation if you can. Only if you are '
+          'genuinely unable to write ${target.englishName} at all, output '
+          'exactly this token and nothing else: $noopSentinel')
       ..writeln()
       ..writeln('NOTE:')
       ..writeln(content)

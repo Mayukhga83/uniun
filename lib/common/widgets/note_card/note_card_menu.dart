@@ -103,28 +103,30 @@ class NoteCardMenu extends StatelessWidget {
 
   /// Translate this note.
   ///
-  /// The language sheet opens ONLY when no language has been chosen yet — it
-  /// seeds from the app's own locale so the first run is confirm-and-go. After
-  /// that this is a single tap; the footer's "Change" action re-opens the
-  /// sheet. See issue #43.
+  /// The picker opens on EVERY translate, preselected with the last language
+  /// used (app locale on first run), so confirming is one tap but the target
+  /// is never a surprise — the previous "ask once, then silently reuse"
+  /// behaviour made a wrong stored language impossible to notice. See #43.
   Future<void> _onTranslate(BuildContext context) async {
     final stored = await getIt<GetTranslationLanguageUseCase>().call();
     final storedCode = stored.fold((_) => null, (c) => c);
+    if (!context.mounted) return;
 
-    var target = TranslationLanguage.fromCode(storedCode);
-    if (storedCode == null) {
-      if (!context.mounted) return;
-      // No choice yet — seed the picker from the app locale.
-      final localeCode = Localizations.localeOf(context).languageCode;
-      final picked = await TranslateLanguageSheet.show(
-        context,
-        initial: TranslationLanguage.fromCode(localeCode),
-      );
-      if (picked == null) return;
-      target = picked;
+    // Fall back to the app locale only until the user has chosen once.
+    final seed = TranslationLanguage.fromCode(
+      storedCode ?? Localizations.localeOf(context).languageCode,
+    );
+    final picked = await TranslateLanguageSheet.show(
+      context,
+      initial: seed,
+      seededFromAppLocale: storedCode == null,
+    );
+    if (picked == null) return;
+
+    if (picked.code != storedCode) {
       await getIt<SetTranslationLanguageUseCase>().call(picked.code);
     }
-    await cubit.translate(target);
+    await cubit.translate(picked);
   }
 
   Future<void> _onDelete(BuildContext context) async {

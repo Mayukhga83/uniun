@@ -483,7 +483,10 @@ Future<void> _runOneGana({
       );
       _log('  feeding prompt');
       try {
-        await chat.addQueryChunk(gemma_msg.Message.text(text: prompt));
+        // isUser: true — Message.text defaults to false, which feeds the
+        // prompt as an assistant turn and breaks instruction-following.
+        await chat.addQueryChunk(
+            gemma_msg.Message.text(text: prompt, isUser: true));
         _log('  streaming tokens...');
         final buf = StringBuffer();
         await for (final response in chat.generateChatResponseAsync()) {

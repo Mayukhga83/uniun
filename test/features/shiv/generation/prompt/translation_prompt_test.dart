@@ -34,8 +34,15 @@ void main() {
     expect(build('x'), contains('Never translate a URL'));
   });
 
-  test('offers the NOOP sentinel for already-translated notes', () {
-    expect(build('x'), contains(TranslationPrompt.noopSentinel));
+  test('the NOOP sentinel is reserved for genuine inability, not an easy '
+      'already-in-this-language exit', () {
+    final p = build('x');
+    expect(p, contains(TranslationPrompt.noopSentinel));
+    expect(p, contains('Always produce a translation if you can'));
+    expect(p, contains('genuinely unable'));
+    // A small model reaches for the cheapest exit; offering "already in this
+    // language" as one made it lie about notes it simply could not translate.
+    expect(p, isNot(contains('ALREADY entirely in')));
   });
 
   test('note content is embedded verbatim — newlines and markup survive', () {
@@ -47,6 +54,19 @@ void main() {
     for (final content in ['مرحبا بالعالم', '🎉 שלום', '日本語テキスト']) {
       expect(build(content), contains(content), reason: content);
     }
+  });
+
+  test('the code-mix rule is conditional so a plain note is unaffected', () {
+    final p = build('just a normal english sentence');
+    // Present, but gated — it must not read as an instruction that applies to
+    // every note, or a small model may mangle plain single-language input.
+    expect(p, contains('code-mixed'));
+    expect(p, contains('If (and only if)'));
+  });
+
+  test('romanised Hinglish content survives into the prompt verbatim', () {
+    const content = 'kal milte hain yaar, party bohot mast thi';
+    expect(build(content), contains(content));
   });
 
   test('an empty note still produces a well-formed prompt', () {

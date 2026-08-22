@@ -186,7 +186,12 @@ class AIModelRunner {
             historyBudget: _historyBudgetTokens(params),
           );
 
-          await chat.addQueryChunk(Message.text(text: prompt));
+          // isUser MUST be set: Message.text defaults it to false, which
+          // makes flutter_gemma wrap the prompt as an ASSISTANT/tool turn
+          // (`_formatToolResponseContent`). The model then sees its own
+          // instructions as something it already said and stops following
+          // them — the prompt is effectively ignored.
+          await chat.addQueryChunk(Message.text(text: prompt, isUser: true));
           final scrubber = _StopTokenScrubber();
           await for (final response in chat.generateChatResponseAsync()) {
             if (cancel.isCancelled) {
@@ -290,7 +295,9 @@ class AIModelRunner {
         isThinking: params?.isThinking ?? false,
       );
 
-      await oneShot.addQueryChunk(Message.text(text: prompt));
+      // isUser: true — see the note in sendAndStream; without it the prompt
+      // is fed as an assistant turn and instruction-following collapses.
+      await oneShot.addQueryChunk(Message.text(text: prompt, isUser: true));
       final buffer = StringBuffer();
       final scrubber = _StopTokenScrubber();
       await for (final response in oneShot.generateChatResponseAsync()) {

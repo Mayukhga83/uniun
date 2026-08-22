@@ -10,15 +10,24 @@ import 'package:uniun/l10n/app_localizations.dart';
 ///
 /// Returns the picked [TranslationLanguage], or null if dismissed.
 class TranslateLanguageSheet extends StatefulWidget {
-  const TranslateLanguageSheet({super.key, required this.initial});
+  const TranslateLanguageSheet({
+    super.key,
+    required this.initial,
+    this.seededFromAppLocale = false,
+  });
 
   /// Pre-selected on open — the persisted choice, or the app locale on first
   /// run so the common case is confirm-and-go.
   final TranslationLanguage initial;
 
+  /// True only on first run, when [initial] is a guess from the app locale
+  /// rather than something the user picked — drives the explanatory hint.
+  final bool seededFromAppLocale;
+
   static Future<TranslationLanguage?> show(
     BuildContext context, {
     required TranslationLanguage initial,
+    bool seededFromAppLocale = false,
   }) {
     return showModalBottomSheet<TranslationLanguage>(
       context: context,
@@ -27,7 +36,10 @@ class TranslateLanguageSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => TranslateLanguageSheet(initial: initial),
+      builder: (_) => TranslateLanguageSheet(
+        initial: initial,
+        seededFromAppLocale: seededFromAppLocale,
+      ),
     );
   }
 
@@ -37,6 +49,16 @@ class TranslateLanguageSheet extends StatefulWidget {
 
 class _TranslateLanguageSheetState extends State<TranslateLanguageSheet> {
   late TranslationLanguage _selected = widget.initial;
+
+  /// [TranslateLanguageSheet.initial] hoisted to the top, then the rest in
+  /// catalogue order. Computed ONCE from `initial` rather than from
+  /// [_selected] so the list never reorders under the user's finger while
+  /// they are choosing.
+  late final List<TranslationLanguage> _ordered = [
+    widget.initial,
+    for (final l in TranslationLanguage.all)
+      if (l.code != widget.initial.code) l,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -81,11 +103,11 @@ class _TranslateLanguageSheetState extends State<TranslateLanguageSheet> {
               child: ListView.builder(
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
-                itemCount: TranslationLanguage.all.length,
+                itemCount: _ordered.length,
                 itemBuilder: (context, i) {
-                  final lang = TranslationLanguage.all[i];
+                  final lang = _ordered[i];
                   final isSelected = lang.code == _selected.code;
-                  return ListTile(
+                  final tile = ListTile(
                     dense: true,
                     onTap: () => setState(() => _selected = lang),
                     leading: Icon(
@@ -106,10 +128,12 @@ class _TranslateLanguageSheetState extends State<TranslateLanguageSheet> {
                         color: colorScheme.onSurface,
                       ),
                     ),
-                    // Endonym alone isn't always enough to identify a row, and
-                    // the app-language row is worth calling out on first run.
+                    // Endonym alone isn't always enough to identify a row.
+                    // The "from your app language" note is only honest on the
+                    // first run, before the user has chosen for themselves.
                     subtitle: Text(
-                      lang.code == widget.initial.code
+                      widget.seededFromAppLocale &&
+                              lang.code == widget.initial.code
                           ? '${lang.englishName} · ${l10n.translateSheetSettingsHint}'
                           : lang.englishName,
                       style: TextStyle(
@@ -117,6 +141,20 @@ class _TranslateLanguageSheetState extends State<TranslateLanguageSheet> {
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
+                  );
+                  // Rule under the pinned current language, separating it
+                  // from the full catalogue below.
+                  if (i != 0) return tile;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      tile,
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      ),
+                    ],
                   );
                 },
               ),
