@@ -193,6 +193,28 @@ void main() {
     expect(result.getOrElse(() => 'leaked'), isNull);
   });
 
+  test('corrupted model output is rejected, not shown as a translation',
+      () async {
+    // Real Qwen3 0.6B output captured on device, asked for a script it could
+    // not write: partially-repaired bytes plus replacement chars.
+    llm.reply = 'UNIUN \u0995\u09c1\u09b2\u09c7 \uFFFD\u00ae\u09b0\u09bf\u0120\u00e0\u00a6\u00b8';
+    final result = await translate.call(TranslateNoteInput(
+      content: 'hello world',
+      target: TranslationLanguage.fromCode('bn'),
+    ));
+    expect(result.getOrElse(() => 'leaked'), isNull);
+  });
+
+  test('a repetition loop is rejected, not shown as a translation', () async {
+    llm.reply = 'kare pro kule kare pro kule kare pro kule kare pro kule '
+        'kare pro kule kare pro kule';
+    final result = await translate.call(TranslateNoteInput(
+      content: 'hello world',
+      target: TranslationLanguage.fromCode('gu'),
+    ));
+    expect(result.getOrElse(() => 'leaked'), isNull);
+  });
+
   test('a blank or whitespace-only model answer is treated as no translation',
       () async {
     for (final blank in ['', '   ', '\n\n']) {

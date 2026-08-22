@@ -83,6 +83,43 @@ class LlmTextSanitizer {
     return s.trim();
   }
 
+  /// True when [s] is wreckage rather than text, and should be discarded
+  /// instead of shown.
+  ///
+  /// [clean] repairs what it can; this answers whether the repair actually
+  /// worked. Small models asked for a script they cannot write return either
+  /// broken bytes or a stuck loop, and rendering that as a "translation" is
+  /// worse than admitting failure.
+  static bool looksCorrupted(String s) {
+    if (s.isEmpty) return false;
+    // U+FFFD — a decode already failed irrecoverably upstream.
+    if (s.contains('\uFFFD')) return true;
+    // Remapped GPT-2 byte chars that survived [clean]: repair was attempted
+    // and could not produce valid UTF-8.
+    for (final c in s.codeUnits) {
+      if (c >= 0x0100 && c <= 0x0143) return true;
+    }
+    return false;
+  }
+
+  /// True when [s] has collapsed into a repetition loop — the classic failure
+  /// mode of an under-sized model pushed past what it can express.
+  ///
+  /// Measured as vocabulary richness rather than by hunting a specific
+  /// n-gram, so it catches both `a b a b a b` and longer stuck phrases.
+  /// Deliberately conservative: short texts are exempt, since a genuine
+  /// two-word translation repeating a word is not a failure.
+  static bool looksDegenerate(String s, {int minWords = 12}) {
+    final words = s
+        .toLowerCase()
+        .split(RegExp(r'[\s\u0964\u3001,.!?;:]+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (words.length < minWords) return false;
+    final distinct = words.toSet().length;
+    return distinct / words.length < 0.35;
+  }
+
   /// Walk `s`, find contiguous runs of chars that map to single bytes
   /// under HuggingFace's `bytes_to_unicode`, and if any char in the run
   /// is a *remapped* one (U+0100..U+0143 — never appears in normal

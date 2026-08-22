@@ -186,11 +186,12 @@ class AIModelRunner {
             historyBudget: _historyBudgetTokens(params),
           );
 
-          // isUser MUST be set: Message.text defaults it to false, which
-          // makes flutter_gemma wrap the prompt as an ASSISTANT/tool turn
-          // (`_formatToolResponseContent`). The model then sees its own
-          // instructions as something it already said and stops following
-          // them — the prompt is effectively ignored.
+          // Message.text defaults isUser to false. On Android/.litertlm the
+          // prompt TEXT is unaffected (format mode is `raw` — the native
+          // LiteRT-LM engine owns the chat template), but the flag still gates
+          // flutter_gemma's Qwen3 `/no_think` auto-append and tools injection.
+          // Set it so the role we claim matches the role we mean; our prompts
+          // already carry `/no_think`, so this is correctness, not a fix.
           await chat.addQueryChunk(Message.text(text: prompt, isUser: true));
           final scrubber = _StopTokenScrubber();
           await for (final response in chat.generateChatResponseAsync()) {
@@ -295,8 +296,8 @@ class AIModelRunner {
         isThinking: params?.isThinking ?? false,
       );
 
-      // isUser: true — see the note in sendAndStream; without it the prompt
-      // is fed as an assistant turn and instruction-following collapses.
+      // isUser: true — see the note in sendAndStream. Correctness only: on
+      // Android/.litertlm the prompt text is identical either way.
       await oneShot.addQueryChunk(Message.text(text: prompt, isUser: true));
       final buffer = StringBuffer();
       final scrubber = _StopTokenScrubber();

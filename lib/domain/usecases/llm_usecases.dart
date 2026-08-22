@@ -8,6 +8,7 @@ import 'package:uniun/domain/entities/llm/llm_task_kind.dart';
 import 'package:uniun/domain/repositories/llm_repository.dart';
 import 'package:uniun/domain/repositories/uniun_repository.dart';
 import 'package:uniun/core/i18n/translation_language.dart';
+import 'package:uniun/core/utils/llm_text_sanitizer.dart';
 import 'package:uniun/features/shiv/generation/prompt/translation_prompt.dart';
 
 // ── Capability ────────────────────────────────────────────────────────────────
@@ -300,6 +301,11 @@ class TranslateNoteUseCase
       // do this for languages they can't write. Treat it as no translation
       // rather than swapping the body for an identical copy of itself.
       if (text == input.content.trim()) return null;
+      // Broken bytes or a repetition loop: an under-sized model pushed into a
+      // script it cannot write. Showing the wreckage as a translation is worse
+      // than telling the user to try a stronger model.
+      if (LlmTextSanitizer.looksCorrupted(text)) return null;
+      if (LlmTextSanitizer.looksDegenerate(text)) return null;
       return text;
     });
   }

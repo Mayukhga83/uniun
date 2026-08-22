@@ -483,8 +483,8 @@ Future<void> _runOneGana({
       );
       _log('  feeding prompt');
       try {
-        // isUser: true — Message.text defaults to false, which feeds the
-        // prompt as an assistant turn and breaks instruction-following.
+        // isUser: true — Message.text defaults to false. Correctness only:
+        // on Android/.litertlm the prompt text is identical either way.
         await chat.addQueryChunk(
             gemma_msg.Message.text(text: prompt, isUser: true));
         _log('  streaming tokens...');
