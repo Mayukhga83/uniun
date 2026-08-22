@@ -6,6 +6,7 @@ import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/common/widgets/note_card/cubit/note_card_cubit.dart';
 import 'package:uniun/common/widgets/note_card/embedded_note_card.dart';
 import 'package:uniun/common/widgets/note_card/media_attachment_view.dart';
+import 'package:uniun/common/widgets/note_card/translation_footer.dart';
 import 'package:uniun/common/widgets/note_card/expandable_note_text.dart';
 import 'package:uniun/common/widgets/open_user_profile.dart';
 import 'package:uniun/common/widgets/note_card/note_card_menu.dart';
@@ -199,19 +200,38 @@ class _NoteCardView extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
 
+                      // Body — swaps to the translation when one is showing.
+                      // Scoped to its own selector so translating one card
+                      // doesn't rebuild the rest of the note.
                       if (note.content.isNotEmpty)
-                        ExpandableNoteText(
-                          text: note.content,
-                          // Body text is selectable (long-press), but a simple tap
-                          // is forwarded to the card's onTap so it still opens the
-                          // thread — SelectableText would otherwise swallow it.
-                          onTap: onTap,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: custom.textBody,
-                            height: 1.55,
+                        BlocSelector<NoteCardCubit, NoteCardState,
+                            (String, bool)>(
+                          selector: (s) => (
+                            s.showsTranslation ? s.translation! : note.content,
+                            s.isTranslating,
                           ),
+                          builder: (context, data) {
+                            final (body, isTranslating) = data;
+                            return Opacity(
+                              // Dim while the model works — the original stays
+                              // readable instead of collapsing to a spinner.
+                              opacity: isTranslating ? 0.45 : 1,
+                              child: ExpandableNoteText(
+                                text: body,
+                                // Body text is selectable (long-press), but a simple tap
+                                // is forwarded to the card's onTap so it still opens the
+                                // thread — SelectableText would otherwise swallow it.
+                                onTap: onTap,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: custom.textBody,
+                                  height: 1.55,
+                                ),
+                              ),
+                            );
+                          },
                         ),
+                      const TranslationFooter(),
                       if (note.quotedNote != null) ...[
                         if (note.content.isNotEmpty) const SizedBox(height: 8),
                         EmbeddedNoteCard(note: note.quotedNote),

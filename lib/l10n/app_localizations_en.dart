@@ -3056,4 +3056,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get surroundingSourceLabel => '📍 Nearby';
+
+  @override
+  String get noteCardTranslate => 'Translate';
+
+  @override
+  String get translateSheetTitle => 'Translate to';
+
+  @override
+  String get translateSheetAction => 'Translate';
+
+  @override
+  String get translateSheetSettingsHint => 'From your app language';
+
+  @override
+  String get translatingLabel => 'Translating…';
+
+  @override
+  String translatedToLabel(String language) {
+    return 'Translated to $language';
+  }
+
+  @override
+  String get translationShowOriginal => 'Show original';
+
+  @override
+  String get translationShowTranslation => 'Show translation';
+
+  @override
+  String get translationChangeLanguage => 'Change';
+
+  @override
+  String translationAlreadyInLanguage(String language) {
+    return 'This note is already in $language.';
+  }
+
+  @override
+  String get translationFailed => 'Couldn\'t translate this note. Try again.';
 }

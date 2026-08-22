@@ -1060,6 +1060,16 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i907.SetThemeModeUseCase>(
       () => _i907.SetThemeModeUseCase(gh<_i117.AppSettingsRepository>()),
     );
+    gh.lazySingleton<_i907.GetTranslationLanguageUseCase>(
+      () => _i907.GetTranslationLanguageUseCase(
+        gh<_i117.AppSettingsRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i907.SetTranslationLanguageUseCase>(
+      () => _i907.SetTranslationLanguageUseCase(
+        gh<_i117.AppSettingsRepository>(),
+      ),
+    );
     gh.lazySingleton<_i858.UnsaveNoteUseCase>(
       () => _i858.UnsaveNoteUseCase(
         gh<_i43.SavedNoteRepository>(),
@@ -1365,6 +1375,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i918.GetActiveLlmModelUseCase>(
       () => _i918.GetActiveLlmModelUseCase(gh<_i205.LlmRepository>()),
     );
+    gh.lazySingleton<_i918.TranslateNoteUseCase>(
+      () => _i918.TranslateNoteUseCase(gh<_i205.LlmRepository>()),
+    );
     gh.factory<_i526.ComposerChatCubit>(
       () => _i526.ComposerChatCubit(
         gh<_i918.SendChatStreamUseCase>(),
@@ -1497,26 +1510,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i63.WatchFollowedUsersUseCase>(),
       ),
     );
-    gh.factoryParam<_i226.NoteCardCubit, _i697.NoteEntity, dynamic>(
-      (note, _) => _i226.NoteCardCubit(
-        gh<_i391.WatchProfileUseCase>(),
-        gh<_i391.RequestProfileFetchUseCase>(),
-        gh<_i858.IsSavedNoteUseCase>(),
-        gh<_i858.SaveNoteUseCase>(),
-        gh<_i858.UnsaveNoteUseCase>(),
-        gh<_i756.EmbedAndStoreNoteUseCase>(),
-        gh<_i561.WatchIsFollowedUseCase>(),
-        gh<_i561.FollowNoteUseCase>(),
-        gh<_i561.UnfollowNoteUseCase>(),
-        gh<_i278.BlockUserUseCase>(),
-        gh<_i232.DeleteNoteUseCase>(),
-        gh<_i799.GetActiveUserUseCase>(),
-        gh<_i977.GetManasIdsForNoteUseCase>(),
-        gh<_i977.GetManasListUseCase>(),
-        gh<_i977.RemoveNoteFromManasUseCase>(),
-        note,
-      ),
-    );
     gh.lazySingleton<_i179.DrainPendingExtractionsUseCase>(
       () => _i179.DrainPendingExtractionsUseCase(
         gh<_i1000.PendingExtractionRepository>(),
@@ -1540,6 +1533,27 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i918.IsUniunCloudConnectedUseCase>(),
         gh<_i918.GetActiveLlmModelUseCase>(),
         gh<_i93.FlutterGemmaGateway>(),
+      ),
+    );
+    gh.factoryParam<_i226.NoteCardCubit, _i697.NoteEntity, dynamic>(
+      (note, _) => _i226.NoteCardCubit(
+        gh<_i391.WatchProfileUseCase>(),
+        gh<_i391.RequestProfileFetchUseCase>(),
+        gh<_i858.IsSavedNoteUseCase>(),
+        gh<_i858.SaveNoteUseCase>(),
+        gh<_i858.UnsaveNoteUseCase>(),
+        gh<_i756.EmbedAndStoreNoteUseCase>(),
+        gh<_i561.WatchIsFollowedUseCase>(),
+        gh<_i561.FollowNoteUseCase>(),
+        gh<_i561.UnfollowNoteUseCase>(),
+        gh<_i278.BlockUserUseCase>(),
+        gh<_i232.DeleteNoteUseCase>(),
+        gh<_i799.GetActiveUserUseCase>(),
+        gh<_i977.GetManasIdsForNoteUseCase>(),
+        gh<_i977.GetManasListUseCase>(),
+        gh<_i977.RemoveNoteFromManasUseCase>(),
+        gh<_i918.TranslateNoteUseCase>(),
+        note,
       ),
     );
     gh.factory<_i886.BrahmaCreateBloc>(

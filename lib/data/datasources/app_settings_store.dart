@@ -21,6 +21,7 @@ class AppSettingsStore {
   static const _kLocaleCode = 'app_settings.locale_code';
   static const _kThemeMode = 'app_settings.theme_mode';
   static const _kMeshEnabled = 'app_settings.mesh_enabled';
+  static const _kTranslationLanguage = 'app_settings.translation_language';
 
   final SharedPreferences _prefs;
 
@@ -97,6 +98,19 @@ class AppSettingsStore {
       await _prefs.remove(_kLocaleCode);
     } else {
       await _prefs.setString(_kLocaleCode, code);
+    }
+  }
+
+  /// Target language for note translation (BCP-47 primary subtag), or `null`
+  /// until the user picks one — the picker seeds itself from the app locale on
+  /// that first run, and every translation after reuses this value.
+  String? get translationLanguage => _prefs.getString(_kTranslationLanguage);
+
+  Future<void> setTranslationLanguage(String? code) async {
+    if (code == null) {
+      await _prefs.remove(_kTranslationLanguage);
+    } else {
+      await _prefs.setString(_kTranslationLanguage, code);
     }
   }
 

@@ -1787,5 +1787,16 @@
   "settingsThemeSheetTitle": "थीम चुनें",
   "settingsThemeSystem": "सिस्टम के अनुसार",
   "settingsThemeLight": "लाइट",
-  "settingsThemeDark": "डार्क"
+  "settingsThemeDark": "डार्क",
+  "noteCardTranslate": "अनुवाद करें",
+  "translateSheetTitle": "इसमें अनुवाद करें",
+  "translateSheetAction": "अनुवाद करें",
+  "translateSheetSettingsHint": "आपकी ऐप भाषा से",
+  "translatingLabel": "अनुवाद हो रहा है…",
+  "translatedToLabel": "{language} में अनुवादित",
+  "translationShowOriginal": "मूल दिखाएँ",
+  "translationShowTranslation": "अनुवाद दिखाएँ",
+  "translationChangeLanguage": "बदलें",
+  "translationAlreadyInLanguage": "यह नोट पहले से ही {language} में है।",
+  "translationFailed": "इस नोट का अनुवाद नहीं हो सका। पुनः प्रयास करें।"
 }

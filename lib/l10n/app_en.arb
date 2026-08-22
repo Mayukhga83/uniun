@@ -2788,5 +2788,18 @@
   "@surroundingSaved": { "description": "Snackbar shown after keeping a surrounding note" },
 
   "surroundingSourceLabel": "📍 Nearby",
-  "@surroundingSourceLabel": { "description": "Source tag shown on a note received from a nearby device in the Surrounding feed" }
+  "@surroundingSourceLabel": { "description": "Source tag shown on a note received from a nearby device in the Surrounding feed" },
+  "noteCardTranslate": "Translate",
+  "translateSheetTitle": "Translate to",
+  "translateSheetAction": "Translate",
+  "translateSheetSettingsHint": "From your app language",
+  "translatingLabel": "Translating…",
+  "translatedToLabel": "Translated to {language}",
+  "@translatedToLabel": {"placeholders": {"language": {"type": "String"}}},
+  "translationShowOriginal": "Show original",
+  "translationShowTranslation": "Show translation",
+  "translationChangeLanguage": "Change",
+  "translationAlreadyInLanguage": "This note is already in {language}.",
+  "@translationAlreadyInLanguage": {"placeholders": {"language": {"type": "String"}}},
+  "translationFailed": "Couldn't translate this note. Try again."
 }

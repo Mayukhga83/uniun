@@ -7,6 +7,8 @@ import 'package:uniun/domain/entities/llm/llm_model_info.dart';
 import 'package:uniun/domain/entities/llm/llm_task_kind.dart';
 import 'package:uniun/domain/repositories/llm_repository.dart';
 import 'package:uniun/domain/repositories/uniun_repository.dart';
+import 'package:uniun/core/i18n/translation_language.dart';
+import 'package:uniun/features/shiv/generation/prompt/translation_prompt.dart';
 
 // ── Capability ────────────────────────────────────────────────────────────────
 
@@ -246,4 +248,54 @@ class GetUniunCloudStatusUseCase
   @override
   Future<Either<Failure, ({String plan, num balance})>> call() =>
       _repo.accountStatus();
+}
+
+// ── Note translation ──────────────────────────────────────────────────────────
+
+class TranslateNoteInput {
+  const TranslateNoteInput({required this.content, required this.target});
+  final String content;
+  final TranslationLanguage target;
+}
+
+/// Translates one note into [TranslateNoteInput.target].
+///
+/// Deliberately a thin wrapper over [LlmRepository.generateOneShot] rather than
+/// a backend of its own: that call already dispatches local-vs-cloud off the
+/// active [LlmBackendType], so translation runs on the on-device model or on
+/// UNIUN Cloud with no branching here.
+///
+/// Returns `Right(null)` when the note is already in the target language (the
+/// model answered with the NOOP sentinel) so the caller can say so instead of
+/// rendering an identical "translation".
+@lazySingleton
+class TranslateNoteUseCase
+    extends UseCase<Either<Failure, String?>, TranslateNoteInput> {
+  final LlmRepository _repo;
+  const TranslateNoteUseCase(this._repo);
+
+  @override
+  Future<Either<Failure, String?>> call(
+    TranslateNoteInput input, {
+    bool cached = false,
+  }) async {
+    final prompt = TranslationPrompt.build(
+      content: input.content,
+      target: input.target,
+    );
+    // Translations run longer than the source: scripts like Devanagari and
+    // Japanese tokenise far less densely than Latin, so budget generously
+    // rather than truncating mid-sentence.
+    final result = await _repo.generateOneShot(
+      prompt: prompt,
+      maxTokens: 2048,
+      kind: LlmTaskKind.translate,
+    );
+    return result.map((raw) {
+      final text = raw?.trim();
+      if (text == null || text.isEmpty) return null;
+      if (text.toUpperCase() == TranslationPrompt.noopSentinel) return null;
+      return text;
+    });
+  }
 }

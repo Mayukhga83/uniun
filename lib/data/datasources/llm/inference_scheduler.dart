@@ -169,6 +169,7 @@ class InferenceScheduler {
   int _tier(_Job j) {
     if (j.kind == LlmTaskKind.modelSwitch) return -1;
     if (j.kind == LlmTaskKind.chat) return 0;
+    if (j.kind == LlmTaskKind.translate) return 1;
     if (j.foregroundHint || _foreground == j.kind) return 1;
     if (j.kind == LlmTaskKind.extract) return 2;
     if (j.deadline != null && clock.now().isAfter(j.deadline!)) return 3;

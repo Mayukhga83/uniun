@@ -31,6 +31,12 @@ abstract class AppSettingsRepository {
   /// synchronously at startup via the store; runtime changes flow through here.
   Future<Either<Failure, Unit>> setLocaleCode(String? code);
 
+  /// Target language for note translation (BCP-47 primary subtag). `null`
+  /// until the user has picked one.
+  Future<Either<Failure, String?>> getTranslationLanguage();
+
+  Future<Either<Failure, Unit>> setTranslationLanguage(String? code);
+
   /// Persist the user's chosen theme mode (system / light / dark). The
   /// initial value is read synchronously at startup via the store; runtime
   /// switches flow through here.

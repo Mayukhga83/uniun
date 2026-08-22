@@ -11,6 +11,7 @@ import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
 import 'package:uniun/domain/entities/saved_note/saved_note_entity.dart';
 import 'package:uniun/domain/entities/user_key/user_key_entity.dart';
+import 'package:uniun/domain/usecases/llm_usecases.dart';
 import 'package:uniun/domain/usecases/blocked_user_usecases.dart';
 import 'package:uniun/domain/usecases/deleted_note_usecases.dart';
 import 'package:uniun/domain/usecases/followed_note_usecases.dart';
@@ -52,6 +53,8 @@ class _MGetManasList extends Mock implements GetManasListUseCase {}
 
 class _MRemoveFromManas extends Mock implements RemoveNoteFromManasUseCase {}
 
+class _MTranslateNote extends Mock implements TranslateNoteUseCase {}
+
 NoteEntity _note({String id = 'n1', String author = 'pub-other'}) =>
     aNote(id: id, authorPubkey: author);
 
@@ -78,6 +81,7 @@ void main() {
   late _MGetManasIds getManasIds;
   late _MGetManasList getManasList;
   late _MRemoveFromManas removeFromManas;
+  late _MTranslateNote translateNote;
 
   setUpAll(() {
     registerFallbackValue(_note());
@@ -104,6 +108,7 @@ void main() {
     getManasIds = _MGetManasIds();
     getManasList = _MGetManasList();
     removeFromManas = _MRemoveFromManas();
+    translateNote = _MTranslateNote();
 
     // Stubs for _init() so unrelated tests don't crash.
     when(() => watchProfile.call(any()))
@@ -135,6 +140,7 @@ void main() {
         getManasIds,
         getManasList,
         removeFromManas,
+        translateNote,
         note ?? _note(),
       );
 

@@ -1,6 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
+import 'package:uniun/common/locator.dart';
 import 'package:uniun/common/widgets/note_card/cubit/note_card_cubit.dart';
+import 'package:uniun/common/widgets/note_card/translate_language_sheet.dart';
+import 'package:uniun/core/i18n/translation_language.dart';
+import 'package:uniun/domain/usecases/app_settings_usecases.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/features/brahma/manas/widgets/manas_membership_sheet.dart';
 import 'package:uniun/features/moderation/pages/report_sheet_page.dart';
@@ -13,6 +17,8 @@ import 'package:uniun/l10n/app_localizations.dart';
 ///     A Manas only surfaces a note that survives retention, so a note that
 ///     isn't the active user's is saved first (own notes are kept forever, so
 ///     they're added directly). See [NoteCardCubit.ensureSavedForManas].
+///   • "Translate" (always) — translates the body in place. The language is
+///     asked for once, then reused; see [_onTranslate].
 ///   • Destructive "Delete note" (always) + "Block user" (when the note
 ///     isn't authored by the active user).
 class NoteCardMenu extends StatelessWidget {
@@ -95,6 +101,32 @@ class NoteCardMenu extends StatelessWidget {
     ManasMembershipSheet.show(context, cubit.note.id);
   }
 
+  /// Translate this note.
+  ///
+  /// The language sheet opens ONLY when no language has been chosen yet — it
+  /// seeds from the app's own locale so the first run is confirm-and-go. After
+  /// that this is a single tap; the footer's "Change" action re-opens the
+  /// sheet. See issue #43.
+  Future<void> _onTranslate(BuildContext context) async {
+    final stored = await getIt<GetTranslationLanguageUseCase>().call();
+    final storedCode = stored.fold((_) => null, (c) => c);
+
+    var target = TranslationLanguage.fromCode(storedCode);
+    if (storedCode == null) {
+      if (!context.mounted) return;
+      // No choice yet — seed the picker from the app locale.
+      final localeCode = Localizations.localeOf(context).languageCode;
+      final picked = await TranslateLanguageSheet.show(
+        context,
+        initial: TranslationLanguage.fromCode(localeCode),
+      );
+      if (picked == null) return;
+      target = picked;
+      await getIt<SetTranslationLanguageUseCase>().call(picked.code);
+    }
+    await cubit.translate(target);
+  }
+
   Future<void> _onDelete(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
@@ -131,6 +163,7 @@ class NoteCardMenu extends StatelessWidget {
       menuPadding: const EdgeInsets.symmetric(vertical: 4),
       onSelected: (value) {
         if (value == 'manas') _onManas(context);
+        if (value == 'translate') _onTranslate(context);
         if (value == 'report') _onReport(context);
         if (value == 'block') _onBlock(context);
         if (value == 'delete') _onDelete(context);
@@ -143,6 +176,8 @@ class NoteCardMenu extends StatelessWidget {
       itemBuilder: (context) => [
         _neutralItem(colorScheme, 'manas', Icons.man_3_rounded,
             l10n.noteCardAddToManas),
+        _neutralItem(colorScheme, 'translate', Icons.translate_rounded,
+            l10n.noteCardTranslate),
         const PopupMenuDivider(),
         _destructiveItem(colorScheme, 'delete', Icons.delete_outline_rounded,
             l10n.noteCardDeleteNote),
