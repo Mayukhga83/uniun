@@ -139,10 +139,23 @@ class GraphNodePanel extends StatelessWidget {
                 child: SingleChildScrollView(
                   child: NoteCard(
                     note: noteEntity,
-                    onTap: () => context.pushNamed(
-                      AppRoutes.thread,
-                      pathParameters: {'noteId': node.eventId},
-                    ),
+                    // Replying inside the thread creates a new own note and
+                    // bumps this note's reply count — neither of which the
+                    // graph watches for, so reload on return (same pattern as
+                    // the draft edit path). The reload preserves selectedNodeId,
+                    // so the open panel re-reads the refreshed node itself.
+                    onTap: () async {
+                      final bloc = context.read<GraphBloc>();
+                      await context.pushNamed(
+                        AppRoutes.thread,
+                        pathParameters: {'noteId': node.eventId},
+                      );
+                      if (bloc.isClosed) return;
+                      bloc.add(LoadGraphEvent(
+                        manasId: bloc.state.scopedManasId,
+                        manasName: bloc.state.scopedManasName,
+                      ));
+                    },
                   ),
                 ),
               ),

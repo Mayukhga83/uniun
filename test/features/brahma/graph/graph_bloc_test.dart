@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar_community/isar.dart';
 import 'package:uniun/core/enum/note_type.dart';
 import 'package:uniun/core/error/failures.dart';
+import 'package:uniun/core/notes/note_kinds.dart';
 import 'package:uniun/domain/entities/draft/draft_entity.dart';
 import 'package:uniun/domain/entities/manas/manas_entity.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
@@ -80,7 +81,8 @@ void main() {
           {String? pubkey = 'me',
           List<String> eTagRefs = const [],
           String? root,
-          String? reply}) =>
+          String? reply,
+          int kind = 1}) =>
       NoteEntity(
         id: id,
         sig: 's',
@@ -93,7 +95,7 @@ void main() {
         created: DateTime(2026, 1, 1),
         rootEventId: root,
         replyToEventId: reply,
-        kind: 1,
+        kind: kind,
       );
 
   SavedNoteEntity savedNote(String id) => SavedNoteEntity(
@@ -194,6 +196,66 @@ void main() {
       expect(bloc.state.nodes.map((n) => n.eventId), ['in-scope']);
       expect(bloc.state.scopedManasId, 'manas-1');
       expect(bloc.state.scopedManasName, 'work');
+      await bloc.close();
+    });
+
+    test('a bare LoadGraphEvent CLEARS an existing Manas scope — a null '
+        'manasId is an explicit unscope, not "leave it alone"', () async {
+      getOwn.notes = [ownNote('in-scope'), ownNote('out-of-scope')];
+      noteIdsForManas.allowed = {'manas-1': ['in-scope']};
+      manasById.bySid = {
+        'manas-1': ManasEntity(
+          manasId: 'manas-1',
+          name: 'work',
+          createdAt: DateTime(2026, 1, 1),
+          updatedAt: DateTime(2026, 1, 1),
+        ),
+      };
+
+      final bloc = build();
+      bloc.add(const LoadGraphEvent(manasId: 'manas-1'));
+      await waitFor(bloc, (s) => s.scopedManasId == 'manas-1');
+
+      // This is the trap behind #204: callers that reload with a bare event
+      // silently drop the user out of their scoped view.
+      bloc.add(const LoadGraphEvent());
+      await waitFor(bloc, (s) => s.scopedManasId == null);
+      expect(bloc.state.nodes, hasLength(2));
+      expect(bloc.state.scopedManasName, isNull);
+      await bloc.close();
+    });
+
+    test('DMs authored by this user are never surfaced as graph nodes',
+        () async {
+      getOwn.notes = [
+        ownNote('note'),
+        ownNote('dm-text', kind: kDmTextKind),
+        ownNote('dm-file', kind: kDmFileKind),
+      ];
+
+      final bloc = build();
+      bloc.add(const LoadGraphEvent());
+      await waitFor(bloc, (s) => s.status == GraphStatus.loaded);
+      expect(bloc.state.nodes.map((n) => n.eventId), ['note']);
+      await bloc.close();
+    });
+
+    test('an active search is re-matched against the freshly-loaded node set',
+        () async {
+      getOwn.notes = [ownNote('A')];
+
+      final bloc = build();
+      bloc.add(const LoadGraphEvent());
+      await waitFor(bloc, (s) => s.status == GraphStatus.loaded);
+      bloc.add(const SearchGraphEvent('own-B'));
+      await waitFor(bloc, (s) => s.searchQuery == 'own-B');
+      expect(bloc.state.matchedNodeIds, isEmpty);
+
+      // B arrives on the next load — the still-active query must now match it.
+      getOwn.notes = [ownNote('A'), ownNote('B')];
+      bloc.add(const LoadGraphEvent());
+      await waitFor(bloc, (s) => s.nodes.length == 2);
+      expect(bloc.state.matchedNodeIds, {'B'});
       await bloc.close();
     });
 
