@@ -186,7 +186,13 @@ class AIModelRunner {
             historyBudget: _historyBudgetTokens(params),
           );
 
-          await chat.addQueryChunk(Message.text(text: prompt));
+          // Message.text defaults isUser to false. On Android/.litertlm the
+          // prompt TEXT is unaffected (format mode is `raw` — the native
+          // LiteRT-LM engine owns the chat template), but the flag still gates
+          // flutter_gemma's Qwen3 `/no_think` auto-append and tools injection.
+          // Set it so the role we claim matches the role we mean; our prompts
+          // already carry `/no_think`, so this is correctness, not a fix.
+          await chat.addQueryChunk(Message.text(text: prompt, isUser: true));
           final scrubber = _StopTokenScrubber();
           await for (final response in chat.generateChatResponseAsync()) {
             if (cancel.isCancelled) {
@@ -290,7 +296,9 @@ class AIModelRunner {
         isThinking: params?.isThinking ?? false,
       );
 
-      await oneShot.addQueryChunk(Message.text(text: prompt));
+      // isUser: true — see the note in sendAndStream. Correctness only: on
+      // Android/.litertlm the prompt text is identical either way.
+      await oneShot.addQueryChunk(Message.text(text: prompt, isUser: true));
       final buffer = StringBuffer();
       final scrubber = _StopTokenScrubber();
       await for (final response in oneShot.generateChatResponseAsync()) {

@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:uniun/common/widgets/note_card/cubit/note_card_cubit.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
+import 'package:uniun/domain/usecases/llm_usecases.dart';
 import 'package:uniun/domain/usecases/blocked_user_usecases.dart';
 import 'package:uniun/domain/usecases/deleted_note_usecases.dart';
 import 'package:uniun/domain/usecases/followed_note_usecases.dart';
@@ -49,6 +50,8 @@ class _MockGetManasList extends Mock implements GetManasListUseCase {}
 
 class _MockRemoveFromManas extends Mock implements RemoveNoteFromManasUseCase {}
 
+class _MockTranslateNote extends Mock implements TranslateNoteUseCase {}
+
 /// Covers: NoteCardCubit's reactive profile/follow watchers, own-note and
 /// saved-flag hydration on init, optimistic save/unsave toggling (including
 /// revert-on-failure and the RAG embed side-effect), ensureSavedForManas'
@@ -71,6 +74,7 @@ void main() {
   late _MockGetManasIdsForNote getManasIdsForNote;
   late _MockGetManasList getManasList;
   late _MockRemoveFromManas removeFromManas;
+  late _MockTranslateNote translateNote;
 
   final note = aNote(id: 'n1', authorPubkey: kAlicePub);
 
@@ -90,6 +94,7 @@ void main() {
         getManasIdsForNote,
         getManasList,
         removeFromManas,
+        translateNote,
         note,
       );
 
@@ -116,6 +121,7 @@ void main() {
     getManasIdsForNote = _MockGetManasIdsForNote();
     getManasList = _MockGetManasList();
     removeFromManas = _MockRemoveFromManas();
+    translateNote = _MockTranslateNote();
 
     when(() => watchProfile.call(any())).thenAnswer((_) => const Stream.empty());
     when(() => requestProfileFetch.call(any()))

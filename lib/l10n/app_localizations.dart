@@ -5545,6 +5545,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'📍 Nearby'**
   String get surroundingSourceLabel;
+
+  /// No description provided for @noteCardTranslate.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get noteCardTranslate;
+
+  /// No description provided for @translateSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate to'**
+  String get translateSheetTitle;
+
+  /// No description provided for @translateSheetAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get translateSheetAction;
+
+  /// No description provided for @translateSheetSettingsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'From your app language'**
+  String get translateSheetSettingsHint;
+
+  /// No description provided for @translatingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Translating…'**
+  String get translatingLabel;
+
+  /// No description provided for @translatedToLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Translated to {language}'**
+  String translatedToLabel(String language);
+
+  /// No description provided for @translationShowOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show original'**
+  String get translationShowOriginal;
+
+  /// No description provided for @translationShowTranslation.
+  ///
+  /// In en, this message translates to:
+  /// **'Show translation'**
+  String get translationShowTranslation;
+
+  /// No description provided for @translationChangeLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get translationChangeLanguage;
+
+  /// No description provided for @translationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t translate this note. Try again.'**
+  String get translationFailed;
+
+  /// No description provided for @translationNotProduced.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI model couldn\'t translate this note. Try a larger model or UNIUN Cloud.'**
+  String get translationNotProduced;
 }
 
 class _AppLocalizationsDelegate

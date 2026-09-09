@@ -169,6 +169,7 @@ class InferenceScheduler {
   int _tier(_Job j) {
     if (j.kind == LlmTaskKind.modelSwitch) return -1;
     if (j.kind == LlmTaskKind.chat) return 0;
+    if (j.kind == LlmTaskKind.translate) return 1;
     if (j.foregroundHint || _foreground == j.kind) return 1;
     if (j.kind == LlmTaskKind.extract) return 2;
     if (j.deadline != null && clock.now().isAfter(j.deadline!)) return 3;
@@ -288,7 +289,12 @@ class InferenceScheduler {
   bool _isReQueueable(_Job j) =>
       j.kind == LlmTaskKind.extract ||
       j.kind == LlmTaskKind.nataraj ||
-      j.kind == LlmTaskKind.gana;
+      j.kind == LlmTaskKind.gana ||
+      // Translation is a pure function of (note, language), so re-running it
+      // is always safe. Without this a chat message preempting a translation
+      // would surface as "the model couldn't translate this note", blaming
+      // the model for what was only a scheduling decision.
+      j.kind == LlmTaskKind.translate;
   // chat is never re-queued — T0 only loses to itself, which signals a bug,
   // so the cancel propagates as an error.
 

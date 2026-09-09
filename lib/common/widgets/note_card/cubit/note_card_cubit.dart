@@ -16,6 +16,8 @@ import 'package:uniun/domain/usecases/profile_usecases.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
 import 'package:uniun/domain/usecases/user_usecases.dart';
 import 'package:uniun/domain/usecases/vector_usecases.dart';
+import 'package:uniun/core/i18n/translation_language.dart';
+import 'package:uniun/domain/usecases/llm_usecases.dart';
 
 part 'note_card_state.dart';
 
@@ -40,6 +42,7 @@ class NoteCardCubit extends Cubit<NoteCardState> {
   final GetManasIdsForNoteUseCase _getManasIdsForNote;
   final GetManasListUseCase _getManasList;
   final RemoveNoteFromManasUseCase _removeFromManas;
+  final TranslateNoteUseCase _translateNote;
   final NoteEntity note;
 
   StreamSubscription<ProfileEntity?>? _profileSub;
@@ -61,6 +64,7 @@ class NoteCardCubit extends Cubit<NoteCardState> {
     this._getManasIdsForNote,
     this._getManasList,
     this._removeFromManas,
+    this._translateNote,
     @factoryParam this.note,
   ) : super(const NoteCardState()) {
     _init();
@@ -204,6 +208,58 @@ class NoteCardCubit extends Cubit<NoteCardState> {
     });
     return result;
   }
+
+  /// Translates the note body into [target] and swaps it into the card.
+  ///
+  /// Re-translating into the language already held un-hides it instead of
+  /// spending a second inference call.
+  Future<void> translate(TranslationLanguage target) async {
+    if (state.isTranslating) return;
+    if (state.translation != null && state.translationLanguage == target.code) {
+      emit(state.copyWith(showOriginal: false));
+      return;
+    }
+    emit(state.copyWith(isTranslating: true, clearTranslationError: true));
+    final result = await _translateNote.call(
+      TranslateNoteInput(content: note.content, target: target),
+    );
+    if (isClosed) return;
+    result.fold(
+      (f) => emit(state.copyWith(
+        isTranslating: false,
+        translationError: f.toMessage(),
+      )),
+      (text) {
+        // Not distinguishable from "already in that language" — report the
+        // failure, don't guess a cause.
+        if (text == null) {
+          emit(state.copyWith(
+            isTranslating: false,
+            translationError: kNoTranslationProduced,
+          ));
+          return;
+        }
+        emit(state.copyWith(
+          isTranslating: false,
+          translation: text,
+          translationLanguage: target.code,
+          showOriginal: false,
+        ));
+      },
+    );
+  }
+
+  /// Flips between the translated body and the original; the translation stays
+  /// in state, so neither direction re-runs inference.
+  void toggleOriginal() =>
+      emit(state.copyWith(showOriginal: !state.showOriginal));
+
+  void clearTranslationError() =>
+      emit(state.copyWith(clearTranslationError: true));
+
+  /// Marker for "the model returned no usable translation". The cubit has no
+  /// BuildContext, so the widget layer swaps this for a localised string.
+  static const String kNoTranslationProduced = '__no_translation_produced__';
 
   @override
   Future<void> close() {

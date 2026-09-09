@@ -18,6 +18,10 @@
 /// and chip path via `EmbeddingQueue`, not via the LLM scheduler.
 enum LlmTaskKind {
   chat,
+
+  /// User tapped Translate on a note — foreground and blocking a visible
+  /// card, so it outranks every background producer but yields to live chat.
+  translate,
   extract,
   nataraj,
   gana,

@@ -101,3 +101,28 @@ class SetThemeModeUseCase extends UseCase<Either<Failure, Unit>, AppThemeMode> {
           {bool cached = false}) =>
       _repository.setThemeMode(input);
 }
+
+// ── Note translation ─────────────────────────────────────────────────────────
+
+/// The user's chosen translation target, or `null` if they've never picked one
+/// — which is what makes the picker show on the first Translate tap only.
+@lazySingleton
+class GetTranslationLanguageUseCase
+    extends NoParamsUseCase<Either<Failure, String?>> {
+  final AppSettingsRepository _repository;
+  const GetTranslationLanguageUseCase(this._repository);
+
+  @override
+  Future<Either<Failure, String?>> call() => _repository.getTranslationLanguage();
+}
+
+@lazySingleton
+class SetTranslationLanguageUseCase
+    extends UseCase<Either<Failure, Unit>, String?> {
+  final AppSettingsRepository _repository;
+  const SetTranslationLanguageUseCase(this._repository);
+
+  @override
+  Future<Either<Failure, Unit>> call(String? input, {bool cached = false}) =>
+      _repository.setTranslationLanguage(input);
+}

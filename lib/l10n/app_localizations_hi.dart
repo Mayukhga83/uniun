@@ -3075,4 +3075,41 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get surroundingSourceLabel => '📍 Nearby';
+
+  @override
+  String get noteCardTranslate => 'अनुवाद करें';
+
+  @override
+  String get translateSheetTitle => 'इसमें अनुवाद करें';
+
+  @override
+  String get translateSheetAction => 'अनुवाद करें';
+
+  @override
+  String get translateSheetSettingsHint => 'आपकी ऐप भाषा से';
+
+  @override
+  String get translatingLabel => 'अनुवाद हो रहा है…';
+
+  @override
+  String translatedToLabel(String language) {
+    return '$language में अनुवादित';
+  }
+
+  @override
+  String get translationShowOriginal => 'मूल दिखाएँ';
+
+  @override
+  String get translationShowTranslation => 'अनुवाद दिखाएँ';
+
+  @override
+  String get translationChangeLanguage => 'बदलें';
+
+  @override
+  String get translationFailed =>
+      'इस नोट का अनुवाद नहीं हो सका। पुनः प्रयास करें।';
+
+  @override
+  String get translationNotProduced =>
+      'AI मॉडल इस नोट का अनुवाद नहीं कर सका। बड़ा मॉडल या UNIUN Cloud आज़माएँ।';
 }

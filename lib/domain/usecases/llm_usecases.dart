@@ -7,6 +7,9 @@ import 'package:uniun/domain/entities/llm/llm_model_info.dart';
 import 'package:uniun/domain/entities/llm/llm_task_kind.dart';
 import 'package:uniun/domain/repositories/llm_repository.dart';
 import 'package:uniun/domain/repositories/uniun_repository.dart';
+import 'package:uniun/core/i18n/translation_language.dart';
+import 'package:uniun/core/utils/llm_text_sanitizer.dart';
+import 'package:uniun/features/shiv/generation/prompt/translation_prompt.dart';
 
 // ── Capability ────────────────────────────────────────────────────────────────
 
@@ -246,4 +249,56 @@ class GetUniunCloudStatusUseCase
   @override
   Future<Either<Failure, ({String plan, num balance})>> call() =>
       _repo.accountStatus();
+}
+
+// ── Note translation ──────────────────────────────────────────────────────────
+
+class TranslateNoteInput {
+  const TranslateNoteInput({required this.content, required this.target});
+  final String content;
+  final TranslationLanguage target;
+}
+
+/// Translates one note into [TranslateNoteInput.target].
+///
+/// Wraps [LlmRepository.generateOneShot], which already dispatches
+/// local-vs-cloud off the active [LlmBackendType] — no backend branching here.
+///
+/// `Right(null)` means no usable translation: NOOP sentinel, echoed source,
+/// corrupt bytes, or a repetition loop. These are indistinguishable from "the
+/// note was already in that language", so callers must not report it as such.
+@lazySingleton
+class TranslateNoteUseCase
+    extends UseCase<Either<Failure, String?>, TranslateNoteInput> {
+  final LlmRepository _repo;
+  const TranslateNoteUseCase(this._repo);
+
+  @override
+  Future<Either<Failure, String?>> call(
+    TranslateNoteInput input, {
+    bool cached = false,
+  }) async {
+    final prompt = TranslationPrompt.build(
+      content: input.content,
+      target: input.target,
+    );
+    // Devanagari/Japanese tokenise less densely than Latin, so the output
+    // needs more room than the source.
+    final result = await _repo.generateOneShot(
+      prompt: prompt,
+      maxTokens: 2048,
+      kind: LlmTaskKind.translate,
+    );
+    return result.map((raw) {
+      final text = raw?.trim();
+      if (text == null || text.isEmpty) return null;
+      if (text.toUpperCase() == TranslationPrompt.noopSentinel) return null;
+      // Small models echo the source for languages they can't write.
+      if (text == input.content.trim()) return null;
+      // Broken bytes / repetition loop — same failure, different shape.
+      if (LlmTextSanitizer.looksCorrupted(text)) return null;
+      if (LlmTextSanitizer.looksDegenerate(text)) return null;
+      return text;
+    });
+  }
 }

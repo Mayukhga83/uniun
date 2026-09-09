@@ -79,6 +79,25 @@ class AppSettingsRepositoryImpl implements AppSettingsRepository {
   }
 
   @override
+  Future<Either<Failure, String?>> getTranslationLanguage() async {
+    try {
+      return Right(_store.translationLanguage);
+    } catch (e) {
+      return Left(Failure.errorFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> setTranslationLanguage(String? code) async {
+    try {
+      await _store.setTranslationLanguage(code);
+      return const Right(unit);
+    } catch (e) {
+      return Left(Failure.errorFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> setThemeMode(AppThemeMode mode) async {
     try {
       await _store.setThemeMode(mode);

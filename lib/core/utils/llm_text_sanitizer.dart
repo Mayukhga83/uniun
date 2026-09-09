@@ -83,6 +83,37 @@ class LlmTextSanitizer {
     return s.trim();
   }
 
+  /// True when [clean]'s repair failed and [s] is still broken bytes.
+  ///
+  /// [clean] is best-effort; this reports whether it succeeded.
+  static bool looksCorrupted(String s) {
+    if (s.isEmpty) return false;
+    // U+FFFD — decode already failed upstream.
+    if (s.contains('\uFFFD')) return true;
+    // Remapped GPT-2 byte chars surviving [clean] = repair produced no valid
+    // UTF-8.
+    for (final c in s.codeUnits) {
+      if (c >= 0x0100 && c <= 0x0143) return true;
+    }
+    return false;
+  }
+
+  /// True when [s] has collapsed into a repetition loop.
+  ///
+  /// Scored by vocabulary richness rather than n-gram matching, so it catches
+  /// both `a b a b` and longer stuck phrases. Texts under [minWords] are exempt:
+  /// a short translation repeating a word is not a failure.
+  static bool looksDegenerate(String s, {int minWords = 12}) {
+    final words = s
+        .toLowerCase()
+        .split(RegExp(r'[\s\u0964\u3001,.!?;:]+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (words.length < minWords) return false;
+    final distinct = words.toSet().length;
+    return distinct / words.length < 0.35;
+  }
+
   /// Walk `s`, find contiguous runs of chars that map to single bytes
   /// under HuggingFace's `bytes_to_unicode`, and if any char in the run
   /// is a *remapped* one (U+0100..U+0143 — never appears in normal

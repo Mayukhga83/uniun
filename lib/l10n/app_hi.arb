@@ -1,1791 +1,911 @@
 {
   "@@locale": "hi",
-
   "appVersion": "UNIUN v1.0.0-beta",
-
   "appTagline": "आपके नोट्स, आपका\nनेटवर्क, आपकी पहचान।",
-
   "navVishnu": "विष्णु",
-
   "navBrahma": "ब्रह्मा",
-
   "navShiv": "शिव",
-
   "actionCopy": "कॉपी करें",
-
   "actionCopied": "कॉपी हो गया",
-
   "actionRetry": "पुनः प्रयास करें",
-
   "actionContinue": "जारी रखें",
-
   "actionDelete": "हटाएं",
-
   "actionSave": "सहेजें",
-
   "actionCancel": "रद्द करें",
-
   "actionBack": "वापस",
-
   "actionDone": "पूर्ण",
-
   "actionSaved": "सहेजा गया",
-
   "actionFollow": "फ़ॉलो करें",
-
   "actionFollowing": "फ़ॉलो किया जा रहा है",
-
   "drawerHome": "होम",
-
   "drawerSavedNotes": "सहेजे गए नोट्स",
-
   "drawerGroups": "दल",
-
   "drawerDirectMessages": "डायरेक्ट मैसेज",
-
   "drawerApps": "ऐप्स",
-
   "drawerAiAssistant": "AI सहायक",
-
   "drawerSettings": "सेटिंग्स",
-
   "drawerFollowingNotes": "नोट वॉच",
-
   "drawerNoFollowedNotes": "अभी तक किसी नोट को नहीं देख रहे",
-
   "drawerNoGroups": "अभी तक कोई दल नहीं",
-
   "drawerMyQrCode": "मेरा QR कोड",
-
   "drawerScanCode": "कोड स्कैन करें",
-
   "drawerPrivateLabel": "निजी",
-
   "drawerSearchKindDm": "डायरेक्ट मैसेज",
-
   "drawerSearchKindUser": "फ़ॉलो किया जा रहा है",
-
   "joinGroupTitle": "दल में शामिल हों",
-
   "joinGroupHeading": "मौजूदा दल में शामिल हों",
-
   "joinGroupAction": "दल में शामिल हों",
-
   "joinGroupIdLabel": "दल ID (Hex)",
-
   "joinGroupRelaysTitle": "दल रिले",
-
   "joinGroupRelaysBody": "सिंक शुरू करने के लिए वे रिले चुनें जिन पर यह दल चलता है।",
-
   "joinGroupSelectRelays": "रिले चुनें",
-
   "joinGroupSelectedRelays": "{count} रिले चुने गए",
-
   "joinGroupAddRelay": "रिले जोड़ें",
-
   "joinGroupAddRelayAction": "जोड़ें",
-
   "joinGroupRelayHint": "wss://relay.example.com",
-
   "joinGroupByQr": "QR से शामिल हों",
-
   "joinGroupScanCardTitle": "दल QR स्कैन करें",
-
   "joinGroupScanCardSubtitle": "अपने कैमरे को UNIUN दल कोड की ओर रखें",
-
   "joinGroupOr": "या",
-
   "joinGroupIdHint": "दल ID पेस्ट करें",
-
   "joinGroupQrTitle": "दल QR स्कैन करें",
-
   "joinGroupQrHint": "दल ID और रिले सूची वाला QR कोड स्कैन करें।",
-
   "joinGroupQrFromGallery": "गैलरी से QR चुनें",
-
   "joinGroupQrGalleryError": "चुनी गई इमेज में कोई वैध QR कोड नहीं मिला।",
-
   "joinGroupSuccess": "दल में सफलतापूर्वक शामिल हो गए।",
-
   "joinGroupErrorInvalidId": "यह एक वैध दल ID जैसा नहीं लगता। इसे जाँचें और फिर से प्रयास करें।",
-
   "joinGroupErrorNoRelay": "कृपया कम से कम एक रिले चुनें।",
-
   "joinGroupErrorRelaySaveFailed": "रिले को स्थानीय रूप से सहेजने में विफल।",
-
   "joinGroupErrorSaveFailed": "दल में शामिल नहीं हो सके। कृपया फिर से प्रयास करें।",
-
   "groupMessageHint": "दल में संदेश भेजें…",
-
   "chatMessageHint": "संदेश…",
-
   "dmEncryptedNotice": "संदेश एंड-टू-एंड एन्क्रिप्टेड हैं",
-
   "groupShareQrTitle": "दल QR साझा करें",
-
   "groupShareQrBody": "किसी को सही रिले के साथ दल में शामिल होने के लिए यह QR स्कैन करने दें।",
-
   "drawerNoMessages": "अभी तक कोई संदेश नहीं",
-
   "drawerSearchHint": "खोजें",
-
   "drawerSearchNoResults": "कोई मेल नहीं",
-
   "drawerCopyNpub": "npub कॉपी करें",
-
   "drawerNpubCopied": "npub कॉपी हो गया",
-
   "drawerComingSoon": "{feature} — जल्द आ रहा है",
-
   "brahmaTitle": "ब्रह्मा",
-
   "brahmaTagline": "Nostr पर लिखें और प्रकाशित करें",
-
   "brahmaHintText": "नया नोट लिखें...",
-
   "brahmaSubjectHintText": "विषय (वैकल्पिक)",
-
   "brahmaAddImage": "इमेज जोड़ें",
-
   "brahmaTagPeople": "लोगों को टैग करें",
-
   "brahmaReferenceNote": "किसी नोट का उल्लेख करें",
-
   "brahmaMentionSheetTitle": "किसी नोट का उल्लेख करें",
-
   "brahmaMentionSearchHint": "नोट्स खोजें…",
-
   "brahmaMentionEmpty": "कोई नोट नहीं मिला",
-
   "brahmaMentionSelected": "उल्लेख किया गया",
-
   "composerReferenceTitle": "संदर्भ जोड़ें",
-
   "composerReferenceSearchHint": "खोजें…",
-
   "composerReferenceEmpty": "कोई परिणाम नहीं",
-
   "composerReferenceTabAll": "सभी",
-
   "composerReferenceTabSaved": "सहेजे गए",
-
   "composerReferenceTabOwn": "मेरे नोट्स",
-
   "composerReferenceTabDrafts": "ड्राफ़्ट",
-
   "composerReferenceAdd": "जोड़ें",
-
   "composerChatPickerTitle": "अपने नोट्स से बात करें",
-
   "composerChatPickerSubtitle": "किसी मानस तक सीमित करें",
-
   "composerChatBrand": "शिव",
-
   "composerChatAllNotes": "सभी नोट्स",
-
   "composerChatAllNotesSubtitle": "ब्रह्मा से पूछें",
-
   "composerChatManasNotes": "{count, plural, =1{1 नोट} other{{count} नोट्स}}",
-
   "composerChatScopeEyebrow": "{scope} · डिवाइस पर",
-
   "composerChatGroundedHint": "{scope} पर आधारित",
-
   "composerChatThinking": "सोच रहा है…",
-
   "composerChatStop": "रोकें",
-
   "composerChatNoModel": "कोई AI मॉडल सक्रिय नहीं है। शिव टैब से कोई एक डाउनलोड करें।",
-
   "composerChatError": "कुछ गड़बड़ हो गई।",
-
   "composerChatUseAsReply": "उत्तर के रूप में उपयोग करें",
-
   "threadReferencesLabel": "संदर्भ",
-
   "threadReplyingToLabel": "इसका उत्तर दे रहे हैं",
-
   "brahmaCreateNote": "नोट बनाएं",
-
   "brahmaFailedToPublish": "प्रकाशित करने में विफल",
-
   "brahmaGraphPreviewLabel": "संदर्भ ग्राफ़ पूर्वावलोकन",
-
   "brahmaInteractivePreview": "इंटरैक्टिव पूर्वावलोकन",
-
   "brahmaDraft": "ड्राफ़्ट",
-
   "markdownToolbarHeading": "शीर्षक",
-
   "markdownToolbarBold": "बोल्ड",
-
   "markdownToolbarItalic": "इटैलिक",
-
   "markdownToolbarCode": "इनलाइन कोड",
-
   "markdownToolbarBulletList": "बुलेट सूची",
-
   "markdownToolbarNumberList": "क्रमांकित सूची",
-
   "markdownToolbarQuote": "उद्धरण",
-
   "markdownToolbarLink": "लिंक",
-
   "brahmaDraftSaved": "ड्राफ़्ट सहेजा गया",
-
   "brahmaDrafts": "ड्राफ़्ट",
-
   "brahmaPublish": "प्रकाशित करें",
-
   "brahmaDraftPublished": "नोट के रूप में प्रकाशित किया गया",
-
   "brahmaTags": "टैग",
-
   "brahmaPublishChainTitle": "यह नोट अन्य ड्राफ़्ट से जुड़ता है",
-
   "brahmaPublishChainSubtitle": "Nostr नोट्स प्रकाशित होने के बाद अपरिवर्तनीय होते हैं — {count, plural, =1{1 अप्रकाशित ड्राफ़्ट} other{{count} अप्रकाशित ड्राफ़्ट}} के संदर्भ केवल अभी जोड़े जा सकते हैं, बाद में नहीं।",
-
   "brahmaPublishChain": "पूरी श्रृंखला प्रकाशित करें",
-
   "brahmaPublishChainBody": "पहले {count, plural, =1{1 जुड़े ड्राफ़्ट} other{{count} जुड़े ड्राफ़्ट}} प्रकाशित करता है, फिर यह नोट उसके टैग में लिंक के साथ।",
-
   "brahmaPublishOnlyThis": "केवल यही प्रकाशित करें",
-
   "brahmaPublishOnlyThisSubtitle": "इस नोट से ड्राफ़्ट संदर्भ हटा दें। बाकी ड्राफ़्ट जहाँ हैं वहीं रहेंगे।",
-
   "vishnuNoNotes": "अभी तक कोई नोट नहीं",
-
   "vishnuCreateFirst": "ब्रह्मा में अपना पहला नोट बनाएं\nया रिले के सिंक होने की प्रतीक्षा करें।",
-
   "vishnuThread": "थ्रेड",
-
   "vishnuReferences": "{count, plural, one{1 संदर्भ} other{{count} संदर्भ}}",
-
   "vishnuReferenceUnavailable": "संदर्भित नोट उपलब्ध नहीं है",
-
   "vishnuNewNotesBanner": "{count, plural, one{1 नया नोट} other{{count} नए नोट}}",
-
   "homeShivTitle": "शिव — AI सहायक",
-
   "homeShivComingSoon": "डिवाइस पर AI जल्द आ रहा है।",
-
   "threadTitle": "थ्रेड",
-
   "threadReplies": "उत्तर",
-
   "threadReferences": "संदर्भ",
-
   "threadNoReplies": "अभी तक कोई उत्तर नहीं",
-
   "threadBeFirstToReply": "उत्तर देने वाले पहले व्यक्ति बनें।",
-
   "threadNoReferences": "कोई संदर्भ नहीं",
-
   "threadNoReferencesDetail": "अभी तक किसी नोट ने इसका संदर्भ नहीं दिया है।",
-
   "threadPost": "पोस्ट करें",
-
   "threadReplyToThis": "इस नोट का उत्तर दें…",
-
   "threadReplyTo": "@{name} को उत्तर दें…",
-
   "threadReplyingTo": "@{name} को उत्तर दे रहे हैं",
-
   "threadContinuation": "थ्रेड निरंतरता",
-
   "threadNReplies": "{count} उत्तर",
-
   "threadUpdated": "अपडेट किया गया: {time}",
-
   "followedNoteViewThread": "थ्रेड देखें",
-
   "followedNoteFailedToLoad": "नोट लोड करने में विफल",
-
   "followedNoteResearchNode": "शोध नोड",
-
   "followedNoteFollowing": "फ़ॉलो किया जा रहा है",
-
   "followedNoteReferencedBy": "उत्तर",
-
   "followedNoteReferences": "संदर्भ",
-
   "settingsTitle": "सेटिंग्स",
-
   "settingsAccount": "खाता",
-
   "settingsIdentity": "पहचान",
-
   "settingsAiShiv": "AI · शिव",
-
   "settingsStorage": "स्टोरेज",
-
   "settingsAbout": "के बारे में",
-
   "settingsVersion": "संस्करण",
-
   "settingsLogout": "लॉग आउट",
-
   "settingsLogoutTitle": "लॉग आउट करें?",
-
   "settingsLogoutBody": "वापस साइन इन करने के लिए आपको अपनी प्राइवेट की (nsec) की आवश्यकता होगी। लॉग आउट करने से पहले सुनिश्चित करें कि इसका बैकअप ले लिया गया है।",
-
   "settingsLogoutConfirm": "लॉग आउट",
-
   "settingsAlerts": "अलर्ट",
-
   "settingsStyle": "स्टाइल",
-
   "profileAnonymous": "गुमनाम",
-
   "profileEditProfile": "प्रोफ़ाइल संपादित करें",
-
   "identityLoginRecovery": "यह आपका लॉगिन और रिकवरी तरीका है।",
-
   "identityKeys": "कुंजियाँ",
-
   "identityRelays": "रिले",
-
   "identityPrivacyPolicy": "गोपनीयता और नीति",
-
   "identityYourKeys": "आपकी कुंजियाँ",
-
   "identityNeverShare": "अपनी प्राइवेट की किसी के साथ कभी साझा न करें।",
-
   "identityPublicKey": "पब्लिक की (npub)",
-
   "identityPublicKeyCopied": "पब्लिक की कॉपी हो गई",
-
   "identityPrivateKey": "प्राइवेट की (nsec)",
-
   "identityRevealPrivateKey": "प्राइवेट की दिखाएं",
-
   "identityNeverShareKey": "यह कुंजी कभी साझा न करें",
-
   "identityTapToCopy": "कॉपी करने के लिए टैप करें",
-
   "identityHide": "छिपाएं",
-
   "identityPrivateKeyCopied": "प्राइवेट की कॉपी हो गई — इसे सुरक्षित रखें!",
-
   "identityRelaysSheetTitle": "रिले",
-
   "identityRelaysSubtitle": "Nostr रिले जिनसे आपका क्लाइंट जुड़ता है।",
-
   "identityRelaysComingSoon": "कस्टम रिले प्रबंधन जल्द आ रहा है।",
-
   "alertsDmAlerts": "DM अलर्ट",
-
   "alertsGroupAlerts": "दल अलर्ट",
-
   "storageUsage": "स्टोरेज उपयोग",
-
   "storageNoteData": "नोट डेटा",
-
   "storageAiModels": "AI मॉडल",
-
   "storageAiModelsSubtitle": "डाउनलोड की गई मॉडल फ़ाइलें",
-
   "storageTotal": "कुल",
-
   "storageNotes": "{count} नोट्स",
-
   "storageRemoveData": "डेटा हटाएं",
-
   "storageShowMetrics": "मेट्रिक्स दिखाएं",
-
   "storageUsed": "उपयोग किया गया",
-
   "storageFree": "{size} खाली",
-
   "storageDeleteDialogTitle": "फ़ीड नोट्स हटाएं",
-
   "storageDeleteDialogBody": "इससे स्थानीय स्टोरेज से {count} फ़ीड नोट्स हट जाएंगे।\n\nआपके अपने नोट्स, सहेजे गए नोट्स और देखे जा रहे नोट्स प्रभावित नहीं होंगे।",
-
   "storageDeleteConfirm": "हटाएं",
-
   "storageDeleteSuccess": "{count} नोट्स हटाए गए",
-
   "storageNothingToDelete": "हटाने के लिए कोई फ़ीड नोट नहीं",
-
   "storageChatHistory": "चैट इतिहास",
-
   "storageOther": "अन्य",
-
   "storageDeleteFeedNotes": "फ़ीड नोट्स हटाएं",
-
   "storageDeleteFeedNotesSubtitle": "{count} फ़ीड नोट्स · आपके अपने, सहेजे गए और देखे जा रहे नोट्स प्रभावित नहीं होते",
-
   "storageDeleteChatHistory": "चैट इतिहास हटाएं",
-
   "storageDeleteChatHistorySubtitle": "सभी शिव बातचीत और संदेश",
-
   "storageDeleteChatHistorySuccess": "चैट इतिहास हटा दिया गया",
-
   "storageDeleteChatHistoryDialogBody": "इससे सभी शिव बातचीत और संदेश स्थायी रूप से हट जाएंगे। इसे पूर्ववत नहीं किया जा सकता।",
-
   "styleTheme": "थीम",
-
   "styleThemeLight": "लाइट",
-
   "styleThemeDark": "डार्क",
-
   "styleThemeSystem": "सिस्टम",
-
   "styleAccent": "एक्सेंट",
-
   "aiSelectModel": "मॉडल चुनें",
-
   "settingsDeviceAiModel": "डिवाइस AI मॉडल",
-
   "aiModelNoneSelected": "कोई मॉडल डाउनलोड नहीं किया गया",
-
   "aiClearCache": "AI कैश साफ़ करें",
-
   "aiModelSelectionTitle": "AI मॉडल चयन",
-
   "aiModelSelectionSubtitle": "अपने डिवाइस की क्षमताओं के अनुकूल बुद्धिमत्ता स्तर चुनें।",
-
   "aiModelAvailableHeader": "उपलब्ध मॉडल",
-  "aiModelCloudTitle": "UNIUN \u0915\u094d\u0932\u093e\u0909\u0921",
-
-  "aiModelCloudSubtitle": "\u0921\u093e\u0909\u0928\u0932\u094b\u0921 \u0915\u0940 \u091c\u093c\u0930\u0942\u0930\u0924 \u0928\u0939\u0940\u0902 \u2014 \u0936\u093f\u0935 \u0906\u092a\u0915\u0940 \u092a\u0939\u091a\u093e\u0928 \u0915\u0947 \u0938\u093e\u0925 UNIUN \u0915\u0947 \u0938\u0930\u094d\u0935\u0930 \u092a\u0930 \u091a\u0932\u0924\u093e \u0939\u0948\u0964",
-
-  "aiModelCloudBadge": "\u092c\u093f\u0928\u093e \u0921\u093e\u0909\u0928\u0932\u094b\u0921",
-
-
+  "aiModelCloudTitle": "UNIUN क्लाउड",
+  "aiModelCloudSubtitle": "डाउनलोड की ज़रूरत नहीं — शिव आपकी पहचान के साथ UNIUN के सर्वर पर चलता है।",
+  "aiModelCloudBadge": "बिना डाउनलोड",
   "aiModelRecommendedBadge": "अनुशंसित",
-
   "aiModelUseThisButton": "यह मॉडल उपयोग करें",
-
   "aiModelDownloadInfoText": "मॉडल बदलने के लिए एक बार डाउनलोड करना होगा। डेटा शुल्क से बचने के लिए Wi-Fi से कनेक्ट करें। आपका चैट इतिहास सुरक्षित रहता है।",
-
   "aiModelOrphanedFilesText": "{size} बची हुई मॉडल फ़ाइलें साफ़ की जा सकती हैं।",
-
   "aiModelCleanUpAction": "साफ़ करें",
-
   "aiModelCleanUpSuccess": "{count, plural, =1{1 फ़ाइल} other{{count} फ़ाइलें}} साफ़ की गईं।",
-
   "aiModelCleanUpFailed": "बची हुई फ़ाइलें साफ़ नहीं की जा सकीं।",
-
   "aiModelOptimizedCpu": "CPU के लिए अनुकूलित",
-
   "aiModelOptimizedGpuCpu": "GPU / CPU के लिए अनुकूलित",
-
   "aiModelOptimizedGpu": "GPU के लिए अनुकूलित",
-
   "aiModelDownloadingProgress": "डाउनलोड हो रहा है… {percent}%",
-
   "aiModelAlreadyActive": "सक्रिय",
-
   "aiModelDownloaded": "डाउनलोड किया गया",
-
   "aiModelSetActive": "सक्रिय के रूप में सेट करें",
-
   "aiModelDownloadError": "डाउनलोड विफल। कृपया फिर से प्रयास करें।",
-
   "aiModelQwen25Name": "Qwen3 0.6B",
-
   "aiModelQwen25Desc": "फ़ंक्शन कॉलिंग के साथ कॉम्पैक्ट बहुभाषी चैट। 3 GB+ RAM वाले किसी भी डिवाइस पर काम करता है।",
-
   "aiModelDeepSeekR1Name": "DeepSeek R1",
-
   "aiModelDeepSeekR1Desc": "उच्च-प्रदर्शन तर्क और कोड जनरेशन। 4 GB+ RAM की आवश्यकता है।",
-
   "aiModelGemma4E2bName": "Gemma 4 E2B",
-
   "aiModelGemma4E2bDesc": "अगली पीढ़ी की मल्टीमॉडल चैट — टेक्स्ट, इमेज, ऑडियो। 6 GB+ RAM की आवश्यकता है।",
-
   "aiModelGemma4E4bName": "Gemma 4 E4B",
-
   "aiModelGemma4E4bDesc": "अगली पीढ़ी की मल्टीमॉडल चैट — टेक्स्ट, इमेज, ऑडियो। 8 GB+ RAM वाले फ्लैगशिप डिवाइस पर सर्वोत्तम।",
-
   "aiEmbeddingSetupInProgress": "AI सुविधाएँ सेट की जा रही हैं…",
-
   "editProfileTitle": "प्रोफ़ाइल संपादित करें",
-
   "editProfileSaved": "प्रोफ़ाइल सहेजी गई",
-
   "editProfileDisplayName": "प्रदर्शित नाम",
-
   "editProfileUsername": "उपयोगकर्ता नाम",
-
   "editProfileAbout": "के बारे में",
-
   "editProfileAvatarUrl": "अवतार URL",
-
   "editProfileNip05": "NIP-05 पहचानकर्ता",
-
   "editProfileDisplayNameHint": "जैसे Satoshi",
-
   "editProfileUsernameHint": "जैसे satoshi",
-
   "editProfileAboutHint": "दुनिया को बताएं कि आप कौन हैं…",
-
   "editProfileAvatarUrlHint": "https://…",
-
   "editProfileNip05Hint": "you@yourdomain.com",
-
   "editProfileSaveButton": "प्रोफ़ाइल सहेजें",
-
   "editProfileEyebrow": "सार्वजनिक प्रोफ़ाइल",
-
   "editProfileSubtitle": "अपडेट करें कि UNIUN पर दूसरे आपको कैसे देखते हैं।",
-
   "editProfileEncrypted": "केवल आपके सार्वजनिक विवरण साझा किए जाते हैं।",
-
   "welcomeTagline": "*बनाएं* · *साझा करें*\n*चिंतन करें* · *रूपांतरित करें*",
-
   "welcomeCreateIdentity": "अपना अवतार बनाएं",
-
   "welcomeImportKey": "अपना अवतार पुनर्स्थापित करें",
-
   "welcomeLearnHow": "जानें UNIUN कैसे काम करता है",
-
   "welcomeSubtitleLead": "आपका विकेंद्रीकृत ",
-
   "welcomeSubtitleEmphasis": "दूसरा दिमाग",
-
   "welcomePillarBrahma": "ब्रह्मा",
-
   "welcomePillarVishnu": "विष्णु",
-
   "welcomePillarShiv": "शिव",
-
   "welcomeRoleCreate": "बनाएं",
-
   "welcomeRoleReflect": "चिंतन करें",
-
   "welcomeRoleTransform": "रूपांतरित करें",
-
   "howItWorksSkip": "छोड़ें",
-
   "howItWorksNext": "आगे",
-
   "howItWorksGetStarted": "शुरू करें",
-
   "howItWorksIntroTitle": "आपका दूसरा दिमाग, आपकी जेब में",
-
   "howItWorksIntroBody": "UNIUN एक शांत जगह है जहाँ आप अपने विचारों को संजो सकते हैं, अपने आइडिया जोड़ सकते हैं और उन पर चिंतन कर सकते हैं — सब कुछ एक ऐप में जो सचमुच आपका है।",
-
   "howItWorksBrahmaTitle": "ब्रह्मा — संजोएं और जोड़ें",
-
   "howItWorksBrahmaBody": "विचारों को संजोने और उन्हें कुछ स्थायी रूप में ढालने की आपकी जगह।",
-
   "howItWorksVishnuTitle": "विष्णु — आपके लोग और स्थान",
-
   "howItWorksVishnuBody": "लोगों और समुदायों से अपने तरीके से जुड़ें।",
-
   "howItWorksShivTitle": "शिव — आपके डिवाइस पर AI",
-
   "howItWorksShivBody": "डिवाइस पर मौजूद AI जो आपके नोट्स के साथ सोचता है।",
-
   "howItWorksTileNote": "नोट",
-
   "howItWorksDescNote": "टेक्स्ट, इमेज और लिंक लिखें",
-
   "howItWorksTileManas": "मानस",
-
   "howItWorksDescManas": "नोट्स को अपने संग्रहों में समूहित करें",
-
   "howItWorksTileGraph": "ग्राफ़",
-
   "howItWorksDescGraph": "जुड़े हुए नोट्स आपका नॉलेज ग्राफ़ बन जाते हैं",
-
   "howItWorksTilePeople": "लोग",
-
   "howItWorksDescPeople": "अपनी फ़ीड को आकार देने के लिए लोगों को फ़ॉलो करें",
-
   "howItWorksTileGroups": "दल",
-
   "howItWorksDescGroups": "विषयों के इर्द-गिर्द जुड़ने के लिए सार्वजनिक कक्ष",
-
   "howItWorksTilePrivate": "निजी",
-
   "howItWorksDescPrivate": "एन्क्रिप्टेड, केवल-आमंत्रण वाले दल",
-
   "howItWorksTileDms": "डायरेक्ट मैसेज",
-
   "howItWorksDescDms": "निजी आमने-सामने की बातचीत",
-
   "howItWorksTileAdiyogi": "आदियोगी",
-
   "howItWorksDescAdiyogi": "अपने नोट्स के बारे में कुछ भी पूछें",
-
   "howItWorksTileNataraj": "नटराज",
-
   "howItWorksDescNataraj": "नोट्स को नए विचारों में बदलने के लिए स्वाइप करें",
-
   "howItWorksTileGana": "गण",
-
   "howItWorksDescGana": "एजेंट जो पृष्ठभूमि में काम करते हैं",
-
   "howItWorksKeysTitle": "आपकी पहचान आपकी अपनी है",
-
   "howItWorksKeysBody": "कोई ईमेल नहीं, कोई पासवर्ड नहीं, कोई खाता नहीं। UNIUN आपको एक प्राइवेट की देता है जो केवल आपके डिवाइस पर रहती है — यही आपकी पहचान है, और केवल आपके पास है।",
-
   "howItWorksPrivateTitle": "निजी और हमेशा आपकी",
-
   "howItWorksPrivateBody": "UNIUN ऑफ़लाइन काम करता है और इसका AI सीधे आपके डिवाइस पर चलता है — कुछ भी क्लाउड पर नहीं जाता। आपके नोट्स आपके पास रहते हैं, और वे आपके रखने के लिए हैं।",
-
   "howItWorksReadyTitle": "शुरू करने के लिए तैयार हैं?",
-
   "howItWorksReadyBody": "अपना अवतार बनाएं और अपना दूसरा दिमाग बनाना शुरू करें। इसमें बस एक पल लगता है।",
-
   "aboutYouEyebrow": "अपना अवतार बनाएं",
-
   "aboutYouTitle": "आपके बारे में",
-
   "aboutYouSubtitle": "अपना अवतार सेट करें। प्रदर्शित नाम और उपयोगकर्ता नाम आवश्यक हैं।",
-
   "aboutYouAvatarCaption": "स्वतः-जनित",
-
   "aboutYouDisplayNameLabel": "प्रदर्शित नाम *",
-
   "aboutYouDisplayNameHint": "हम आपको क्या कहकर बुलाएं?",
-
   "aboutYouUsernameLabel": "उपयोगकर्ता नाम *",
-
   "aboutYouUsernameHint": "उपयोगकर्ता नाम",
-
   "aboutYouUsernameHelper": "उल्लेख और खोज के लिए अनोखा हैंडल।",
-
   "aboutYouBioLabel": "बायो  (वैकल्पिक)",
-
   "aboutYouBioHint": "दुनिया को अपने बारे में थोड़ा बताएं…",
-
   "aboutYouEncrypted": "आपका डेटा एन्क्रिप्टेड और निजी है।",
-
   "aboutYouDisplayNameRequired": "प्रदर्शित नाम आवश्यक है",
-
   "aboutYouUsernameRequired": "उपयोगकर्ता नाम आवश्यक है",
-
   "importTitle": "वापसी पर स्वागत है",
-
   "importSubtitle": "अपने मौजूदा अवतार को पुनर्स्थापित करने के लिए अपनी प्राइवेट की पेस्ट करें।",
-
   "importPrivateKeyLabel": "प्राइवेट की",
-
   "importPasteFromClipboard": "क्लिपबोर्ड से पेस्ट करें",
-
   "importKeyHint": "nsec1... या 64-वर्ण की hex कुंजी",
-
   "importSecurityNote": "आपकी प्राइवेट की स्थानीय रूप से संसाधित होती है और कभी किसी सर्वर पर नहीं भेजी जाती।",
-
   "importContinue": "इम्पोर्ट करें और जारी रखें",
-
   "importPasteFirst": "कृपया पहले अपनी प्राइवेट की पेस्ट करें।",
-
   "importFailed": "कुंजी इम्पोर्ट करने में विफल। कृपया फिर से प्रयास करें।",
-
   "importInvalidKey": "अमान्य कुंजी। कृपया जाँचें और फिर से प्रयास करें।",
-
   "importEyebrow": "अपना अवतार पुनर्स्थापित करें",
-
   "importScanQrButton": "इसके बजाय QR स्कैन करें",
-
   "importScanTitle": "अपनी कुंजी का QR स्कैन करें",
-
   "importScanHint": "अपने कैमरे को उस QR की ओर रखें जिसमें आपकी प्राइवेट की हो",
-
   "keysTitle": "आपकी अवतार कुंजियाँ",
-
   "keysSubtitle": "एक साझा करने के लिए है। एक केवल आपकी नज़रों के लिए है।",
-
   "keysEyebrow": "आपकी अवतार कुंजियाँ",
-
   "keysHeadline": "आपकी कुंजियाँ ही आपका अवतार हैं।",
-
   "keysPublicKeyTitle": "पब्लिक की",
-
   "keysPublicKeySubtitle": "संदेश पाने के लिए दूसरों के साथ साझा करें।",
-
   "keysPrivateKeyTitle": "प्राइवेट की",
-
   "keysPrivateKeySubtitle": "इसे कभी साझा न करें। यह आपकी पहचान तक पूरी पहुँच देती है।",
-
   "keysPrivateKeyWarning": "यह कुंजी खोना = अपना खाता हमेशा के लिए खोना।",
-
   "keysSaveAndContinue": "सहेजें और जारी रखें",
-
   "keysE2eEncrypted": "E2E एन्क्रिप्टेड",
-
   "keysAgreePrefix": "मैं सहमत हूँ ",
-
   "keysAgreeTerms": "नियम और शर्तें",
-
   "keysAgreeConjunction": " और ",
-
   "keysAgreePrivacy": "गोपनीयता नीति",
-
   "keysPublicCopied": "पब्लिक की कॉपी हो गई — अब अपनी प्राइवेट की दिखाएं",
-
   "keysPrivateCopied": "प्राइवेट की कॉपी हो गई — इसे कहीं सुरक्षित रखें!",
-
   "keysFailedToSave": "कुंजियाँ सहेजने में विफल: {error}",
-
   "keysCopyPublicAbove": "अपनी प्राइवेट की दिखाने के लिए ऊपर अपनी पब्लिक की कॉपी करें।",
-
   "privacyPageTitle": "गोपनीयता और नीति",
-
   "privacyIntroTitle": "गोपनीयता और नीति",
-
   "privacyIntroBody": "UNIUN पारदर्शिता पर बना है। आपका डेटा आपके डिवाइस पर रहता है। नीचे वह सब कुछ है जो आपको जानना चाहिए — कोई कानूनी शब्दजाल नहीं।",
-
   "privacyExpandPrivacy": "गोपनीयता नीति",
-
   "privacyExpandTerms": "उपयोग की शर्तें",
-
   "privacyLastUpdated": "अंतिम अपडेट: जून 2026",
-
   "privacyContactEmail": "info@uniun.in",
-
   "privacyStoredLocallyTitle": "हम स्थानीय रूप से क्या संग्रहीत करते हैं",
-
   "privacyStoredLocallyBody": "UNIUN आपके नोट्स, प्रोफ़ाइल, सहेजे गए आइटम, दल संदेश और सेटिंग्स सीधे आपके डिवाइस पर संग्रहीत करता है। यह डेटा UNIUN द्वारा नियंत्रित किसी सर्वर पर नहीं भेजा जाता।",
-
   "privacySharedPubliclyTitle": "सार्वजनिक रूप से क्या साझा होता है",
-
   "privacySharedPubliclyBody": "जब आप कोई नोट प्रकाशित करते हैं या किसी सार्वजनिक दल में संदेश भेजते हैं, तो वह सामग्री Nostr रिले पर प्रसारित होती है। Nostr एक खुला सार्वजनिक प्रोटोकॉल है — एक बार प्रकाशित होने के बाद, आपके नोट्स उन रिले से जुड़े किसी भी व्यक्ति को दिख सकते हैं। UNIUN तीसरे-पक्ष के रिले को नियंत्रित नहीं करता।",
-
   "privacyIdentityKeysTitle": "आपकी पहचान और कुंजियाँ",
-
   "privacyIdentityKeysBody": "आपकी पहचान एक क्रिप्टोग्राफ़िक कुंजी जोड़ी है। आपकी पब्लिक की Nostr नेटवर्क पर दूसरों को दिखाई देती है। आपकी प्राइवेट की (nsec) विशेष रूप से आपके डिवाइस के सुरक्षित सिस्टम कीचेन (iOS Keychain / Android Keystore) में संग्रहीत होती है। UNIUN आपकी प्राइवेट की कभी किसी सर्वर पर नहीं भेजता।",
-
   "privacyLocalAiTitle": "स्थानीय AI (शिव)",
-
   "privacyLocalAiBody": "शिव AI सहायक पूरी तरह आपके डिवाइस पर चलता है। यह केवल आपके स्थानीय रूप से सहेजे गए नोट्स तक पहुँचता है। कोई भी नोट सामग्री किसी बाहरी AI सेवा या API को नहीं भेजी जाती।",
-
   "privacyMediaTitle": "मीडिया और Blossom सर्वर",
-
   "privacyMediaBody": "यदि आप इमेज या मीडिया संलग्न करते हैं, तो उन्हें आपकी पसंद के किसी Blossom कंटेंट सर्वर पर अपलोड किया जा सकता है। UNIUN Blossom सर्वर संचालित नहीं करता। वहाँ अपलोड की गई सामग्री प्रोटोकॉल के डिज़ाइन के अनुसार सार्वजनिक रूप से सुलभ हो सकती है।",
-
   "privacyDmsTitle": "डायरेक्ट मैसेज",
-
   "privacyDmsBody": "DM, Nostr NIP-17 मानक का उपयोग करके एंड-टू-एंड एन्क्रिप्टेड हैं। केवल इच्छित प्राप्तकर्ता ही संदेश की सामग्री पढ़ सकता है। संदेश रूटिंग मेटाडेटा रिले को दिखाई दे सकता है।",
-
   "privacyControlTitle": "आपका नियंत्रण",
-
   "privacyControlBody": "आप सेटिंग्स से किसी भी समय अपना स्थानीय डेटा हटा सकते हैं। चूँकि Nostr एक सार्वजनिक प्रोटोकॉल है, रिले पर पहले से प्रकाशित नोट्स वापस नहीं लिए जा सकते — यह नेटवर्क का एक जानबूझकर रखा गया गुण है, ऐप की सीमा नहीं।",
-
   "privacyContactTitle": "संपर्क",
-
   "privacyContactBody": "गोपनीयता संबंधी प्रश्नों के लिए: info@uniun.in",
-
   "termsResponsibilityTitle": "आपकी ज़िम्मेदारी",
-
   "termsResponsibilityBody": "UNIUN पर आपके द्वारा प्रकाशित सभी सामग्री के लिए आप पूरी तरह ज़िम्मेदार हैं। ऐप का उपयोग करके, आप ऐसी सामग्री पोस्ट न करने के लिए सहमत होते हैं जो अवैध, अपमानजनक, उत्पीड़क, घृणास्पद, यौन रूप से स्पष्ट हो, या दूसरों के अधिकारों का उल्लंघन करती हो। आपत्तिजनक सामग्री और अपमानजनक व्यवहार UNIUN पर स्वीकार्य नहीं हैं।",
-
   "termsNoAbuseTitle": "कोई दुरुपयोग या स्पैम नहीं",
-
   "termsNoAbuseBody": "UNIUN का उपयोग स्पैम करने, उत्पीड़न करने, दूसरों का प्रतिरूपण करने, या Nostr नेटवर्क को बाधित करने वाली स्वचालित गतिविधि के लिए न करें। UNIUN विकेंद्रीकृत है: किसी भी नोट के मेन्यू में एक रिपोर्ट विकल्प शामिल है (श्रेणियाँ: नग्नता, मैलवेयर, अपशब्द, अवैध, स्पैम, प्रतिरूपण, अन्य) और किसी भी उपयोगकर्ता को सेटिंग्स → ब्लॉक किए गए उपयोगकर्ता से ब्लॉक किया जा सकता है। रिपोर्ट किए गए नोट्स तुरंत आपकी फ़ीड से छिप जाते हैं और ब्लॉक किए गए उपयोगकर्ताओं की सामग्री कभी आप तक नहीं पहुँचती। रिपोर्ट Nostr नेटवर्क पर भी प्रकाशित होती हैं ताकि अन्य क्लाइंट और रिले संचालक उन पर कार्रवाई कर सकें।",
-
   "termsPrivateKeyTitle": "अपनी प्राइवेट की सुरक्षित रखें",
-
   "termsPrivateKeyBody": "आपकी प्राइवेट की (nsec) आपकी पहचान और लॉगिन है। यदि आप इसे खो देते हैं, तो आपका खाता पुनर्प्राप्त नहीं किया जा सकता — UNIUN के पास प्राइवेट की को रीसेट या पुनर्प्राप्त करने का कोई तरीका नहीं है। इसे किसी सुरक्षित स्थान पर बैकअप करें।",
-
   "termsPublicContentTitle": "रिले पर सार्वजनिक सामग्री",
-
   "termsPublicContentBody": "आपके द्वारा प्रकाशित नोट्स और दल संदेश Nostr रिले पर भेजे जाते हैं और नेटवर्क पर किसी को भी दिख सकते हैं। सार्वजनिक नोट्स में संवेदनशील व्यक्तिगत जानकारी साझा न करें।",
-
   "termsAppMayChangeTitle": "ऐप बदल सकता है",
-
   "termsAppMayChangeBody": "UNIUN सक्रिय विकास के अधीन है। सुविधाएँ, रिले व्यवहार और नीतियाँ समय के साथ बदल सकती हैं। हम ऐप के भीतर महत्वपूर्ण अपडेट के बारे में सूचित करेंगे।",
-
   "termsNoWarrantyTitle": "कोई वारंटी नहीं",
-
   "termsNoWarrantyBody": "UNIUN जैसा है वैसा ही प्रदान किया जाता है। हम रिले अपटाइम, तीसरे-पक्ष सर्वर उपलब्धता, या बाहरी रिले पर सामग्री के बने रहने की कोई गारंटी नहीं देते।",
-
   "shivName": "शिव",
-
   "shivTagline": "थ्रेड्स में सोचें",
-
   "shivLandingBody": "आपका डिवाइस पर मौजूद AI.\nथ्रेड्स में सोचें।",
-
   "shivNoModelBody": "शिव से चैट करना शुरू करने के लिए एक AI मॉडल डाउनलोड करें। सेटअप के बाद सब कुछ आपके डिवाइस पर चलता है — इंटरनेट की ज़रूरत नहीं।",
-
   "shivSetUpAi": "AI सेट करें",
-
   "shivNewConversation": "नई बातचीत",
-
   "shivViewConversations": "{count, plural, =1{1 बातचीत देखें} other{{count} बातचीत देखें}}",
-
   "shivConversations": "बातचीत",
-
   "shivNewConversationTooltip": "नई बातचीत",
-
   "shivConversationsTooltip": "बातचीत",
-
   "shivBranchTreeTooltip": "ब्रांच ट्री",
-
   "shivBranchTreeComingSoon": "ब्रांच ट्री — चरण 4 में आ रहा है",
-
   "shivConversationTree": "बातचीत ट्री",
-
   "shivNodeOpenBranch": "ब्रांच खोलें",
-
   "shivNodeContinueFromHere": "यहाँ से जारी रखें",
-
   "shivNodeNewBranch": "नई ब्रांच",
-
   "shivActiveBranch": "सक्रिय ब्रांच",
-
   "shivNodeMessages": "{count} संदेश",
-
   "shivDefaultConversationTitle": "नई बातचीत",
-
   "shivEmptyTitle": "एक बातचीत शुरू करें",
-
   "shivEmptyBody": "शिव से कुछ भी पूछें — आपके सहेजे गए नोट्स\nइसे संदर्भ देते हैं कि आप क्या जानते हैं।",
-
   "shivEmptyTreeTitle": "अभी तक कोई संदेश नहीं",
-
   "shivEmptyTreeBody": "ब्रांच ट्री यहाँ देखने के लिए\nएक बातचीत शुरू करें।",
-
   "shivThinking": "सोच रहा है…",
-
   "shivThinkingLabel": "तर्क",
-
   "shivSourcesChip": "{count, plural, =1{स्रोत · 1} other{स्रोत · {count}}}",
-
   "shivSourcesSheetTitle": "स्रोत",
-
   "shivSourcesEmpty": "इस उत्तर के लिए कोई स्रोत नोट नहीं",
-
   "shivInputHint": "शिव से कुछ भी पूछें…",
-
   "shivHomeHeadline": "मैं आपकी कैसे मदद कर सकता हूँ?",
-
   "shivHomeHistoryTooltip": "इतिहास",
-
   "shivHomeGana": "गण",
-
   "shivHomeNataraj": "नटराज",
-
   "shivHomeSuggestSummarize": "मेरे सप्ताह का सारांश दें",
-
   "shivHomeSuggestConnect": "दो विचारों को जोड़ें",
-
   "shivHomeSuggestDraft": "किसी नोट से ड्राफ़्ट बनाएं",
-
   "composerAskScope": "{scope} से पूछें",
-
   "shivNoConversations": "अभी तक कोई बातचीत नहीं",
-
   "shivActiveLabel": "सक्रिय",
-
   "shivTimeJustNow": "अभी-अभी",
-
   "shivTimeMinutesAgo": "{count} मिनट पहले",
-
   "shivTimeHoursAgo": "{count} घंटे पहले",
-
   "shivTimeDaysAgo": "{count} दिन पहले",
-
   "savedNotesTitle": "सहेजे गए नोट्स",
-
   "savedNotesSearch": "सहेजे गए नोट्स खोजें…",
-
   "savedNotesEmpty": "अभी तक कुछ सहेजा नहीं गया",
-
   "savedNotesEmptySub": "बाद में पढ़ने के लिए अपनी फ़ीड से नोट्स बुकमार्क करें।",
-
   "graphLegendSaved": "सहेजे गए",
-
   "graphLegendOwn": "अपने",
-
   "graphLegendDraft": "ड्राफ़्ट",
-
   "graphFabTextNote": "टेक्स्ट नोट",
-
   "graphFabReferenceNote": "संदर्भ नोट",
-
   "graphDraftEdit": "संपादित करें",
-
   "graphDraftDelete": "हटाएं",
-
   "graphScopeAllNotes": "सभी नोट्स",
-
   "graphSearchHint": "ग्राफ़ खोजें…",
-
   "graphSearchTooltip": "ग्राफ़ खोजें",
-
   "graphMenuTooltip": "मानस ड्रॉअर खोलें",
-
   "graphSearchClear": "खोज साफ़ करें",
-
   "groupEntryTitle": "दल",
-
   "groupEntrySubtitle": "किसी मौजूदा सार्वजनिक दल में उसकी ID या QR का उपयोग करके शामिल हों, या नया शुरू करें।",
-
   "groupEntryJoin": "किसी दल में शामिल हों",
-
   "groupEntryCreate": "एक दल बनाएं",
-
   "privateGroupEntryTitle": "निजी दल",
-
   "privateGroupEntrySubtitle": "किसी मौजूदा निजी दल में शामिल होने का अनुरोध करें, या अपना खुद का बनाएं।",
-
   "privateGroupEntryJoin": "किसी निजी दल में शामिल हों",
-
   "privateGroupEntryCreate": "एक निजी दल बनाएं",
-
   "createGroupTitle": "दल",
-
   "createGroupHeaderTitle": "दल बनाएं",
-
   "createGroupDetailsHeading": "दल विवरण",
-
   "createGroupNameLabel": "दल का नाम",
-
   "createGroupNamePlaceholder": "जैसे design",
-
   "createGroupAboutLabel": "के बारे में (थीम/नियम)",
-
   "createGroupDescriptionLabel": "विवरण",
-
   "createGroupAboutPlaceholder": "यह दल किस बारे में है?",
-
   "createGroupPictureLabel": "तस्वीर URL (वैकल्पिक)",
-
   "createGroupPermanenceNote": "दल की पहली घटना उसकी स्थायी ID बन जाती है — इसे कभी हटाया नहीं जा सकता।",
-
   "createGroupAdvancedRelays": "उन्नत · रिले",
-
   "createGroupPublishRelays": "प्रकाशन रिले",
-
   "createGroupPublishRelaysBody": "वे रिले चुनें जिन पर यह दल प्रसारित होना चाहिए।",
-
   "createGroupAction": "दल बनाएं",
-
   "createGroupSuccess": "दल सफलतापूर्वक बनाया गया",
-
   "createPrivateGroupTitle": "निजी दल बनाएं",
-
   "createPrivateGroupEncrypted": "एन्क्रिप्टेड",
-
   "createPrivateGroupNameHint": "जैसे core team",
-
   "createPrivateGroupDescHint": "यह दल किस बारे में है?",
-
   "createPrivateGroupAdminNote": "आप एडमिन हैं — आप तय करते हैं कौन शामिल होगा।",
-
   "createPrivateGroupHeading": "एक नया निजी दल शुरू करें",
-
   "createPrivateGroupDescription": "निजी दल एंड-टू-एंड एन्क्रिप्टेड होते हैं। सदस्यों को शामिल होने का अनुरोध करना होता है, और एडमिन को उन्हें स्वीकृत करना होता है।",
-
   "createPrivateGroupNameLabel": "दल का नाम",
-
   "createPrivateGroupDescLabel": "विवरण",
-
   "createPrivateGroupAction": "दल बनाएं",
-
   "createPrivateGroupSuccess": "निजी दल सफलतापूर्वक बनाया गया!",
-
   "createDmTitle": "नया संदेश",
-
   "createDmRecipientLabel": "इन्हें भेजें",
-
   "createDmRecipientHint": "उनका UNIUN कोड पेस्ट करें, या उनका QR स्कैन करें",
-
   "createDmRelaysNote": "वे रिले चुनें जिनके माध्यम से यह संदेश भेजा जाता है।",
-
   "createDmEncryptedNote": "डायरेक्ट मैसेज एंड-टू-एंड एन्क्रिप्टेड हैं। केवल प्राप्तकर्ता ही उन्हें पढ़ सकता है।",
-
   "createDmScanQr": "QR कोड स्कैन करें",
-
   "createDmAction": "चैट शुरू करें",
-
   "joinPrivateGroupTitle": "निजी दल में शामिल हों",
-
   "joinPrivateGroupEncrypted": "एन्क्रिप्टेड",
-
   "joinPrivateGroupHeading": "शामिल होने का अनुरोध करें",
-
   "joinPrivateGroupSubtitle": "किसी निजी दल तक पहुँच का अनुरोध करने के लिए दल ID दर्ज करें।",
-
   "joinPrivateGroupGroupIdLabel": "दल ID",
-
   "joinPrivateGroupGroupIdHint": "दल ID पेस्ट करें…",
-
   "joinPrivateGroupGroupIdHelper": "दल ID के लिए दल एडमिन से पूछें।",
-
   "joinPrivateGroupScanQr": "QR स्कैन करें",
-
   "joinPrivateGroupScanCardTitle": "एक निजी दल QR स्कैन करें",
-
   "joinPrivateGroupScanCardSubtitle": "अपने कैमरे को एडमिन द्वारा साझा किए गए कोड की ओर रखें",
-
   "joinPrivateGroupApprovalInfo": "संदेश पढ़ने से पहले आपका अनुरोध स्वीकृति के लिए एडमिन के पास जाता है।",
-
   "joinPrivateGroupAction": "शामिल होने का अनुरोध भेजें",
-
   "joinPrivateGroupSuccess": "शामिल होने का अनुरोध भेजा गया! एडमिन की स्वीकृति की प्रतीक्षा करें।",
-
   "commonOr": "या",
-
   "commonAdvanced": "उन्नत",
-
   "relaySelectorPlaceholder": "रिले चुनें",
-
   "relaySelectorSelected": "{count} रिले चुने गए",
-
   "relaySelectorPickerTitle": "रिले चुनें",
-
   "relaySelectorEmpty": "कोई रिले उपलब्ध नहीं। जोड़ने के लिए + पर टैप करें।",
-
   "relaySelectorAddTooltip": "रिले जोड़ें",
-
   "relayAddDialogTitle": "रिले जोड़ें",
-
   "relayAddDialogHint": "wss://relay.example.com",
-
   "relayAddDialogAction": "जोड़ें",
-
   "relayAddDialogError": "रिले नहीं जोड़ सका: {error}",
-
   "relayRemoveDialogTitle": "रिले हटाएं",
-
   "relayRemoveDialogBody": "{url} का उपयोग बंद करें?",
-
   "relayRemoveDialogAction": "हटाएं",
-
   "relayManageEmpty": "कोई रिले नहीं मिला।",
-
   "relayManageRemoveTooltip": "हटाएं",
-
   "pendingRequestsTitle": "लंबित शामिल होने के अनुरोध",
-
   "pendingRequestsSubtitle": "उपयोगकर्ताओं को स्वीकृत करें ताकि वे संदेश पढ़ और भेज सकें।",
-
   "pendingRequestsEmpty": "कोई लंबित अनुरोध नहीं।",
-
   "pendingRequestsNewMember": "नया सदस्य",
-
   "pendingRequestsApprove": "स्वीकृत करें",
-
   "settingsCloudProvider": "Cloud AI",
-
   "cloudProviderTitle": "UNIUN Cloud",
-
   "cloudProviderEmptyCta": "साइन इन करें",
-
   "cloudProviderEmptySubtitle": "शिव को Claude पर चलाएं — अपनी UNIUN पहचान से साइन इन करें।",
-
   "cloudProviderConnectedSubtitle": "कनेक्ट किया गया · प्रबंधित करने के लिए टैप करें",
-
   "cloudProviderDisconnect": "डिस्कनेक्ट करें",
-
   "cloudProviderLastKeyTitle": "यह आपकी एकमात्र सक्रिय कुंजी है",
-
   "cloudProviderLastKeyMessage": "डिस्कनेक्ट करने से UNIUN Cloud पर आपकी अंतिम सक्रिय कुंजी रद्द हो जाएगी। आप बाद में फिर से कनेक्ट कर सकते हैं — इससे केवल यह डिवाइस साइन आउट होगा।",
-
   "cloudProviderConnecting": "साइन इन हो रहा है…",
-
   "cloudProviderConnectFailed": "UNIUN Cloud में साइन इन नहीं हो सका। कनेक्शन जांचें और फिर से प्रयास करें।",
-
   "qrLoginNotConnected": "पहले सेटिंग्स में UNIUN Cloud में साइन इन करें, फिर इस कोड को फिर से स्कैन करें।",
-
   "qrLoginApproved": "यह डिवाइस अब वेब पर साइन इन है।",
-
   "qrLoginFailed": "साइन-इन स्वीकृत नहीं हो सका: {error}",
-
-  "cloudProviderModelsHeader": "\u0915\u094d\u0932\u093e\u0909\u0921 \u092e\u0949\u0921\u0932",
-
-  "cloudProviderOnDevice": "\u0911\u0928-\u0921\u093f\u0935\u093e\u0907\u0938",
-
-  "cloudProviderOnDeviceNotSet": "\u0921\u093e\u0909\u0928\u0932\u094b\u0921 \u0928\u0939\u0940\u0902 \u0939\u0941\u0906",
-
-  "cloudProviderNoCloudModels": "\u0906\u092a\u0915\u0947 \u092a\u094d\u0932\u093e\u0928 \u092e\u0947\u0902 \u0905\u092d\u0940 \u0915\u094b\u0908 \u0915\u094d\u0932\u093e\u0909\u0921 \u092e\u0949\u0921\u0932 \u0928\u0939\u0940\u0902 \u0939\u0948\u0964 \u0907\u0928\u094d\u0939\u0947\u0902 \u0905\u0928\u0932\u0949\u0915 \u0915\u0930\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f uniun.in \u092a\u0930 \u0905\u092a\u0928\u093e \u092a\u094d\u0932\u093e\u0928 \u0905\u092a\u0917\u094d\u0930\u0947\u0921 \u0915\u0930\u0947\u0902\u0964",
-  "cloudProviderPlanLabel": "\u092a\u094d\u0932\u093e\u0928",
-
-  "cloudProviderCreditsLabel": "\u0915\u094d\u0930\u0947\u0921\u093f\u091f",
-
-  "cloudProviderUpgrade": "\u092a\u094d\u0932\u093e\u0928 \u0905\u092a\u0917\u094d\u0930\u0947\u0921 \u0915\u0930\u0947\u0902 / \u0915\u094d\u0930\u0947\u0921\u093f\u091f \u091c\u094b\u0921\u093c\u0947\u0902",
-
-  "cloudProviderUpgradeHint": "\u092a\u0947\u092e\u0947\u0902\u091f uniun.in \u092a\u0930 \u0939\u094b\u0924\u093e \u0939\u0948 \u2014 \u0935\u0939\u093e\u0902 \u0905\u092a\u0928\u0940 \u0909\u0938\u0940 \u092a\u0939\u091a\u093e\u0928 \u0938\u0947 \u0938\u093e\u0907\u0928 \u0907\u0928 \u0915\u0930\u0947\u0902, \u092b\u093f\u0930 \u0935\u093e\u092a\u0938 \u0906\u0915\u0930 \u0907\u0938 \u0936\u0940\u091f \u0915\u094b \u092b\u093f\u0930 \u0938\u0947 \u0916\u094b\u0932\u0947\u0902 \u0924\u093e\u0915\u093f \u0928\u092f\u093e \u092a\u094d\u0932\u093e\u0928 \u0926\u093f\u0916\u0947\u0964",
-
+  "cloudProviderModelsHeader": "क्लाउड मॉडल",
+  "cloudProviderOnDevice": "ऑन-डिवाइस",
+  "cloudProviderOnDeviceNotSet": "डाउनलोड नहीं हुआ",
+  "cloudProviderNoCloudModels": "आपके प्लान में अभी कोई क्लाउड मॉडल नहीं है। इन्हें अनलॉक करने के लिए uniun.in पर अपना प्लान अपग्रेड करें।",
+  "cloudProviderPlanLabel": "प्लान",
+  "cloudProviderCreditsLabel": "क्रेडिट",
+  "cloudProviderUpgrade": "प्लान अपग्रेड करें / क्रेडिट जोड़ें",
+  "cloudProviderUpgradeHint": "पेमेंट uniun.in पर होता है — वहां अपनी उसी पहचान से साइन इन करें, फिर वापस आकर इस शीट को फिर से खोलें ताकि नया प्लान दिखे।",
   "modelPickerTitle": "एक मॉडल चुनें",
-
   "modelPickerSearchHint": "मॉडल खोजें…",
-
   "modelPickerLocalSection": "डिवाइस पर",
-
   "modelPickerCloudSection": "क्लाउड",
-
   "modelPickerManageLocalCta": "डिवाइस पर मॉडल प्रबंधित करें",
-
   "modelPickerConnectCloudCta": "एक क्लाउड प्रदाता कनेक्ट करें",
-
   "modelPickerNoModels": "कोई मॉडल उपलब्ध नहीं।",
-
   "chatInputPickModelTooltip": "मॉडल चुनें",
-
   "followActionSuccess": "अब फ़ॉलो कर रहे हैं।",
-
   "drawerFollowingSectionTitle": "फ़ॉलो किए जा रहे",
-
   "drawerFollowingEmpty": "अभी तक किसी को फ़ॉलो नहीं कर रहे",
-
   "vishnuFeedEmptyTitle": "आपकी फ़ीड शांत है",
-
   "vishnuFeedEmptySubtitle": "किसी का UNIUN QR स्कैन करके उन्हें फ़ॉलो करें और उनके नोट्स यहाँ देखें।",
-
   "vishnuFeedEmptyCta": "एक QR स्कैन करें",
-
   "vishnuFeedEmptyRefresh": "रिफ़्रेश करें",
-
   "drawerPrivateGroups": "निजी दल",
-
   "drawerNoPrivateGroups": "कोई निजी दल नहीं जुड़ा",
-
   "followActionInvalidKey": "अमान्य पब्लिक की",
-
   "userProfileFollow": "फ़ॉलो करें",
-
   "userProfileFollowing": "फ़ॉलो किया जा रहा है",
-
   "userProfileNoNotes": "अभी तक कोई नोट नहीं",
-
   "userProfileMessage": "संदेश",
-
   "userProfileNotesLabel": "नोट्स",
-
   "userProfileCopyNpub": "npub कॉपी करें",
-
   "qrShareAction": "साझा करें",
-
   "qrShareFailed": "QR कोड साझा नहीं कर सके",
-
   "qrCaptionUser": "UNIUN पर आपको जोड़ने के लिए इसे स्कैन करें।",
-
   "qrCaptionPublicGroup": "इस दल में शामिल होने के लिए स्कैन करें।",
-
   "qrCaptionPrivateGroup": "इस निजी दल में शामिल होने के लिए स्कैन करें।",
-
   "qrCaptionDm": "UNIUN पर चैट शुरू करने के लिए स्कैन करें।",
-
   "shareSheetTitle": "नोट साझा करें",
-
   "shareQuotingLabel": "उद्धृत कर रहे हैं",
-
   "shareToLabel": "इन्हें साझा करें",
-
   "shareActionShare": "साझा करें",
-
   "shareSheetCommentHint": "एक टिप्पणी जोड़ें (वैकल्पिक)",
-
   "shareDestFeed": "मेरी फ़ीड पर पोस्ट करें",
-
   "shareDestFeedSubtitle": "विष्णु पर दृश्यमान",
-
   "shareSectionPublicGroups": "सार्वजनिक दल",
-
   "shareSectionPrivateGroups": "निजी दल",
-
   "shareSectionDms": "डायरेक्ट मैसेज",
-
   "shareSuccess": "साझा किया गया",
-
   "shareEmbedLoading": "नोट लोड हो रहा है…",
-
   "shareEmbedNotFound": "नोट उपलब्ध नहीं",
-
   "shareEmbedUnverified": "असत्यापित",
-
   "shareComposeAddReference": "संदर्भ",
-
   "shareComposeAddImage": "इमेज",
-
   "shareNoDmConversations": "नोट्स यहाँ साझा करने के लिए पहले एक DM शुरू करें।",
-
   "noteCardBlockUser": "उपयोगकर्ता को ब्लॉक करें",
-
   "noteCardDeleteNote": "नोट हटाएं",
-
   "deleteNoteSnackbar": "नोट हटा दिया गया।",
-
   "blockUserSnackbar": "{name} को ब्लॉक कर दिया। उनकी नई पोस्ट दिखाई नहीं देंगी।",
-
   "settingsBlockedUsers": "ब्लॉक किए गए उपयोगकर्ता",
-
   "blockedUsersTitle": "ब्लॉक किए गए उपयोगकर्ता",
-
   "blockedUsersDescription": "ब्लॉक किए गए लोग आपको संदेश नहीं भेज सकते और उनके नोट्स आपकी फ़ीड से छिपे रहते हैं। नोट्स कभी हटाए नहीं जाते — अनब्लॉक करने से वे वापस आ जाते हैं।",
-
   "blockedUsersSectionCount": "ब्लॉक किए गए · {count}",
-
   "blockedUsersBlockedAgo": "{time} पहले ब्लॉक किया गया",
-
   "blockedUsersBlockedJustNow": "अभी-अभी ब्लॉक किया गया",
-
   "blockedUsersEmpty": "आपने किसी को ब्लॉक नहीं किया है",
-
   "blockedUsersEmptyHint": "आपके द्वारा ब्लॉक किए गए लोग यहाँ दिखेंगे, ताकि आप उन्हें कभी भी अनब्लॉक कर सकें।",
-
   "actionUnblock": "अनब्लॉक करें",
-
   "noteCardReport": "नोट की रिपोर्ट करें",
-
   "reportSheetTitle": "इस सामग्री की रिपोर्ट करें",
-
   "reportSheetReasonHint": "वैकल्पिक — कोई संदर्भ जोड़ें (अधिकतम 280 अक्षर)",
-
   "reportSheetSubmit": "रिपोर्ट सबमिट करें",
-
   "reportSheetOutcomeHint": "यह नोट आपकी फ़ीड से छिप जाएगा। आपकी रिपोर्ट नेटवर्क पर भेजी जाती है।",
-
   "reportSheetAlsoBlock": "इस उपयोगकर्ता को भी ब्लॉक करें (आप उनकी कोई भी पोस्ट नहीं देखेंगे)",
-
   "reportSentSnackbar": "रिपोर्ट भेजी गई। UNIUN को सुरक्षित रखने के लिए धन्यवाद।",
-
   "reportTypeNudity": "नग्नता",
-
   "reportTypeNudityDescription": "यौन रूप से स्पष्ट सामग्री या नग्नता",
-
   "reportTypeMalware": "मैलवेयर",
-
   "reportTypeMalwareDescription": "ऐसे लिंक या फ़ाइलें जो डिवाइस को नुकसान पहुँचा सकती हैं",
-
   "reportTypeProfanity": "अपशब्द",
-
   "reportTypeProfanityDescription": "घृणास्पद या अत्यधिक अश्लील भाषा",
-
   "reportTypeIllegal": "अवैध",
-
   "reportTypeIllegalDescription": "ऐसी सामग्री जो रिपोर्टकर्ता के क्षेत्राधिकार में अवैध है",
-
   "reportTypeSpam": "स्पैम",
-
   "reportTypeSpamDescription": "अवांछित या बार-बार होने वाला प्रचार",
-
   "reportTypeImpersonation": "प्रतिरूपण",
-
   "reportTypeImpersonationDescription": "किसी और होने का दिखावा करना",
-
   "reportTypeOther": "अन्य",
-
   "reportTypeOtherDescription": "कुछ और जो सामुदायिक मानकों का उल्लंघन करता है",
-
   "actionReadMore": "और पढ़ें",
-
   "actionReadLess": "कम पढ़ें",
-
   "mediaGalleryTitle": "मीडिया",
-
   "mediaTabAll": "सभी",
-
   "mediaTabImages": "इमेज",
-
   "mediaTabVideos": "वीडियो",
-
   "mediaTabAudio": "ऑडियो",
-
   "mediaTabFiles": "फ़ाइलें",
-
   "mediaTabPinned": "पिन किए गए",
-
   "mediaActionDownload": "डाउनलोड करें",
-
   "mediaActionOpen": "खोलें",
-
   "mediaActionPin": "पिन करें",
-
   "mediaActionUnpin": "अनपिन करें",
-
   "mediaActionRemoveLocal": "डिवाइस से हटाएं",
-
   "mediaActionCopySha": "sha256 कॉपी करें",
-
   "mediaActionSaveToDevice": "डिवाइस में सहेजें",
-
   "mediaSavedTo": "{destination} में सहेजा गया",
-
   "mediaSaveSuccess": "सहेजा गया",
-
   "mediaSaveFailed": "फ़ाइल सहेज नहीं सके",
-
   "mediaEmptyState": "अभी तक कोई मीडिया नहीं। अटैचमेंट के साथ मिलने वाले नोट्स यहाँ दिखेंगे।",
-
   "mediaDetailReferencedBy": "इनके द्वारा संदर्भित",
-
   "mediaDetailLabelSha": "sha256",
-
   "mediaDetailLabelMime": "प्रकार",
-
   "mediaDetailLabelSize": "आकार",
-
   "mediaDetailLabelDim": "आयाम",
-
   "mediaDetailLabelCached": "कैश किया गया",
-
   "mediaDetailLabelServer": "सर्वर",
-
   "mediaPickerTitle": "लाइब्रेरी से संलग्न करें",
-
   "mediaPickerEmpty": "अभी तक कोई मीडिया उपलब्ध नहीं।",
-
   "composerAttachPhoto": "फ़ोटो",
-
   "composerAttachVideo": "वीडियो",
-
   "composerAttachFile": "फ़ाइल",
-
   "mediaTooLarge": "फ़ाइल बहुत बड़ी है ({size})। अधिकतम {cap}। कृपया इसे कंप्रेस करके फिर से प्रयास करें।",
-
   "mediaTooLargeAfterCompress": "इमेज को अपलोड करने लायक छोटा नहीं कर सके। कोई दूसरी फ़ोटो आज़माएं।",
-
   "storageMediaRow": "मीडिया",
-
   "storageMediaRowSubtitle": "आपके नोट्स की फ़ोटो, वीडियो और फ़ाइलें",
-
   "noteCardDownloadMedia": "डाउनलोड करें",
-
   "noteCardFileFallbackName": "अटैचमेंट",
-
   "noteCardFileTapToOpen": "खोलने के लिए टैप करें",
-
   "noteCardFileTapToDownload": "डाउनलोड करने के लिए टैप करें",
-
   "mediaSelectionCount": "{count} चयनित",
-
   "mediaSelectionExit": "चयन से बाहर निकलें",
-
   "mediaSelectionRemoveDialogTitle": "डिवाइस से हटाएं?",
-
   "mediaSelectionRemoveDialogBody": "इस डिवाइस से {count} कैश की गई फ़ाइल(लें) हटाकर जगह खाली करें। सर्वर की प्रतियाँ बनी रहती हैं — आप कभी भी फिर से डाउनलोड कर सकते हैं।",
-
   "storageMedia": "मीडिया",
-
   "storageRetentionTitle": "पुराने नोट्स स्वतः हटाएं",
-
   "storageRetentionSubtitle": "केवल सार्वजनिक फ़ीड और दल नोट्स। सहेजे गए, देखे जा रहे, आपके अपने, DM और निजी दल हमेशा बने रहते हैं।",
-
   "storageRetentionOff": "बंद",
-
   "storageRetentionDays": "{days} दिन",
-
   "syncWindowTitle": "सिंक विंडो",
-
   "syncWindowSubtitle": "फ़ीड और दल संदेशों का कितना पुराना इतिहास सिंक करना है। देखे जा रहे नोट्स और DM हमेशा पूरे सिंक होते हैं। अगली बार ऐप शुरू करने पर लागू होता है।",
-
   "syncWindowDays": "{days} दिन",
-
   "noteCardMediaDownloading": "डाउनलोड हो रहा है…",
-
   "noteCardMediaFailed": "डाउनलोड विफल",
-
   "manasDrawerHeaderTitle": "ब्रह्मा",
-
   "manasDrawerHeaderSubtitle": "आपके नॉलेज ग्राफ़",
-
   "manasDrawerBrahmaEntryTitle": "ब्रह्मा",
-
   "manasDrawerBrahmaEntrySubtitle": "वह सब कुछ जो आपने सहेजा, लिखा और ड्राफ़्ट किया",
-
   "manasDrawerSectionTitle": "मानस",
-
   "manasDrawerNewManasButton": "नया",
-
   "manasDrawerEmptyStateTitle": "अभी तक कोई मानस नहीं",
-
   "manasDrawerEmptyStateBody": "किसी विषय पर ग्राफ़ को केंद्रित करने के लिए एक मानस बनाएं — आपके नोट्स के एक उपदल से बना एक उप-विशेषज्ञ मन।",
-
   "manasDrawerEmptyStateCta": "अपना पहला मानस बनाएं",
-
   "manasDrawerTileNoteCount": "{count, plural, =1{1 नोट} other{{count} नोट्स}}",
-
   "manasTileEmptyHint": "0 नोट्स · खोलने के लिए टैप करें",
-
   "manasTileActionEdit": "मानस संपादित करें",
-
   "manasTileActionDelete": "मानस हटाएं",
-
   "manasDeleteConfirmTitle": "मानस हटाएं?",
-
   "manasDeleteConfirmBody": "“{name}” हटा दिया जाएगा। नोट्स स्वयं बने रहते हैं — केवल मानस की सदस्यता हटाई जाती है।",
-
   "manasDeleteConfirmConfirm": "हटाएं",
-
   "manasDeleteConfirmCancel": "रद्द करें",
-
   "manasFormCreateTitle": "नया मानस",
-
   "manasFormEditTitle": "संपादित करें · {name}",
-
   "manasFormEditTitleFallback": "मानस संपादित करें",
-
   "manasFormSaveAction": "सहेजें",
-
   "manasFormDeleteAction": "मानस हटाएं",
-
   "manasFormNameLabel": "नाम",
-
   "manasFormNameHint": "जैसे Rust विशेषज्ञ",
-
   "manasFormDescriptionLabel": "विवरण",
-
   "manasFormDescriptionHint": "वैकल्पिक। यह मानस किसलिए है?",
-
   "manasFormMembershipSectionTitle": "इस मानस में नोट्स ({count})",
-
   "manasFormMembershipEmpty": "अभी तक कोई नोट नहीं। कुछ जोड़ने के लिए नीचे खोजें।",
-
   "manasFormAddNotesSectionTitle": "नोट्स जोड़ें",
-
   "manasFormSearchHint": "सहेजे गए, अपने या ड्राफ़्ट नोट्स खोजें",
-
   "manasFormSearchEmpty": "कोई मेल नहीं।",
-
   "manasFormNoteUnavailable": "(नोट उपलब्ध नहीं)",
-
   "manasFormKindSaved": "सहेजे गए",
-
   "manasFormKindOwn": "अपने",
-
   "manasFormKindDraft": "ड्राफ़्ट",
-
   "manasFormDeleteConfirmTitle": "यह मानस हटाएं?",
-
   "manasFormDeleteConfirmBody": "इससे मानस और उसकी सभी सदस्यताएँ हट जाती हैं। नोट्स स्वयं ब्रह्मा में बने रहते हैं।",
-
   "manasFormDeleteConfirmConfirm": "हटाएं",
-
   "manasFormDeleteConfirmCancel": "रद्द करें",
-
   "graphHeaderManasEditTooltip": "मानस संपादित करें",
-
   "graphHeaderUnnamedManas": "मानस",
-
   "noteCardAddToManas": "मानस में जोड़ें",
-
   "noteCardManasSaveFailed": "नोट सहेज नहीं सके। फिर से प्रयास करें।",
-
   "unsaveManasDialogTitle": "नोट को असहेजें?",
-
   "unsaveManasDialogBody": "इस नोट को असहेजने से यह इनसे भी हट जाएगा:",
-
   "unsaveManasDialogConfirm": "असहेजें",
-
   "unsaveManasDialogCancel": "रद्द करें",
-
   "manasMembershipSheetTitle": "मानस में जोड़ें",
-
   "manasMembershipSheetCreate": "नया मानस बनाएं",
-
   "manasMembershipSheetEmptyTitle": "अभी तक कोई मानस नहीं",
-
   "manasMembershipSheetEmptyBody": "नोट्स को केंद्रित उप-विशेषज्ञों में समूहित करना शुरू करने के लिए अपना पहला मानस बनाएं।",
-
   "manasMembershipSheetEmptyCta": "मानस बनाएं",
-
   "manasIconPickerTitle": "एक आइकन चुनें",
-
   "ganaListTitle": "गण",
-
   "ganaListNew": "नया",
-
   "ganaListSubtitle": "स्वायत्त एजेंट जो किसी सतह को देखते हैं, किसी मानस पर तर्क करते हैं, और आपके लिए प्रकाशित करते हैं।",
-
   "ganaListPaused": "रुका हुआ",
-
   "ganaListScopeAll": "सभी नोट्स",
-
   "ganaListScopeCount": "{count, plural, =1{1 मानस} other{{count} मानस}}",
-
   "ganaDrawerEmptyTitle": "अभी तक कोई गण नहीं",
-
   "ganaDrawerEmptyBody": "एक AI वर्कर बनाएं जो किसी सतह को देखता है और आपके लिए प्रकाशित करता है।",
-
   "ganaTileDisabled": "बंद",
-
   "ganaTileTriggerReactive": "प्रतिक्रियाशील",
-
   "ganaTileTriggerInterval": "हर {n} मिनट",
-
   "ganaTileTriggerBoth": "प्रतिक्रियाशील + हर {n} मिनट",
-
   "ganaTileTriggerOnceOnEnable": "सक्षम करने पर एक बार",
-
   "ganaTileTriggerOnceOnInput": "पहले इनपुट पर एक बार",
-
   "ganaTileLastRunNever": "अभी तक कोई रन नहीं",
-
   "ganaTileLastRunSucceeded": "पिछला रन · {when}",
-
   "ganaTileLastRunSkipped": "छोड़ा गया · {when}",
-
   "ganaTileLastRunFailed": "विफल · {when}",
-
   "ganaRelativeJustNow": "अभी-अभी",
-
   "ganaRelativeMinutes": "{count} मिनट पहले",
-
   "ganaRelativeHours": "{count} घंटे पहले",
-
   "ganaRelativeDays": "{count} दिन पहले",
-
   "ganaFormCreateTitle": "नया गण",
-
   "ganaFormEditTitle": "संपादित करें · {name}",
-
   "ganaFormEditTitleFallback": "गण संपादित करें",
-
   "ganaFormSaveAction": "सहेजें",
-
   "ganaFormDeleteAction": "गण हटाएं",
-
   "ganaFormNameLabel": "नाम",
-
   "ganaFormNameHint": "जैसे Life Lessons Replier",
-
   "ganaFormManasSectionTitle": "ज्ञान",
-
   "ganaFormManasSectionSubtitle": "वह मानस जिस पर यह गण तर्क करता है।",
-
   "ganaFormManasEmpty": "अभी तक कोई मानस नहीं। एक गण को तर्क करने के लिए ज्ञान आधार चाहिए — जारी रखने के लिए एक बनाएं।",
-
   "ganaFormManasCreateNew": "मानस बनाएं",
-
   "ganaFormModeRecurring": "आवर्ती",
-
   "ganaFormModeOneShot": "एक-बारगी",
-
   "ganaFormModeRecurringHelp": "जब तक आप इसे अक्षम नहीं करते, हर मेल खाते ट्रिगर पर चलता रहता है।",
-
   "ganaFormModeOneShotHelp": "एक बार चलता है, फिर खुद को स्वतः अक्षम कर देता है। फिर से चलाने के लिए दोबारा सक्षम करें।",
-
   "ganaFormBlockerName": "जारी रखने के लिए एक नाम जोड़ें।",
-
   "ganaFormBlockerManas": "कम से कम एक मानस चुनें — एक गण को तर्क करने के लिए ज्ञान चाहिए।",
-
   "ganaFormBlockerTask": "एक टास्क प्रॉम्प्ट लिखें ताकि गण को पता हो कि क्या करना है।",
-
   "ganaFormBlockerInputRef": "इनपुट स्रोत चुनें — दल, DM, उपयोगकर्ता, या नोट।",
-
   "ganaFormBlockerOutputRef": "आउटपुट गंतव्य चुनें ताकि गण को पता हो कि कहाँ प्रकाशित करना है।",
-
   "ganaFormBlockerOneShotReactive": "इनपुट स्रोत वाले एक-बारगी गण के लिए नए इनपुट पर प्रतिक्रिया चालू होना चाहिए।",
-
   "ganaFormBlockerInterval": "स्वतंत्र आवर्ती गण के लिए एक अंतराल (≥ 5 मिनट) चाहिए।",
-
   "ganaFormBlockerTrigger": "नए इनपुट पर प्रतिक्रिया चालू करें, या एक अंतराल (≥ 5 मिनट) सेट करें।",
-
   "ganaFormBlockerMaxOutputs": "1 और 1000 के बीच अधिकतम-नोट सीमा सेट करें।",
-
   "ganaFormMaxOutputsLabel": "बनाने के लिए अधिकतम नोट्स",
-
   "ganaFormMaxOutputsHelp": "आवर्ती गण इतने नोट्स प्रकाशित करने के बाद स्वतः अक्षम हो जाते हैं। 1–1000।",
-
   "ganaFormOneShotStandaloneNote": "जब आप इस गण को सक्षम करेंगे तब एक बार चलेगा, फिर स्वतः अक्षम हो जाएगा।",
-
   "ganaFormReactiveRequiredNote": "इनपुट स्रोत वाले एक-बारगी गण के लिए आवश्यक।",
-
   "ganaFormTaskPromptLabel": "टास्क प्रॉम्प्ट",
-
   "ganaFormTaskPromptHint": "गण को बताएं कि क्या करना है। जैसे \"जब कोई यहाँ कोई सवाल पोस्ट करे, तो मेरे मानस से सबसे प्रासंगिक नोट के साथ उत्तर दें और एक पंक्ति टिप्पणी जोड़ें।\"",
-
   "ganaFormInputSectionTitle": "इनपुट",
-
   "ganaFormInputStandalone": "स्वतंत्र (कोई इनपुट नहीं)",
-
   "ganaFormInputGroup": "सार्वजनिक दल",
-
   "ganaFormInputPrivateGroup": "निजी दल",
-
   "ganaFormInputDm": "DM",
-
   "ganaFormInputUser": "किसी उपयोगकर्ता के नोट्स",
-
   "ganaFormInputFollowedNote": "देखे जा रहे नोट का थ्रेड",
-
   "ganaFormInputPickHint": "एक स्रोत चुनें",
-
   "ganaFormInputUserHint": "एक pubkey पेस्ट करें (hex या npub)",
-
   "ganaFormOutputSectionTitle": "आउटपुट",
-
   "ganaFormOutputFeed": "मुख्य फ़ीड (Kind 1)",
-
   "ganaFormOutputGroup": "सार्वजनिक दल",
-
   "ganaFormOutputPrivateGroup": "निजी दल",
-
   "ganaFormOutputDm": "DM",
-
   "ganaFormOutputPickHint": "एक गंतव्य चुनें",
-
   "ganaFormModelSectionTitle": "मॉडल",
-
   "ganaFormModelUseActive": "जो भी मॉडल सक्रिय हो उसका उपयोग करें",
-
   "ganaFormTriggersSectionTitle": "ट्रिगर",
-
   "ganaFormTriggerQuestion": "यह कब चलना चाहिए?",
-
   "ganaFormPresetOnceOnEnable": "एक बार, जब मैं इसे सक्षम करूँ",
-
   "ganaFormPresetOnceOnFirstMessage": "एक बार, पहले नए संदेश पर",
-
   "ganaFormPresetEveryMessage": "हर नए संदेश पर",
-
   "ganaFormPresetOnSchedule": "एक शेड्यूल पर (हर N मिनट)",
-
   "ganaFormPresetMessageOrSchedule": "हर नए संदेश पर और एक टाइमर पर",
-
   "ganaFormReactiveLabel": "नए इनपुट पर प्रतिक्रिया करें",
-
   "ganaFormReactiveHelp": "इनपुट सतह पर नए संदेश के कुछ सेकंड के भीतर चलता है।",
-
   "ganaFormIntervalLabel": "हर बार चलाएं",
-
   "ganaFormIntervalUnit": "मिनट (न्यूनतम 5)",
-
   "ganaFormEnabledLabel": "सक्षम",
-
   "ganaFormEnabledHelp": "डिफ़ॉल्ट रूप से बंद। कॉन्फ़िग की समीक्षा करने के बाद चालू करें।",
-
   "ganaFormRunsSectionTitle": "हाल के रन",
-
   "ganaFormRunsEmpty": "यह गण अभी तक नहीं चला है।",
-
   "ganaFormDeleteConfirmTitle": "यह गण हटाएं?",
-
   "ganaFormDeleteConfirmBody": "इससे वर्कर रुक जाता है और उसका रन लॉग हट जाता है। इसके द्वारा संदर्भित मानस और नोट्स प्रभावित नहीं होते।",
-
   "ganaFormDeleteConfirmConfirm": "हटाएं",
-
   "ganaFormDeleteConfirmCancel": "रद्द करें",
-
   "ganaRunStatusSucceeded": "सफल",
-
   "ganaRunStatusSkipped": "छोड़ा गया",
-
   "ganaRunStatusFailed": "विफल",
-
   "ganaRunStatusRunning": "चल रहा है",
-
   "natarajTileAction": "विचार जगाएं",
-
   "natarajDrawerTitle": "नटराज",
-
   "natarajScopeSheetTitle": "मानस चुनें",
-
   "natarajScopeAllNotes": "ब्रह्मा",
-
   "natarajScopeManasCount": "{count} मानस",
-
   "natarajNewChatTooltip": "नई चैट",
-
   "natarajEdgePublish": "प्रकाशित करें",
-
   "natarajEdgeDraft": "ड्राफ़्ट",
-
   "natarajEdgeDiscard": "छोड़ें",
-
   "natarajEdgeDiscuss": "चर्चा करें",
-
   "natarajReferencesLabel": "संदर्भ",
-
   "natarajReferencesView": "संदर्भ देखें",
-
   "natarajReferencesAttach": "प्रकाशित करने पर चयनित नोट्स संदर्भ के रूप में संलग्न होते हैं।",
-
   "natarajCoachTitle": "विचार खोजने के लिए स्वाइप करें",
-
   "natarajCoachDismiss": "समझ गया",
-
   "natarajGenerating": "संबंध खोजे जा रहे हैं…",
-
   "natarajRevisitingHint": "पुराने विचारों को फिर से देख रहे हैं — नए विचारों के लिए नोट्स जोड़ें",
-
   "natarajEmptyNeedsMoreTitle": "अभी पर्याप्त नोट्स नहीं",
-
   "natarajEmptyNeedsMoreBody": "संबंध जगाने के लिए इस दायरे में कम से कम 2 नोट्स चाहिए।",
-
   "natarajExhaustedTitle": "आपने सभी देख लिए",
-
   "natarajExhaustedBody": "नए विचार जगाने के लिए और नोट्स जोड़ें।",
-
   "natarajModelErrorTitle": "विचार उत्पन्न नहीं कर सके",
-
   "natarajModelErrorBody": "AI मॉडल इस डिवाइस पर नहीं चल सका। कोई दूसरा (छोटा) मॉडल आज़माएं, या पुनः प्रयास पर टैप करें।",
-
   "natarajNoIdeaTitle": "इस बार कोई विचार नहीं",
-
   "natarajNoIdeaBody": "नोट्स के इस संयोजन से कुछ नहीं जगा। कुछ गलत नहीं है — बस फिर से प्रयास करें।",
-
   "natarajPublishedSnack": "नोट के रूप में प्रकाशित किया गया",
-
   "natarajDraftSavedSnack": "ड्राफ़्ट के रूप में सहेजा गया",
-
   "natarajGenerateErrorSnack": "अभी उत्पन्न नहीं कर सके",
-
   "natarajYouName": "आप",
-
   "natarajYouHandle": "@you · अभी",
-
   "natarajDraftLabel": "ड्राफ़्ट",
-
   "natarajRefsCount": "{count} संदर्भ",
-
   "natarajRetry": "फिर से प्रयास करें",
-
   "receiveShareTitle": "UNIUN में जोड़ें",
-
   "receiveShareCommentHint": "कुछ कहें… (वैकल्पिक)",
-
   "receiveShareSaveDraft": "ड्राफ़्ट में सहेजें",
-
   "receiveShareDraftSaved": "ड्राफ़्ट में सहेजा गया",
-
   "receiveShareIngesting": "अटैचमेंट तैयार किए जा रहे हैं…",
-
   "receiveShareDraftNeedsText": "ड्राफ़्ट सहेजने के लिए कुछ टेक्स्ट जोड़ें",
-
   "receiveShareNothingToShare": "पहले टेक्स्ट या मीडिया जोड़ें",
-
   "jumpToLatest": "नवीनतम पर जाएं",
-
   "interestsEyebrow": "अपनी फ़ीड बनाएं",
-
   "interestsTitle": "जो पसंद हो उसे टैप करें",
-
   "interestsSubtitle": "कम से कम 3 चुनें। हर एक रोज़ पोस्ट करता है, इसलिए आपकी फ़ीड पहले स्क्रॉल से ही जीवंत रहती है।",
-
   "interestsSearchHint": "रुचियाँ खोजें…",
-
   "interestsNoResults": "उससे कोई रुचि मेल नहीं खाती।",
-
   "interestsContinue": "मुझे मेरी फ़ीड दिखाएं",
-
   "interestsPickMore": "जारी रखने के लिए {count} और चुनें",
-
   "interestsSkip": "अभी के लिए छोड़ें",
-
   "interestsFollowFailed": "सभी को फ़ॉलो नहीं कर सके — कृपया फिर से प्रयास करें।",
-
   "interestsLoadFailed": "रुचियां लोड नहीं हो सकीं। अपना कनेक्शन जांचें।",
-
   "interestsRetry": "पुनः प्रयास करें",
-
   "welcomeMoreLanguages": "और भाषाएँ",
-
   "languageSelectTitle": "भाषा चुनें",
-
   "languageComingSoon": "जल्द आ रहा है",
-
   "settingsLanguage": "भाषा",
-
   "settingsAppLanguage": "ऐप की भाषा",
-
   "graphEmptyHint": "अपना नॉलेज ग्राफ़ बनाने के लिए नोट्स सहेजें।\n\nजब कोई नोट किसी दूसरे नोट का संदर्भ देता है, तब एजेस दिखाई देते हैं।",
-
   "ganaDetailManasesLabel": "मानस",
-
   "settingsAppearance": "दिखावट",
   "settingsTheme": "थीम",
   "settingsThemeSheetTitle": "थीम चुनें",
   "settingsThemeSystem": "सिस्टम के अनुसार",
   "settingsThemeLight": "लाइट",
-  "settingsThemeDark": "डार्क"
+  "settingsThemeDark": "डार्क",
+  "noteCardTranslate": "अनुवाद करें",
+  "translateSheetTitle": "इसमें अनुवाद करें",
+  "translateSheetAction": "अनुवाद करें",
+  "translateSheetSettingsHint": "आपकी ऐप भाषा से",
+  "translatingLabel": "अनुवाद हो रहा है…",
+  "translatedToLabel": "{language} में अनुवादित",
+  "translationShowOriginal": "मूल दिखाएँ",
+  "translationShowTranslation": "अनुवाद दिखाएँ",
+  "translationChangeLanguage": "बदलें",
+  "translationFailed": "इस नोट का अनुवाद नहीं हो सका। पुनः प्रयास करें।",
+  "translationNotProduced": "AI मॉडल इस नोट का अनुवाद नहीं कर सका। बड़ा मॉडल या UNIUN Cloud आज़माएँ।"
 }
