@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:isar_community/isar.dart';
 import 'package:uniun/core/notes/note_kinds.dart';
 import 'package:uniun/data/models/deleted_note_model.dart';
+import 'package:uniun/data/models/manas_note_link_model.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
 import 'package:uniun/domain/usecases/draft_usecases.dart';
 import 'package:uniun/domain/usecases/manas_usecases.dart';
@@ -32,6 +33,7 @@ class GraphBloc extends Bloc<GraphEvent, GraphState> {
   final Isar _isar;
 
   StreamSubscription<void>? _deletedNoteWatcher;
+  StreamSubscription<void>? _manasLinkWatcher;
 
   GraphBloc(
     this._getAllSavedNotes,
@@ -62,11 +64,25 @@ class GraphBloc extends Bloc<GraphEvent, GraphState> {
         ));
       }
     });
+
+    // Membership is written from ManasMembershipSheet, which is shared with
+    // the feed and holds no GraphBloc — so the graph has to notice for itself.
+    // Only a scoped graph derives its node set from membership; unscoped shows
+    // everything regardless, so reloading it would be pure waste.
+    _manasLinkWatcher = _isar.manasNoteLinkModels.watchLazy().listen((_) {
+      if (!isClosed && state.scopedManasId != null) {
+        add(LoadGraphEvent(
+          manasId: state.scopedManasId,
+          manasName: state.scopedManasName,
+        ));
+      }
+    });
   }
 
   @override
   Future<void> close() {
     _deletedNoteWatcher?.cancel();
+    _manasLinkWatcher?.cancel();
     return super.close();
   }
 

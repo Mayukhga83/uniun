@@ -6,6 +6,7 @@ import 'package:uniun/core/enum/note_type.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/core/notes/note_kinds.dart';
 import 'package:uniun/domain/entities/draft/draft_entity.dart';
+import 'package:uniun/data/models/manas_note_link_model.dart';
 import 'package:uniun/domain/entities/manas/manas_entity.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
@@ -493,6 +494,108 @@ void main() {
         timeout: const Duration(seconds: 2),
       );
       await bloc.close();
+    });
+  });
+
+  // ── manasNoteLinkModels watcher (#205) ──────────────────────────────────
+
+  group('manasNoteLinkModels watcher', () {
+    Future<void> writeLink(String manasId, String noteId) =>
+        isar.writeTxn(() async {
+          await isar.manasNoteLinkModels.put(
+            ManasNoteLinkModel()
+              ..manasId = manasId
+              ..noteId = noteId
+              ..addedAt = DateTime(2026, 1, 1),
+          );
+        });
+
+    test('a membership write reloads a SCOPED graph, preserving the scope',
+        () async {
+      getOwn.notes = [ownNote('A'), ownNote('B')];
+      noteIdsForManas.allowed = {'m1': ['A']};
+      manasById.bySid = {
+        'm1': ManasEntity(
+          manasId: 'm1',
+          name: 'work',
+          createdAt: DateTime(2026, 1, 1),
+          updatedAt: DateTime(2026, 1, 1),
+        ),
+      };
+
+      final bloc = build();
+      bloc.add(const LoadGraphEvent(manasId: 'm1'));
+      await waitFor(bloc, (s) => s.status == GraphStatus.loaded);
+      expect(bloc.state.nodes.map((n) => n.eventId), ['A']);
+
+      // B joins the Manas — the sheet writes the link and tells nobody.
+      noteIdsForManas.allowed = {'m1': ['A', 'B']};
+      await writeLink('m1', 'B');
+
+      await waitFor(
+        bloc,
+        (s) => s.nodes.length == 2,
+        timeout: const Duration(seconds: 2),
+      );
+      // waitFor returns the current state on timeout rather than throwing, so
+      // the reload has to be asserted, not merely awaited.
+      expect(bloc.state.nodes.map((n) => n.eventId), containsAll(['A', 'B']));
+      expect(bloc.state.scopedManasId, 'm1');
+      expect(bloc.state.scopedManasName, 'work');
+      await bloc.close();
+    });
+
+    test('a removal is picked up too — the node leaves the scoped graph',
+        () async {
+      getOwn.notes = [ownNote('A'), ownNote('B')];
+      noteIdsForManas.allowed = {'m1': ['A', 'B']};
+
+      final bloc = build();
+      bloc.add(const LoadGraphEvent(manasId: 'm1'));
+      await waitFor(bloc, (s) => s.nodes.length == 2);
+
+      noteIdsForManas.allowed = {'m1': ['A']};
+      await writeLink('m1', 'B'); // any write to the table fires the watcher
+
+      await waitFor(
+        bloc,
+        (s) => s.nodes.length == 1,
+        timeout: const Duration(seconds: 2),
+      );
+      expect(bloc.state.nodes.single.eventId, 'A');
+      await bloc.close();
+    });
+
+    test('an UNSCOPED graph is not reloaded — its node set cannot depend on '
+        'membership, so the rebuild would be pure waste', () async {
+      getOwn.notes = [ownNote('A')];
+
+      final bloc = build();
+      bloc.add(const LoadGraphEvent());
+      await waitFor(bloc, (s) => s.status == GraphStatus.loaded);
+
+      // If the watcher fired regardless of scope, this would be picked up.
+      getOwn.notes = [ownNote('A'), ownNote('B')];
+      await writeLink('m1', 'B');
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+
+      expect(bloc.state.nodes, hasLength(1));
+      await bloc.close();
+    });
+
+    test('the watcher is cancelled on close — no reload after dispose',
+        () async {
+      getOwn.notes = [ownNote('A')];
+      noteIdsForManas.allowed = {'m1': ['A']};
+
+      final bloc = build();
+      bloc.add(const LoadGraphEvent(manasId: 'm1'));
+      await waitFor(bloc, (s) => s.status == GraphStatus.loaded);
+      await bloc.close();
+
+      // Must not throw "add called after close".
+      await writeLink('m1', 'B');
+      await Future<void>.delayed(const Duration(milliseconds: 300));
     });
   });
 }
