@@ -72,6 +72,27 @@ void main() {
     }
   });
 
+  /// Left-to-right x of the two actions.
+  (double draft, double send) xs(WidgetTester t) => (
+        t.getCenter(find.text('Draft')).dx,
+        t.getCenter(find.byIcon(Icons.arrow_upward_rounded)).dx,
+      );
+
+  testWidgets('default: send sits rightmost — the primary slot', (t) async {
+    await t.pumpWidget(host(draftIsPrimary: false));
+    final (draft, send) = xs(t);
+    expect(send, greaterThan(draft));
+  });
+
+  testWidgets('draftIsPrimary: draft sits rightmost, send moves left',
+      (t) async {
+    // Position has to follow colour, or the accent says "Draft" while the
+    // rightmost slot still says "Publish".
+    await t.pumpWidget(host(draftIsPrimary: true));
+    final (draft, send) = xs(t);
+    expect(draft, greaterThan(send));
+  });
+
   testWidgets('both remain tappable — muted is not disabled', (t) async {
     var drafted = 0;
     var sent = 0;

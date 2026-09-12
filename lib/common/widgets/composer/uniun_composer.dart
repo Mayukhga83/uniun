@@ -316,75 +316,91 @@ class _UniunComposerState extends State<UniunComposer> {
                     ),
                   ],
                   const Spacer(),
-                  if (widget.onDraft != null) ...[
-                    GestureDetector(
-                      onTap: widget.isSending ? null : widget.onDraft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 9),
-                        decoration: BoxDecoration(
-                          color: widget.draftIsPrimary
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.surfaceContainerHigh,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          widget.draftLabel ?? 'Draft',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: widget.draftIsPrimary
-                                ? Theme.of(context).colorScheme.onPrimary
-                                : Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (widget.onSend != null)
-                    GestureDetector(
-                      onTap: widget.canSend && !widget.isSending
-                          ? widget.onSend
-                          : null,
-                      child: AnimatedOpacity(
-                        opacity: widget.canSend ? 1.0 : 0.4,
-                        duration: const Duration(milliseconds: 150),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: widget.draftIsPrimary
-                                ? Theme.of(context).colorScheme.surfaceContainerHigh
-                                : Theme.of(context).colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: widget.isSending
-                              ? Padding(
-                                  padding: const EdgeInsets.all(11),
-                                  child: DropLoadingIndicator(
-                                    color: widget.draftIsPrimary
-                                        ? Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant
-                                        : Theme.of(context).colorScheme.onPrimary,
-                                  ),
-                                )
-                              : Icon(Icons.arrow_upward_rounded,
-                                  size: 20,
-                                  color: widget.draftIsPrimary
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant
-                                      : Colors.white),
-                        ),
-                      ),
-                    ),
+                  // Order follows emphasis: the primary action takes the
+                  // rightmost slot. Colours alone would leave send sitting in
+                  // the primary position while Draft carried the accent.
+                  ...(widget.draftIsPrimary
+                      ? [_sendButton(context), _draftButton(context)]
+                      : [_draftButton(context), _sendButton(context)]),
                 ],
               ),
           ],
         ),
     );
+  }
+
+  /// Null-safe so the row can order the two actions without repeating the
+  /// `onDraft`/`onSend` presence checks at every position.
+  Widget _draftButton(BuildContext context) {
+    if (widget.onDraft == null) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(left: widget.draftIsPrimary ? 8 : 0,
+          right: widget.draftIsPrimary ? 0 : 8),
+      child: GestureDetector(
+        onTap: widget.isSending ? null : widget.onDraft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 9),
+          decoration: BoxDecoration(
+            color: widget.draftIsPrimary
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            widget.draftLabel ?? 'Draft',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: widget.draftIsPrimary
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sendButton(BuildContext context) {
+    if (widget.onSend == null) return const SizedBox.shrink();
+    return GestureDetector(
+        onTap: widget.canSend && !widget.isSending
+            ? widget.onSend
+            : null,
+        child: AnimatedOpacity(
+          opacity: widget.canSend ? 1.0 : 0.4,
+          duration: const Duration(milliseconds: 150),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: widget.draftIsPrimary
+                  ? Theme.of(context).colorScheme.surfaceContainerHigh
+                  : Theme.of(context).colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+            child: widget.isSending
+                ? Padding(
+                    padding: const EdgeInsets.all(11),
+                    child: DropLoadingIndicator(
+                      color: widget.draftIsPrimary
+                          ? Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant
+                          : Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  )
+                : Icon(Icons.arrow_upward_rounded,
+                    size: 20,
+                    color: widget.draftIsPrimary
+                        ? Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                        : Colors.white),
+          ),
+        ),
+      );
   }
 }
 
