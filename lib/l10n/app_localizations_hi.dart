@@ -3112,4 +3112,11 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get translationNotProduced =>
       'AI मॉडल इस नोट का अनुवाद नहीं कर सका। बड़ा मॉडल या UNIUN Cloud आज़माएँ।';
+
+  @override
+  String get brahmaPublishConfirmTitle => 'यह नोट प्रकाशित करें?';
+
+  @override
+  String get brahmaPublishConfirmBody =>
+      'प्रकाशित नोट स्थायी होते हैं। वे रिले पर चले जाते हैं और उन्हें संपादित या हटाया नहीं जा सकता। अगर आप अभी भी काम कर रहे हैं तो इसे ड्राफ़्ट में रखें।';
 }

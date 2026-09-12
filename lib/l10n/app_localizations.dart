@@ -5611,6 +5611,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The AI model couldn\'t translate this note. Try a larger model or UNIUN Cloud.'**
   String get translationNotProduced;
+
+  /// No description provided for @brahmaPublishConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish this note?'**
+  String get brahmaPublishConfirmTitle;
+
+  /// No description provided for @brahmaPublishConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Published notes are permanent. They go out to the relay and cannot be edited or deleted. Keep it as a draft if you\'re still working on it.'**
+  String get brahmaPublishConfirmBody;
 }
 
 class _AppLocalizationsDelegate

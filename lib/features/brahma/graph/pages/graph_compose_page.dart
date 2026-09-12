@@ -139,6 +139,29 @@ class _GraphComposeViewState extends State<_GraphComposeView> {
         ));
   }
 
+  /// Publishing is irreversible — UNIUN has no delete — so it asks first.
+  Future<bool> _confirmPublish() async {
+    final l10n = AppLocalizations.of(context)!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.brahmaPublishConfirmTitle),
+        content: Text(l10n.brahmaPublishConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.actionCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.brahmaPublish),
+          ),
+        ],
+      ),
+    );
+    return ok == true && mounted;
+  }
+
   Future<void> _publish() async {
     final content = _controller.text.trim();
     if (content.isEmpty) return;
@@ -171,6 +194,10 @@ class _GraphComposeViewState extends State<_GraphComposeView> {
       );
       if (choice == PublishChainChoice.cancel || !mounted) return;
       chain = choice == PublishChainChoice.chain;
+    } else if (!await _confirmPublish()) {
+      // The chain sheet already carries a cancel, so it doubles as the
+      // confirmation — only the plain path needs its own (#210).
+      return;
     }
 
     if (widget.initialDraftId != null) {
@@ -305,6 +332,7 @@ class _GraphComposeViewState extends State<_GraphComposeView> {
                           .read<BrahmaCreateBloc>()
                           .add(RemoveAttachedMediaEvent(sha)),
                       onDraft: () => _saveDraft(state),
+                      draftIsPrimary: true,
                       draftLabel: l10n.brahmaDraft,
                       onSend: _publish,
                     ),
