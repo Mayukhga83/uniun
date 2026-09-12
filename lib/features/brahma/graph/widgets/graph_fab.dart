@@ -22,6 +22,11 @@ class GraphFab extends StatelessWidget {
   Future<void> _onTap(BuildContext context) async {
     final bloc = context.read<GraphBloc>();
     await context.pushNamed(AppRoutes.brahmaCreate);
-    bloc.add(const LoadGraphEvent());
+    // A bare LoadGraphEvent() means "unscope" (manasId == null ⇒ clearScope),
+    // so the active Manas has to ride along.
+    bloc.add(LoadGraphEvent(
+      manasId: bloc.state.scopedManasId,
+      manasName: bloc.state.scopedManasName,
+    ));
   }
 }
