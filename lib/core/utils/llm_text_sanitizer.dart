@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:uniun/core/constants/app_constants.dart';
+
 /// Cleans raw text emitted by on-device LLMs (flutter_gemma) before it
 /// is persisted or shown to a user.
 ///
@@ -46,6 +48,12 @@ class LlmTextSanitizer {
     caseSensitive: false,
   );
   // Matches an OPEN tag with no close (model was cut off mid-thought).
+  /// A leading `Shiv:` the model copied from the prompt's answer cue.
+  static final RegExp _echoedLabel = RegExp(
+    '^\\s*' + AppConstants.kShivLabel + '\\s*:\\s*',
+    caseSensitive: false,
+  );
+
   static final RegExp _thinkOpenOnly = RegExp(
     r'<think>[\s\S]*$',
     caseSensitive: false,
@@ -72,7 +80,13 @@ class LlmTextSanitizer {
       if (json != null) s = json.group(2)!;
     }
 
-    // 3. Reverse GPT-2 byte_to_unicode in runs.
+    // 3. Drop an echoed answer-cue label. Every chat prompt ends with
+    //    `Shiv:` to stop a small model answering as the user; the model
+    //    sometimes copies that label into its reply. Model-agnostic — it
+    //    keys off our own cue, not any model's format.
+    s = s.replaceFirst(_echoedLabel, '').trim();
+
+    // 4. Reverse GPT-2 byte_to_unicode in runs.
     //    The model usually detokenizes correctly (so most text is plain
     //    UTF-16); only multi-byte sequences like emojis leak through as
     //    a run of byte-encoded chars (e.g. `ðŁĮ±` for 🌱). We scan for

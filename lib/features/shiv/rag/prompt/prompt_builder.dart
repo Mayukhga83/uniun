@@ -1,3 +1,4 @@
+import 'package:uniun/core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uniun/core/enum/message_role.dart';
@@ -90,7 +91,7 @@ class PromptBuilder {
     );
     for (final m in recent) {
       final isUser = m.role == MessageRole.user;
-      final role = isUser ? 'User' : 'Shiv';
+      final role = isUser ? 'User' : AppConstants.kShivLabel;
       final preview = isUser
           ? _summarizeUser(m.content)
           : _summarizeAssistant(m.content);
@@ -258,7 +259,7 @@ class PromptBuilder {
 
   /// Explicit assistant cue. Primes the model to begin its reply in
   /// Shiv\'s voice rather than echoing the user.
-  String _answerCue() => '\n\nShiv:';
+  String _answerCue() => '\n\n${AppConstants.kShivLabel}:';
 
   String? _renderNotesSection(
     String heading,

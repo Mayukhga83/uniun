@@ -27,6 +27,12 @@ class AppConstants {
   /// `GET /<sha256>`, `HEAD /<sha256>`, etc. live here.
   static const String kUniunBlossom = 'https://dev.uniun.in:8080';
 
+  /// How Shiv is named to the model: the role label in conversation context
+  /// and the answer cue every chat prompt ends with. Shared so the prompt and
+  /// [LlmTextSanitizer] (which strips the label back off if a model echoes it)
+  /// cannot drift apart.
+  static const String kShivLabel = 'Shiv';
+
   /// Image compression target (Android / iOS / macOS / web). Photos over
   /// this are shrunk via `ImageCompressor` before upload. Not a hard reject.
   static const int kMaxUploadBytes = 3 * 1024 * 1024;
