@@ -480,10 +480,8 @@ Future<void> _runOneGana({
       );
       _log('  feeding prompt');
       try {
-        // isUser: true — Message.text defaults to false. Correctness only:
-        // on Android/.litertlm the prompt text is identical either way.
-        await chat.addQueryChunk(
-            gemma_msg.Message.text(text: prompt, isUser: true));
+        // isUser stays false — see AIModelRunner.sendAndStream.
+        await chat.addQueryChunk(gemma_msg.Message.text(text: prompt));
         _log('  streaming tokens...');
         final buf = StringBuffer();
         await for (final response in chat.generateChatResponseAsync()) {

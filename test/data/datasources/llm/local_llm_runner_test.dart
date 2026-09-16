@@ -179,6 +179,32 @@ void main() {
       return cpuModel;
     }
 
+    test('sends the prompt untouched — isUser stays false so the plugin '
+        'cannot append /no_think after our answer cue (#220)', () async {
+      when(() => gateway.hasActiveModel()).thenReturn(true);
+      final model = _MockInferenceModel();
+      when(() => gateway.getActiveModel(
+            maxTokens: any(named: 'maxTokens'),
+            preferredBackend: any(named: 'preferredBackend'),
+          )).thenAnswer((_) async => model);
+      final chat = chatReturning(const [TextResponse('ok')]);
+      when(() => model.openChat(
+            temperature: any(named: 'temperature'),
+            topK: any(named: 'topK'),
+            tokenBuffer: any(named: 'tokenBuffer'),
+            modelType: any(named: 'modelType'),
+            isThinking: any(named: 'isThinking'),
+          )).thenAnswer((_) async => chat);
+
+      await runner.generateOneShot('my prompt');
+
+      final sent =
+          verify(() => chat.addQueryChunk(captureAny())).captured.single
+              as Message;
+      expect(sent.isUser, isFalse);
+      expect(sent.text, 'my prompt');
+    });
+
     test('GPU open failure retries explicitly on CPU and succeeds', () async {
       stubGpuFailsCpuWorks();
 
@@ -355,6 +381,31 @@ void main() {
         () => runner.sendAndStream('hi', systemInstruction: 'sys').toList(),
         throwsA(isA<StateError>()),
       );
+    });
+
+    test('sends the chat prompt untouched — isUser stays false so the plugin '
+        'cannot append /no_think after our answer cue (#220)', () async {
+      when(() => gateway.hasActiveModel()).thenReturn(true);
+      final model = _MockInferenceModel();
+      when(() => gateway.getActiveModel(
+            maxTokens: any(named: 'maxTokens'),
+            preferredBackend: any(named: 'preferredBackend'),
+          )).thenAnswer((_) async => model);
+      final chat = chatReturning(const [TextResponse('ok')]);
+      when(() => model.openChat(
+            temperature: any(named: 'temperature'),
+            topK: any(named: 'topK'),
+            tokenBuffer: any(named: 'tokenBuffer'),
+            modelType: any(named: 'modelType'),
+            isThinking: any(named: 'isThinking'),
+          )).thenAnswer((_) async => chat);
+
+      await runner.sendAndStream('hi', systemInstruction: 'sys').toList();
+
+      final sent =
+          verify(() => chat.addQueryChunk(captureAny())).captured.last
+              as Message;
+      expect(sent.isUser, isFalse);
     });
 
     test('streams sanitized tokens in order and closes the chat', () async {

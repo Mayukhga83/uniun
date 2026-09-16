@@ -44,4 +44,50 @@ void main() {
     expect(out, contains('there.'));
     expect(out, isNot(contains('<think>')));
   });
+
+  group('echoed answer-cue label (#220)', () {
+    test('a leading "Shiv:" the model copied from the cue is dropped', () {
+      expect(LlmTextSanitizer.clean('Shiv: I am Shiv, the assistant.'),
+          'I am Shiv, the assistant.');
+    });
+
+    test('spacing and case variants are dropped too', () {
+      for (final raw in [
+        'Shiv:hello',
+        'Shiv : hello',
+        '  shiv:   hello',
+        'SHIV: hello',
+      ]) {
+        expect(LlmTextSanitizer.clean(raw), 'hello', reason: raw);
+      }
+    });
+
+    test('only the FIRST label goes — a later one is real content', () {
+      expect(LlmTextSanitizer.clean('Shiv: quoting Shiv: verbatim'),
+          'quoting Shiv: verbatim');
+    });
+
+    test('a word merely starting with the label is untouched', () {
+      expect(LlmTextSanitizer.clean('Shivam asked me something'),
+          'Shivam asked me something');
+    });
+
+    test('a label mid-answer is untouched — only a leading echo is a cue', () {
+      expect(LlmTextSanitizer.clean('The note says Shiv: hello'),
+          'The note says Shiv: hello');
+    });
+
+    test('label after a think block is still dropped', () {
+      expect(LlmTextSanitizer.clean('<think>hmm</think>Shiv: hello'), 'hello');
+    });
+
+    test('a bare label with no answer collapses to empty', () {
+      expect(LlmTextSanitizer.clean('Shiv:'), isEmpty);
+    });
+
+    test('an ordinary answer is unchanged', () {
+      expect(LlmTextSanitizer.clean('Gana testing refers to a process.'),
+          'Gana testing refers to a process.');
+    });
+  });
 }
