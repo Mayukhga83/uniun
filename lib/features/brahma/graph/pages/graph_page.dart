@@ -263,7 +263,12 @@ class _NodePanelSlider extends StatelessWidget {
                     AppRoutes.brahmaCreate,
                     extra: {'draftId': draftId, 'autoPublish': false},
                   );
-                  bloc.add(const LoadGraphEvent());
+                  // A bare LoadGraphEvent() means "unscope" (manasId == null
+                  // ⇒ clearScope), so the active Manas has to ride along.
+                  bloc.add(LoadGraphEvent(
+                    manasId: bloc.state.scopedManasId,
+                    manasName: bloc.state.scopedManasName,
+                  ));
                   bloc.add(SelectGraphNodeEvent(draftId));
                 },
                 onPublishTap: (draftId) async {
