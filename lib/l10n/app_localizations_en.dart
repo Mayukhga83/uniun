@@ -3092,4 +3092,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get translationNotProduced =>
       'The AI model couldn\'t translate this note. Try a larger model or UNIUN Cloud.';
+
+  @override
+  String get brahmaPublishConfirmTitle => 'Publish this note?';
+
+  @override
+  String get brahmaPublishConfirmBody =>
+      'Published notes are permanent. They go out to the relay and cannot be edited or deleted. Keep it as a draft if you\'re still working on it.';
 }

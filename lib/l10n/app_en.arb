@@ -3897,5 +3897,7 @@
   "translationShowTranslation": "Show translation",
   "translationChangeLanguage": "Change",
   "translationFailed": "Couldn't translate this note. Try again.",
-  "translationNotProduced": "The AI model couldn't translate this note. Try a larger model or UNIUN Cloud."
+  "translationNotProduced": "The AI model couldn't translate this note. Try a larger model or UNIUN Cloud.",
+  "brahmaPublishConfirmTitle": "Publish this note?",
+  "brahmaPublishConfirmBody": "Published notes are permanent. They go out to the relay and cannot be edited or deleted. Keep it as a draft if you're still working on it."
 }
