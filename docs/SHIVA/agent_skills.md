@@ -65,24 +65,18 @@ model.
 **Why now / why the old blocker is gone:** flutter_gemma issue
 [#348](https://github.com/DenisovAV/flutter_gemma/issues/348) (per-turn
 native-heap leak) is **OpenCL-GPU-specific**. The maintainer verified
-CPU is flat and Metal (iOS) is flat. UNIUN runs **CPU-first on
-Android** (`lib/core/utils/llm_backend.dart`) and Metal on iOS — so
-multi-round agent loops do not multiply any leak on our shipped
-configuration. The upstream fix
-(google-ai-edge/LiteRT-LM#2699) is the maintainer's problem, not our
-blocker.
+CPU is flat and Metal (iOS) is flat. Fixed upstream
+(google-ai-edge/LiteRT-LM#2699), so multi-round agent loops no longer
+multiply a per-turn leak on either GPU backend.
 
-**Status update (2026-08-08):** the upstream leak is confirmed **fixed
-in LiteRT-LM v0.15.0** (maintainer's paired before/after measurement on
-the same device: +1731 MB steady-state growth on v0.14.0 vs ~0 MB on
-v0.15.0, engine-teardown accumulation also resolved). Not yet actionable
-for us either way: `flutter_gemma`'s own native releases only go up to
-`native-v0.14.0` as of this check — the fix hasn't been packaged
-downstream yet — and even once it is, our Android GPU is still gated
-off by the separate, untracked SIGSEGV crash issue documented in
-`lib/core/utils/llm_backend.dart` (a different bug from the same
-OpenCL delegate, no upstream issue filed for it yet). Re-enabling
-Android GPU needs both resolved, not just this one.
+**Status update (2026-09-15):** fixed in `flutter_gemma_litertlm` 1.4.1
+(LiteRT-LM v0.16.0). UNIUN now ships flutter_gemma 1.8.3 / litertlm 1.6.3
+and prefers GPU on Android as well (`lib/core/utils/llm_backend.dart`). The
+"separate SIGSEGV" previously cited as a second blocker was never tied to an
+upstream issue; the known Android GPU native-crash classes (flutter_gemma
+#209, #379) are fixed in versions older than the ones we ship. The CPU retry
+only catches a *thrown* GPU failure, so any device-specific native crash
+should be pinned to CPU per device.
 
 ---
 

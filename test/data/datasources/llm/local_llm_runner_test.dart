@@ -156,29 +156,62 @@ void main() {
       expect(result, 'answer<|im_e');
     });
 
-    test('GPU open failure falls back to CPU and succeeds', () async {
+    /// GPU open throws; CPU succeeds. Shared by the two fallback tests below.
+    _MockInferenceModel stubGpuFailsCpuWorks() {
       when(() => gateway.hasActiveModel()).thenReturn(true);
-      final gpuModel = _MockInferenceModel();
       final cpuModel = _MockInferenceModel();
       when(() => gateway.getActiveModel(
             maxTokens: any(named: 'maxTokens'),
-            preferredBackend: any(named: 'preferredBackend'),
+            preferredBackend: PreferredBackend.gpu,
           )).thenThrow(Exception('GPU texture binding overflow'));
-      when(() => gateway.getActiveModel(maxTokens: any(named: 'maxTokens')))
-          .thenAnswer((_) async => cpuModel);
-      final chat = chatReturning(const [TextResponse('cpu-ok')]);
+      when(() => gateway.getActiveModel(
+            maxTokens: any(named: 'maxTokens'),
+            preferredBackend: PreferredBackend.cpu,
+          )).thenAnswer((_) async => cpuModel);
       when(() => cpuModel.openChat(
             temperature: any(named: 'temperature'),
             topK: any(named: 'topK'),
             tokenBuffer: any(named: 'tokenBuffer'),
             modelType: any(named: 'modelType'),
             isThinking: any(named: 'isThinking'),
-          )).thenAnswer((_) async => chat);
+          )).thenAnswer(
+              (_) async => chatReturning(const [TextResponse('cpu-ok')]));
+      return cpuModel;
+    }
+
+    test('GPU open failure retries explicitly on CPU and succeeds', () async {
+      stubGpuFailsCpuWorks();
 
       final result = await runner.generateOneShot('prompt');
 
       expect(result, 'cpu-ok');
-      verifyNever(() => gpuModel.close());
+      verify(() => gateway.getActiveModel(
+            maxTokens: any(named: 'maxTokens'),
+            preferredBackend: PreferredBackend.cpu,
+          )).called(1);
+      // A null backend is GPU-then-CPU on LiteRT-LM: it would repeat the
+      // failed GPU attempt instead of falling back.
+      verifyNever(
+          () => gateway.getActiveModel(maxTokens: any(named: 'maxTokens')));
+    });
+
+    test('after a GPU failure, later opens of the same model skip GPU',
+        () async {
+      stubGpuFailsCpuWorks();
+
+      // Not the default `extract`: back-to-back extracts trip the scheduler's
+      // T2 soft budget (>60% over 5 min) and the second one is never picked.
+      await runner.generateOneShot('first', kind: LlmTaskKind.nataraj);
+      await runner.generateOneShot('second', kind: LlmTaskKind.nataraj);
+
+      verify(() => gateway.getActiveModel(
+            maxTokens: any(named: 'maxTokens'),
+            preferredBackend: PreferredBackend.gpu,
+          )).called(1);
+      verify(() => gateway.getActiveModel(
+            maxTokens: any(named: 'maxTokens'),
+            preferredBackend: PreferredBackend.cpu,
+          )).called(2);
     });
 
     test('invoke failure resets the cached model and retries once, '

@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_gemma/flutter_gemma.dart' hide Message;
 import 'package:flutter_gemma/core/message.dart' as gemma_msg;
-import 'package:flutter_gemma_embeddings/flutter_gemma_embeddings.dart';
 import 'package:flutter_gemma_litertlm/flutter_gemma_litertlm.dart';
 import 'package:flutter_gemma_mediapipe/flutter_gemma_mediapipe.dart';
 import 'package:isar_community/isar.dart';
@@ -456,10 +455,8 @@ Future<void> _runOneGana({
     DateTime? firstTokenAt;
     try {
       _log('  opening model handle (${preferredLlmBackend.name} preferred)');
-      // Prefer GPU (iOS), fall back to CPU on engine-creation failure — mirrors
-      // the foreground AIModelRunner. Android starts on CPU via
-      // [preferredLlmBackend] because its GPU delegate can hard-crash the
-      // process, so the bg tick still runs instead of taking the app down.
+      // Prefer GPU, fall back to CPU on engine-creation failure — mirrors the
+      // foreground AIModelRunner.
       final backend = preferredLlmBackend;
       InferenceModel model;
       try {

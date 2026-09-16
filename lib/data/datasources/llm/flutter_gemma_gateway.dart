@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:injectable/injectable.dart';
@@ -86,6 +87,11 @@ class FlutterGemmaGatewayImpl implements FlutterGemmaGateway {
   Future<bool> isModelInstalled(String filename) =>
       FlutterGemma.isModelInstalled(filename);
 
+  /// Android-only: runs the download under a dataSync foreground service, so a
+  /// multi-GB model survives backgrounding and Doze. iOS gains nothing from it
+  /// but a notification-permission prompt, so it keeps the plugin default.
+  static bool? get _foreground => Platform.isAndroid ? true : null;
+
   @override
   Future<void> installModel({
     required ModelType modelType,
@@ -93,7 +99,7 @@ class FlutterGemmaGatewayImpl implements FlutterGemmaGateway {
     required String networkUrl,
   }) =>
       FlutterGemma.installModel(modelType: modelType, fileType: fileType)
-          .fromNetwork(networkUrl)
+          .fromNetwork(networkUrl, foreground: _foreground)
           .install();
 
   @override
@@ -105,7 +111,7 @@ class FlutterGemmaGatewayImpl implements FlutterGemmaGateway {
   }) {
     final controller = StreamController<int>();
     FlutterGemma.installModel(modelType: modelType, fileType: fileType)
-        .fromNetwork(networkUrl)
+        .fromNetwork(networkUrl, foreground: _foreground)
         .withProgress((percent) {
           if (!controller.isClosed) controller.add(percent);
         })

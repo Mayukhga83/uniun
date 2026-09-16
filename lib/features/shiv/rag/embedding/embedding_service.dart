@@ -49,9 +49,8 @@ class EmbeddingService {
     if (isReady) return;
     try {
       await ensureInstalled();
-      // Prefer GPU (iOS), fall back to CPU on load failure. Android starts on
-      // CPU via [preferredLlmBackend] because its GPU delegate can hard-crash
-      // the process (see llm_backend.dart), so RAG still works everywhere.
+      // Prefer GPU, fall back to CPU on load failure so RAG still works
+      // everywhere.
       final backend = preferredLlmBackend;
       try {
         _model = await _gateway.getActiveEmbedder(preferredBackend: backend);

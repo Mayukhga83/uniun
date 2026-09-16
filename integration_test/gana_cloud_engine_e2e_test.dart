@@ -32,7 +32,6 @@
 //   flutter test integration_test/gana_cloud_engine_e2e_test.dart -d <device-id>
 
 import 'package:flutter_gemma/flutter_gemma.dart';
-import 'package:flutter_gemma_embeddings/flutter_gemma_embeddings.dart';
 import 'package:flutter_gemma_litertlm/flutter_gemma_litertlm.dart';
 import 'package:flutter_gemma_mediapipe/flutter_gemma_mediapipe.dart';
 import 'package:flutter_test/flutter_test.dart';

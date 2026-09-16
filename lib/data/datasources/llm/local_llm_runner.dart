@@ -54,14 +54,12 @@ class AIModelRunner {
   LocalModelParams? get _activeParams =>
       LocalModelParams.forId(_settings.activeModelId);
 
-  /// Backend that actually worked for the current model. We prefer GPU on iOS,
-  /// but the Metal GPU delegate cannot be applied to every model on every
+  /// Backend that actually worked for the current model. We prefer GPU, but
+  /// the Metal GPU delegate cannot be applied to every model on every
   /// device — large LiteRT graphs trip Metal's 31-texture-binding limit
   /// ("texture binding ... index 31 that is greater than 30") and the iOS
   /// simulator has no usable GPU delegate at all. On the first GPU failure we
   /// retry on CPU and remember it so later turns skip the doomed GPU attempt.
-  /// On Android [preferredLlmBackend] starts us on CPU because the GPU delegate
-  /// crashes the process natively there (uncatchable — see llm_backend.dart).
   /// Reset whenever the active model changes, to re-probe the preferred backend.
   PreferredBackend _backend = preferredLlmBackend;
   AIModelId? _backendForModel;
@@ -81,8 +79,13 @@ class AIModelRunner {
     } catch (e) {
       if (_backend == PreferredBackend.cpu) rethrow;
       debugPrint('⚠️ GPU backend failed to open model ($e) — retrying on CPU');
+      // Explicit and remembered: a null backend is GPU-then-CPU on LiteRT-LM,
+      // so it would repeat the GPU attempt that just failed — on this open and
+      // every later one for the same model.
+      _backend = PreferredBackend.cpu;
       return _activeModel = await _gateway.getActiveModel(
         maxTokens: maxTokens,
+        preferredBackend: PreferredBackend.cpu,
       );
     }
   }
