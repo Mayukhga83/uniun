@@ -2271,7 +2271,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storageRetentionSubtitle =>
-      'Public feed and group notes only. Saved, followed, your own, DMs, and private groups stay forever.';
+      'Public feed and group notes only. Saved, followed, your own, DMs, and private groups stay forever. Deleting a note also removes its photos/files from this device (the server copy is untouched).';
 
   @override
   String get storageRetentionOff => 'Off';

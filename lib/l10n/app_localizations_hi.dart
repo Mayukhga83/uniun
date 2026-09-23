@@ -2290,7 +2290,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get storageRetentionSubtitle =>
-      'केवल सार्वजनिक फ़ीड और दल नोट्स। सहेजे गए, देखे जा रहे, आपके अपने, DM और निजी दल हमेशा बने रहते हैं।';
+      'केवल सार्वजनिक फ़ीड और दल नोट्स। सहेजे गए, देखे जा रहे, आपके अपने, DM और निजी दल हमेशा बने रहते हैं। नोट हटाने पर उसकी फ़ोटो/फ़ाइलें भी इस डिवाइस से हट जाती हैं (सर्वर की कॉपी सुरक्षित रहती है)।';
 
   @override
   String get storageRetentionOff => 'बंद';
