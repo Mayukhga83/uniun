@@ -10,9 +10,7 @@ import 'package:uniun/l10n/app_localizations.dart';
 class _MockGraphBloc extends MockBloc<GraphEvent, GraphState>
     implements GraphBloc {}
 
-/// Covers the search match stepper (#208): the `‹ n/total ›` control that walks
-/// the camera through the matches. It only exists while the search field is
-/// open and the query matches something.
+/// Covers: the search match stepper's visibility, position label, and step button wiring.
 void main() {
   late _MockGraphBloc bloc;
 

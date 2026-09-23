@@ -23,21 +23,9 @@ import 'package:uniun/features/brahma/graph/models/graph_node_type.dart';
 import '../../../_helpers/isar_seeds.dart';
 import '../../../_helpers/isar_test_harness.dart';
 
-/// Full BLoC tests for [GraphBloc] — the load orchestrator behind the
-/// Brahma graph view. The adjacency math is pure-tested in
-/// `graph_edges_test.dart`; this file drives the BLoC end-to-end:
-///
-///   - `LoadGraphEvent` (initial, scoped to a Manas, with relation counts)
-///   - `SelectGraphNodeEvent` (lazy profile load, toggle deselect)
-///   - `DeselectGraphNodeEvent`
-///   - `DeleteDraftNodeEvent` → deletes via use case + reloads graph
-///   - `SearchGraphEvent` (case-insensitive content + hashtag match)
-///   - `StepGraphMatchEvent` (camera cursor over the matches, #208)
-///   - `StepConnectedNodeEvent` (same walk over a node's edges, no search)
-///   - `deletedNoteModels.watchLazy()` triggers a reload
-///
-/// The 10 use case dependencies are stubbed via `implements` + `noSuchMethod`;
-/// only [Isar] is real (so the deleted-note watcher actually fires).
+/// Covers: LoadGraphEvent (Manas scope, relation counts), Select/Deselect,
+/// DeleteDraftNodeEvent, SearchGraphEvent, StepGraphMatchEvent,
+/// StepConnectedNodeEvent, deletedNoteModels watcher — stubbed use cases, real Isar.
 void main() {
   late Isar isar;
   late _GetAllSaved getAllSaved;

@@ -5,10 +5,8 @@ import 'package:uniun/features/brahma/graph/models/graph_node_type.dart';
 import 'package:uniun/features/brahma/graph/widgets/graph_canvas.dart';
 import 'package:uniun/l10n/app_localizations.dart';
 
-/// Covers the search camera (#208): highlighting alone left every match at
-/// whatever zoom the graph happened to be at, so a match could sit off-screen
-/// or too small to read. `focusedNodeId` now flies the view to that node, and
-/// the view held before the flight comes back when the search closes.
+/// Covers: camera flight to a focused node, zoom level, stepping between
+/// matches, view restore on close, no-op when nothing is focused, gesture interrupt.
 void main() {
   const size = Size(400, 800);
 

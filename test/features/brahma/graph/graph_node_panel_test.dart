@@ -33,13 +33,8 @@ GraphNodeData _node({GraphNodeType type = GraphNodeType.own}) => GraphNodeData(
       cachedReplyCount: 3,
     );
 
-/// Covers: the node panel's note tap → thread navigation, and the reload it
-/// must fire on return (#197 — replying in the thread creates a note the
-/// graph never watches for, so without this the graph shows stale nodes and
-/// stale reply counts). Also pins that the reload carries the active Manas
-/// scope, that nothing is dispatched while the thread is still open, and that
-/// a closed bloc is never touched. Also covers the connection stepper (#208):
-/// the no-search way to walk a node's edges.
+/// Covers: note-tap → thread nav + reload-on-return with Manas scope,
+/// no reload while thread open, closed-bloc guard, connection stepper.
 void main() {
   late _MockGraphBloc bloc;
   late _MockNoteCardCubit cardCubit;

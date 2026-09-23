@@ -18,9 +18,7 @@ class _MockBrahmaCreateBloc
     extends MockBloc<BrahmaCreateEvent, BrahmaCreateState>
     implements BrahmaCreateBloc {}
 
-/// The graph's keyboard behaviour: the floating nav must get out of the way
-/// when the search keyboard comes up (it sat on top of it), and a tap on empty
-/// canvas must put that keyboard away.
+/// Covers: floating nav hides while the keyboard is up; tapping empty canvas dismisses it.
 void main() {
   late _MockGraphBloc graph;
   late _MockBrahmaCreateBloc create;
