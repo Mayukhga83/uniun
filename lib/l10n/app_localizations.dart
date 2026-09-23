@@ -4175,7 +4175,7 @@ abstract class AppLocalizations {
   /// Subtitle/explanation under the auto-delete retention row — clarifies which notes are affected and that their local media is removed along with them.
   ///
   /// In en, this message translates to:
-  /// **'Public feed and group notes only. Saved, followed, your own, DMs, and private groups stay forever. Deleting a note also removes its photos/files from this device (the server copy is untouched).'**
+  /// **'Public feed and group notes only. Saved, followed, your own, DMs, and private groups stay forever. Deleting a note also removes its photos/files from this device.'**
   String get storageRetentionSubtitle;
 
   /// Dropdown value for disabling auto-deletion (the default — nothing is removed).
