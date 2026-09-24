@@ -2642,10 +2642,28 @@ abstract class AppLocalizations {
   /// **'Sources'**
   String get shivSourcesSheetTitle;
 
+  /// Page reference on a PDF source tile in Shiv's Sources sheet, e.g. 'Page 4'
+  ///
+  /// In en, this message translates to:
+  /// **'Page {label}'**
+  String shivSourcesDocumentPage(String label);
+
+  /// Title of a PDF source tile when the note that attached the file is no longer on this device
+  ///
+  /// In en, this message translates to:
+  /// **'PDF document'**
+  String get shivSourcesDocumentUntitled;
+
+  /// Tooltip on a PDF source tile in Shiv's Sources sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Open PDF'**
+  String get shivSourcesDocumentOpen;
+
   /// Empty state when the source notes for a Shiv reply can't be resolved
   ///
   /// In en, this message translates to:
-  /// **'No source notes for this reply'**
+  /// **'No sources for this reply'**
   String get shivSourcesEmpty;
 
   /// Hint text inside the Shiv chat input field

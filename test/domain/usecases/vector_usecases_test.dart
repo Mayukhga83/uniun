@@ -1,9 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 import 'package:uniun/domain/entities/shiv/scored_note.dart';
+import 'package:uniun/domain/repositories/document_vector_repository.dart';
 import 'package:uniun/domain/repositories/vector_repository.dart';
 import 'package:uniun/domain/usecases/knowledge_usecases.dart';
 import 'package:uniun/domain/usecases/vector_usecases.dart';
+import 'package:uniun/data/datasources/llm/embedding_queue.dart';
 import 'package:uniun/features/shiv/rag/embedding/embedding_service.dart';
 
 class _MockVectorRepository extends Mock implements VectorRepository {}
@@ -11,6 +14,8 @@ class _MockVectorRepository extends Mock implements VectorRepository {}
 class _MockEmbeddingService extends Mock implements EmbeddingService {}
 
 class _MockExtractKnowledge extends Mock implements ExtractKnowledgeUseCase {}
+
+class _MockDocumentVectors extends Mock implements DocumentVectorRepository {}
 
 void main() {
   setUpAll(() {
@@ -146,6 +151,117 @@ void main() {
       ).call(('n1', 'some text'));
 
       verifyZeroInteractions(vector);
+    });
+  });
+
+  group('SearchDocumentChunksUseCase', () {
+    late _MockDocumentVectors repo;
+    late SearchDocumentChunksUseCase useCase;
+
+    const hit = ScoredChunk(
+      chunkId: 's:0',
+      sha256: 's',
+      label: '4',
+      score: 0.8,
+      content: 'doc text',
+    );
+
+    setUp(() {
+      repo = _MockDocumentVectors();
+      useCase = SearchDocumentChunksUseCase(repo);
+    });
+
+    test('forwards vector/topK/minScore and wraps the result in Right',
+        () async {
+      when(() => repo.search([1.0, 2.0], topK: 7, minScore: 0.6))
+          .thenAnswer((_) async => const [hit]);
+
+      final result = await useCase(([1.0, 2.0], 7, 0.6));
+
+      expect(result.getOrElse(() => []), [hit]);
+      verify(() => repo.search([1.0, 2.0], topK: 7, minScore: 0.6)).called(1);
+    });
+
+    test('an empty result set is a Right, not a failure', () async {
+      when(() => repo.search(any(),
+              topK: any(named: 'topK'), minScore: any(named: 'minScore')))
+          .thenAnswer((_) async => const []);
+
+      expect((await useCase(([1.0], 3, 0.3))).getOrElse(() => [hit]), isEmpty);
+    });
+
+    test('a throwing repository becomes a Left, never an exception', () async {
+      when(() => repo.search(any(),
+              topK: any(named: 'topK'), minScore: any(named: 'minScore')))
+          .thenThrow(Exception('store unavailable'));
+
+      final result = await useCase(([1.0], 3, 0.3));
+
+      expect(result.isLeft(), isTrue);
+    });
+  });
+
+  group('EmbedAndStoreChunkUseCase', () {
+    late _MockEmbeddingService embedding;
+    late _MockDocumentVectors vectors;
+    late EmbedAndStoreChunkUseCase useCase;
+
+    setUp(() {
+      embedding = _MockEmbeddingService();
+      vectors = _MockDocumentVectors();
+      useCase = EmbedAndStoreChunkUseCase(embedding, vectors, EmbeddingQueue());
+      when(() => vectors.upsert(any(), any())).thenAnswer((_) async {});
+    });
+
+    test('embeds as a document and upserts under the chunk id', () async {
+      when(() => embedding.embed(any(), isDocument: any(named: 'isDocument')))
+          .thenAnswer((_) async => [1.0, 0.0]);
+
+      final stored = await useCase(('sha:3', 'the passage'));
+
+      expect(stored, isTrue);
+      verify(() => embedding.embed('the passage', isDocument: true)).called(1);
+      verify(() => vectors.upsert('sha:3', [1.0, 0.0])).called(1);
+    });
+
+    test('an empty vector means "retry later" — nothing is stored', () async {
+      when(() => embedding.embed(any(), isDocument: any(named: 'isDocument')))
+          .thenAnswer((_) async => <double>[]);
+
+      final stored = await useCase(('sha:0', 'text'));
+
+      expect(stored, isFalse,
+          reason: 'the embedder answers [] when not ready; that is not a '
+              'document without text');
+      verifyNever(() => vectors.upsert(any(), any()));
+    });
+
+    test('a throwing embedder reports failure rather than escaping', () async {
+      when(() => embedding.embed(any(), isDocument: any(named: 'isDocument')))
+          .thenThrow(Exception('model exploded'));
+
+      expect(await useCase(('sha:0', 'text')), isFalse);
+      verifyNever(() => vectors.upsert(any(), any()));
+    });
+
+    test('a throwing store reports failure rather than escaping', () async {
+      when(() => embedding.embed(any(), isDocument: any(named: 'isDocument')))
+          .thenAnswer((_) async => [1.0]);
+      when(() => vectors.upsert(any(), any())).thenThrow(Exception('disk full'));
+
+      expect(await useCase(('sha:0', 'text')), isFalse);
+    });
+
+    test('many chunks all get stored despite the concurrency bound', () async {
+      when(() => embedding.embed(any(), isDocument: any(named: 'isDocument')))
+          .thenAnswer((_) async => [1.0]);
+
+      final results = await Future.wait([
+        for (var i = 0; i < 12; i++) useCase(('sha:$i', 'chunk $i')),
+      ]);
+
+      expect(results.every((r) => r), isTrue);
+      verify(() => vectors.upsert(any(), any())).called(12);
     });
   });
 }

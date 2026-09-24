@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_gemma_litertlm/flutter_gemma_litertlm.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:flutter_gemma_mediapipe/flutter_gemma_mediapipe.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -16,6 +17,7 @@ import 'package:uniun/core/l10n/locale_cubit.dart';
 import 'package:uniun/core/router/app_router.dart';
 import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/core/theme/app_theme_mode.dart';
+import 'package:uniun/features/shiv/rag/indexing/pdf_indexer.dart';
 import 'package:uniun/core/theme/theme_cubit.dart';
 import 'package:uniun/common/locator.dart';
 import 'package:uniun/data/datasources/app_settings_store.dart';
@@ -50,6 +52,9 @@ Future<void> main() async {
     inferenceEngines: const [LiteRtLmEngine(), MediaPipeEngine()],
     embeddingBackends: const [LiteRtEmbeddingBackend()],
   );
+  // Loads PDFium, which PdfrxTextSource needs to pull the text layer out of an
+  // attached PDF for the Shiv RAG index. Idempotent.
+  await pdfrxFlutterInitialize();
   // Preserve native splash only until Flutter renders its first frame
   FlutterNativeSplash.preserve(widgetsBinding: binding);
 
@@ -67,6 +72,10 @@ Future<void> main() async {
   // opted in and is logged in. MeshService waits for the app to be foreground before
   // touching the native host (Android's foreground-service start rule).
   getIt<MeshService>().start();
+
+  // Keeps Shiv's PDF index in step with the media cache. Idle — no extraction
+  // or embedding work — until a PDF is actually cached on this device.
+  getIt<PdfIndexer>().start();
 
   // Resolve the startup locale synchronously (the AppSettingsStore singleton is
   // already pre-resolved) so the first frame renders in the right language with

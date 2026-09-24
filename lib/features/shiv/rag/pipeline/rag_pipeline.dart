@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:injectable/injectable.dart';
 import 'package:uniun/domain/entities/graph_edge/graph_edge_entity.dart';
 import 'package:uniun/domain/entities/graph_node/graph_node_entity.dart';
 import 'package:uniun/domain/entities/llm/llm_model_info.dart';
 import 'package:uniun/domain/entities/memory_node/memory_node_entity.dart';
+import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 import 'package:uniun/domain/entities/shiv/scored_note.dart';
 import 'package:uniun/domain/entities/shiv/shiv_message_entity.dart';
 import 'package:uniun/domain/usecases/knowledge_usecases.dart';
@@ -24,6 +26,7 @@ class RagMessage {
     required this.userMessage,
     required this.contextCount,
     this.sourceNoteIds = const [],
+    this.sourceChunkIds = const [],
   });
 
   /// The per-turn message for [AIModelRunner.sendAndStream]:
@@ -39,6 +42,11 @@ class RagMessage {
   /// the last reply. Empty when no notes matched / model not loaded. Excludes
   /// graph edges and memory summaries — these are the actual source notes.
   final List<String> sourceNoteIds;
+
+  /// Chunk ids (`"<sha256>:<ordinal>"`) of the PDF passages that informed this
+  /// turn, score-desc. Resolved on demand by the Sources sheet. Always empty in
+  /// Manas-scoped chat, which never searches documents.
+  final List<String> sourceChunkIds;
 }
 
 /// Orchestrates the full RAG + GraphRAG pipeline.
@@ -131,12 +139,15 @@ class RagPipeline {
       budget: budget,
       userName: _personalization?.userName,
     );
-    final count =
-        context.seedNotes.length + context.graphEdges.length + context.memories.length;
+    final count = context.seedNotes.length +
+        context.seedChunks.length +
+        context.graphEdges.length +
+        context.memories.length;
     return RagMessage(
       userMessage: userMessage,
       contextCount: count,
       sourceNoteIds: context.seedNotes.map((s) => s.noteId).toList(),
+      sourceChunkIds: context.seedChunks.map((c) => c.chunkId).toList(),
     );
   }
 
@@ -159,6 +170,7 @@ class RagPipeline {
     try {
       // 1. Vector seed — confined to the selected Manas, or the whole library.
       final List<ScoredNote> seedNotes;
+      var seedChunks = const <ScoredChunk>[];
       if (manasIds.isNotEmpty) {
         // Manas-scoped: relevance-rank within the picked Manas's notes.
         final packed = await _manasLoader.merge(
@@ -174,8 +186,22 @@ class RagPipeline {
         final vec = await _embedding.embed(query);
         if (vec.isEmpty) return EnrichedContext.empty;
         seedNotes = await _vectorSearch.search(queryVector: vec, topK: topK);
+        // Documents are unscoped-chat only: a Manas scopes by note membership,
+        // which a PDF blob has none of.
+        seedChunks = await _safeChunkSearch(vec, math.max(1, topK ~/ 2));
       }
-      if (seedNotes.isEmpty) return EnrichedContext.empty;
+      if (seedNotes.isEmpty && seedChunks.isEmpty) return EnrichedContext.empty;
+      // A document-only match has nothing to expand: chunks are not graph nodes
+      // and carry no memory summaries.
+      if (seedNotes.isEmpty) {
+        return EnrichedContext(
+          seedNotes: const [],
+          seedChunks: seedChunks,
+          graphNodes: const [],
+          graphEdges: const [],
+          memories: const [],
+        );
+      }
 
       // 2. Memory for seeds → collect concept keys.
       final seedIds = seedNotes.map((s) => s.noteId).toList();
@@ -212,12 +238,23 @@ class RagPipeline {
 
       return EnrichedContext(
         seedNotes: seedNotes,
+        seedChunks: seedChunks,
         graphNodes: nodes,
         graphEdges: edges,
         memories: [...seedMemories, ...expandedMemories],
       );
     } catch (_) {
       return EnrichedContext.empty;
+    }
+  }
+
+  /// Chunk retrieval must never cost a turn its notes: a failing document store
+  /// degrades to notes-only rather than losing the whole context.
+  Future<List<ScoredChunk>> _safeChunkSearch(List<double> vec, int topK) async {
+    try {
+      return await _vectorSearch.searchChunks(queryVector: vec, topK: topK);
+    } catch (_) {
+      return const [];
     }
   }
 

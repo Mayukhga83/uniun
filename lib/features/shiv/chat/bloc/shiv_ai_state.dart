@@ -47,6 +47,11 @@ abstract class ShivAIState with _$ShivAIState {
     /// and show no chip. Overwritten each turn; cleared on open/close/branch.
     @Default([]) List<String> lastTurnSourceNoteIds,
 
+    /// `"<sha256>:<ordinal>"` ids of the PDF passages that grounded the LAST
+    /// assistant reply. Same lifecycle as [lastTurnSourceNoteIds]: transient,
+    /// overwritten each turn, cleared on open/close/branch, never persisted.
+    @Default([]) List<String> lastTurnSourceChunkIds,
+
     /// True while the embedding model is loading on first Shiv tab open.
     @Default(false) bool isRagInitializing,
 

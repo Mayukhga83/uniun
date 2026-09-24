@@ -5,9 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/core/usecases/usecase.dart';
+import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 import 'package:uniun/domain/entities/shiv/scored_note.dart';
+import 'package:uniun/domain/repositories/document_vector_repository.dart';
 import 'package:uniun/domain/repositories/vector_repository.dart';
 import 'package:uniun/domain/usecases/knowledge_usecases.dart';
+import 'package:uniun/data/datasources/llm/embedding_queue.dart';
 import 'package:uniun/features/shiv/rag/embedding/embedding_service.dart';
 
 @lazySingleton
@@ -82,6 +85,68 @@ class EmbedAndStoreNoteUseCase
       unawaited(_extract.call((eventId, text, vec)));
     } catch (e, st) {
       debugPrint('❌ EmbedAndStore failed for $shortId: $e\n$st');
+    }
+  }
+}
+
+/// Top-K PDF chunks most similar to a query vector, from the document store.
+///
+/// The document twin of [SearchVectorNotesUseCase]: same tuple input
+/// `(vector, topK, minScore)`, separate store, so note retrieval is unaffected.
+@lazySingleton
+class SearchDocumentChunksUseCase extends UseCase<
+    Either<Failure, List<ScoredChunk>>, (List<double>, int, double)> {
+  final DocumentVectorRepository _repository;
+
+  SearchDocumentChunksUseCase(this._repository);
+
+  @override
+  Future<Either<Failure, List<ScoredChunk>>> call(
+    (List<double>, int, double) input, {
+    bool cached = false,
+  }) async {
+    try {
+      final (vec, topK, minScore) = input;
+      return Right(
+          await _repository.search(vec, topK: topK, minScore: minScore));
+    } catch (e) {
+      return Left(Failure.errorFailure(e.toString()));
+    }
+  }
+}
+
+/// Embeds one PDF chunk and stores its vector against `chunkId`.
+///
+/// The document twin of [EmbedAndStoreNoteUseCase], kept separate rather than
+/// branching inside it: a chunk needs no URL stripping (it is extracted prose,
+/// not user-typed content carrying a blob URL), goes to the document store, and
+/// asserts no knowledge-graph edges — `ExtractKnowledgeUseCase` is about notes.
+///
+/// Returns whether the vector was stored. `false` means the embedder was not
+/// ready, which the caller must treat as "retry later", NOT as "this document
+/// has no text" — [EmbeddingService.embed] answers `[]` instead of throwing.
+///
+/// Runs through [EmbeddingQueue], so a document yielding dozens of chunks
+/// cannot storm the CPU.
+@lazySingleton
+class EmbedAndStoreChunkUseCase extends UseCase<bool, (String, String)> {
+  final EmbeddingService _embedding;
+  final DocumentVectorRepository _vector;
+  final EmbeddingQueue _queue;
+
+  EmbedAndStoreChunkUseCase(this._embedding, this._vector, this._queue);
+
+  @override
+  Future<bool> call((String, String) input, {bool cached = false}) async {
+    final (chunkId, text) = input;
+    try {
+      final vec = await _queue.run(() => _embedding.embed(text, isDocument: true));
+      if (vec.isEmpty) return false;
+      await _vector.upsert(chunkId, vec);
+      return true;
+    } catch (e) {
+      debugPrint('❌ EmbedAndStoreChunk failed for $chunkId: $e');
+      return false;
     }
   }
 }

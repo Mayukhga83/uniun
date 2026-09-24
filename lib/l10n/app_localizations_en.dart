@@ -1437,7 +1437,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shivSourcesSheetTitle => 'Sources';
 
   @override
-  String get shivSourcesEmpty => 'No source notes for this reply';
+  String shivSourcesDocumentPage(String label) {
+    return 'Page $label';
+  }
+
+  @override
+  String get shivSourcesDocumentUntitled => 'PDF document';
+
+  @override
+  String get shivSourcesDocumentOpen => 'Open PDF';
+
+  @override
+  String get shivSourcesEmpty => 'No sources for this reply';
 
   @override
   String get shivInputHint => 'Ask Shiv anything…';

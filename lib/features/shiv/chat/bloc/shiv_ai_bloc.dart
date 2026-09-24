@@ -174,6 +174,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       messages: [],
       ragContextCount: 0,
       lastTurnSourceNoteIds: const [],
+      lastTurnSourceChunkIds: const [],
       errorMessage: null,
     ));
   }
@@ -213,6 +214,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
           allMessages: msgs,
           ragContextCount: 0,
           lastTurnSourceNoteIds: const [],
+          lastTurnSourceChunkIds: const [],
           errorMessage: null,
         ));
       },
@@ -238,6 +240,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       streamingMessageId: null,
       ragContextCount: 0,
       lastTurnSourceNoteIds: const [],
+      lastTurnSourceChunkIds: const [],
     ));
   }
 
@@ -342,6 +345,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
     emit(state.copyWith(
       ragContextCount: ragMsg.contextCount,
       lastTurnSourceNoteIds: ragMsg.sourceNoteIds,
+      lastTurnSourceChunkIds: ragMsg.sourceChunkIds,
     ));
 
     // 4 — Pair up prior turns as clean (Q, A) tuples. We exclude the
@@ -554,6 +558,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       activeConversation: conv.copyWith(activeLeafMessageId: event.leafMessageId),
       selectedNodeMessageId: null,
       lastTurnSourceNoteIds: const [],
+      lastTurnSourceChunkIds: const [],
     ));
   }
 
@@ -572,6 +577,7 @@ class ShivAIBloc extends Bloc<ShivAIEvent, ShivAIState> {
       activeConversation: conv.copyWith(activeLeafMessageId: event.parentMessageId),
       selectedNodeMessageId: null,
       lastTurnSourceNoteIds: const [],
+      lastTurnSourceChunkIds: const [],
     ));
   }
 

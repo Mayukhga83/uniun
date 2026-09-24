@@ -3,6 +3,7 @@ import 'package:uniun/core/enum/message_role.dart';
 import 'package:uniun/domain/entities/graph_edge/graph_edge_entity.dart';
 import 'package:uniun/domain/entities/graph_node/graph_node_entity.dart';
 import 'package:uniun/domain/entities/memory_node/memory_node_entity.dart';
+import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 import 'package:uniun/domain/entities/shiv/scored_note.dart';
 import 'package:uniun/domain/entities/shiv/shiv_message_entity.dart';
 import 'package:uniun/features/shiv/rag/prompt/prompt_budget.dart';
@@ -35,6 +36,15 @@ GraphNodeEntity _node(String key, String name) => GraphNodeEntity(
       type: 'concept',
       createdAt: DateTime(2026, 1, 1),
       updatedAt: DateTime(2026, 1, 1),
+    );
+
+ScoredChunk _chunk(String content, {String label = '3', int ordinal = 0}) =>
+    ScoredChunk(
+      chunkId: 's:$ordinal',
+      sha256: 's',
+      label: label,
+      score: 0.9,
+      content: content,
     );
 
 MemoryNodeEntity _memory(String summary) => MemoryNodeEntity(
@@ -391,6 +401,91 @@ void main() {
 
       expect(prompt, contains('SIMILAR_NOTES:'));
       expect(prompt, contains('- id:sim1  a similar note'));
+    });
+  });
+
+  group('buildUserMessage — document chunks', () {
+    EnrichedContext ctx({
+      List<ScoredNote> notes = const [],
+      List<ScoredChunk> chunks = const [],
+    }) =>
+        EnrichedContext(
+          seedNotes: notes,
+          graphNodes: const [],
+          graphEdges: const [],
+          memories: const [],
+          seedChunks: chunks,
+        );
+
+    test('a chunk-only context is not empty and renders a Documents section',
+        () {
+      final c = ctx(chunks: [_chunk('leave policy revised', label: '3')]);
+
+      expect(c.isEmpty, isFalse);
+      final msg = builder.buildUserMessage(
+          userQuestion: 'q', context: c, budget: defaultBudget);
+
+      expect(msg, contains('## Relevant Documents'));
+      expect(msg, contains('(p.3) leave policy revised'));
+    });
+
+    test('the page label of each chunk is carried into the prompt', () {
+      final msg = builder.buildUserMessage(
+        userQuestion: 'q',
+        context: ctx(chunks: [
+          _chunk('first', label: '1'),
+          _chunk('seventh', label: '7', ordinal: 1),
+        ]),
+        budget: defaultBudget,
+      );
+
+      expect(msg, contains('(p.1) first'));
+      expect(msg, contains('(p.7) seventh'));
+    });
+
+    test('documents come after the notes', () {
+      final msg = builder.buildUserMessage(
+        userQuestion: 'q',
+        context:
+            ctx(notes: [_note('n1', 'a note')], chunks: [_chunk('a chunk')]),
+        budget: defaultBudget,
+      );
+
+      expect(msg.indexOf('## Relevant Notes'),
+          lessThan(msg.indexOf('## Relevant Documents')));
+    });
+
+    test('an over-budget section is dropped whole, never truncated mid-chunk',
+        () {
+      const tiny = PromptBudget(
+        maxTokens: 60,
+        queryTokens: 6,
+        topNotesTokens: 21,
+        graphRelationsTokens: 12,
+        memoriesTokens: 9,
+        topK: 3,
+        maxHops: 1,
+      );
+      final msg = builder.buildUserMessage(
+        userQuestion: 'q',
+        context: ctx(
+            notes: [_note('n1', 'short note')], chunks: [_chunk('x' * 700)]),
+        budget: tiny,
+      );
+
+      expect(msg, contains('## Relevant Notes'));
+      expect(msg, isNot(contains('Relevant Documents')));
+      expect(msg, isNot(contains('xxxx')));
+    });
+
+    test('with no chunks nothing about documents appears', () {
+      final msg = builder.buildUserMessage(
+        userQuestion: 'q',
+        context: ctx(notes: [_note('n1', 'a note')]),
+        budget: defaultBudget,
+      );
+
+      expect(msg, isNot(contains('Relevant Documents')));
     });
   });
 }

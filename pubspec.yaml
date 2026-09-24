@@ -119,6 +119,7 @@ dependencies:
   # Triggers a LAN-transport rebind when the network interface changes (Wi-Fi
   # switch) so mesh sync recovers without an app restart — see MeshEngineHost.
   connectivity_plus: ^6.1.0
+  pdfrx: ^2.4.8
 
 dev_dependencies:
   flutter_test:
@@ -155,6 +156,10 @@ dev_dependencies:
   injectable_generator: ^2.4.1
   json_serializable: ^6.9.0
   flutter_launcher_icons: ^0.14.3
+  # Unpacks the PDFium prebuilt in test/_helpers/pdfium_test_lib.dart —
+  # `flutter test` does not run native-asset hooks, so the library is fetched
+  # at test time the way IsarCore already is.
+  archive: ^4.0.0
 
 flutter_native_splash:
   color: "#ffffff"

@@ -58,7 +58,8 @@ class _ShivChatPageState extends State<ShivChatPage> {
           p.status != c.status ||
           p.messages != c.messages ||
           p.activeConversation != c.activeConversation ||
-          p.lastTurnSourceNoteIds != c.lastTurnSourceNoteIds,
+          p.lastTurnSourceNoteIds != c.lastTurnSourceNoteIds ||
+          p.lastTurnSourceChunkIds != c.lastTurnSourceChunkIds,
       builder: (context, state) {
         final isStreaming = state.status == ShivChatStatus.streaming;
         final conv = state.activeConversation;
@@ -114,6 +115,7 @@ class _ShivChatPageState extends State<ShivChatPage> {
                                 key: ValueKey(msg.messageId),
                                 message: msg,
                                 sourceNoteIds: state.lastTurnSourceNoteIds,
+                                sourceChunkIds: state.lastTurnSourceChunkIds,
                               );
                             }
                             return ShivMessageBubble(
@@ -122,6 +124,9 @@ class _ShivChatPageState extends State<ShivChatPage> {
                               isLastAssistant: isLastAssistant,
                               sourceNoteIds: isLastAssistant
                                   ? state.lastTurnSourceNoteIds
+                                  : const [],
+                              sourceChunkIds: isLastAssistant
+                                  ? state.lastTurnSourceChunkIds
                                   : const [],
                             );
                           },
@@ -156,10 +161,12 @@ class _StreamingBubble extends StatelessWidget {
     super.key,
     required this.message,
     required this.sourceNoteIds,
+    required this.sourceChunkIds,
   });
 
   final ShivMessageEntity message;
   final List<String> sourceNoteIds;
+  final List<String> sourceChunkIds;
 
   @override
   Widget build(BuildContext context) {
@@ -170,6 +177,7 @@ class _StreamingBubble extends StatelessWidget {
         streamingContent: streaming ?? '',
         isLastAssistant: true,
         sourceNoteIds: sourceNoteIds,
+        sourceChunkIds: sourceChunkIds,
       ),
     );
   }
