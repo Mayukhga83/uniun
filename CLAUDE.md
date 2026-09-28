@@ -444,7 +444,7 @@ lib/gateway/
 | Kind 0 (profiles — own table)      | 30 days, refresh on view|
 | AI conversations/messages          | Forever                |
 
-**Media files have no automatic retention.** The user removes blobs from device manually via Settings → Storage → Media. Saved / followed / own / DM / private-channel media stay on disk as long as the user wants them; nothing else (gallery, GC) touches the files. The cache table (`MediaCacheModel`) is the only record of what's on disk — deleting a row from it deletes the file.
+**Media files have no retention of their own.** There is no timer or sweep that targets media directly, and the user can always remove a blob by hand via Settings → Storage → Media. Saved / followed / own / DM / private-channel media stay on disk as long as the user wants them — those notes are never evicted, so their media is never touched by GC either. **Ordinary notes' media is not exempt, though**: `CleanupManager`'s opt-in note-retention sweep (`lib/gateway/cleanup/cleanup_manager.dart`, off by default) deletes any `MediaCacheModel` file left unreferenced after it evicts an old note — a side effect of note eviction, not an independent media policy. The cache table (`MediaCacheModel`) is the only record of what's on disk — deleting a row from it deletes the file.
 
 On-demand fetch: if a note is referenced but not in Isar, `SyncEngine.fetchById(eventId)` queries the relay with `{"ids": [eventId]}`.
 

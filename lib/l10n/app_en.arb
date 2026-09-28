@@ -2888,9 +2888,9 @@
   "@storageRetentionTitle": {
     "description": "Row title for the auto-cleanup retention dropdown in Settings → Storage. Affects only public feed / group notes the user hasn't saved or followed."
   },
-  "storageRetentionSubtitle": "Public feed and group notes only. Saved, followed, your own, DMs, and private groups stay forever.",
+  "storageRetentionSubtitle": "Public feed and group notes only. Saved, followed, your own, DMs, and private groups stay forever. Deleting a note also removes its photos/files from this device.",
   "@storageRetentionSubtitle": {
-    "description": "Subtitle/explanation under the auto-delete retention row — clarifies which notes are affected."
+    "description": "Subtitle/explanation under the auto-delete retention row — clarifies which notes are affected and that their local media is removed along with them."
   },
   "storageRetentionOff": "Off",
   "@storageRetentionOff": {
