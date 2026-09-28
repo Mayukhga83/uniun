@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/domain/entities/shiv/document_citation.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
@@ -22,6 +23,7 @@ void main() {
   const citation = DocumentCitation(
     chunkId: 's:0',
     sha256: 's',
+    kind: DocumentKind.pdf,
     label: '2',
     snippet: 'passage',
     localPath: '/p/doc.pdf',

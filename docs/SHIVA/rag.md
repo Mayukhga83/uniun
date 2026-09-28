@@ -194,35 +194,45 @@
                                                             
 ---
 
-## PDF documents
+## Documents (PDF, DOCX)
 
-A PDF attached to a note has its text extracted, chunked and embedded, so Shiv
-can answer from it and cite the page it came from. Design:
-`docs/superpowers/specs/2026-09-19-pdf-rag-design.md`.
+A PDF or Word (`.docx`) file attached to a note has its text extracted, chunked
+and embedded, so Shiv can answer from it and cite where it came from — the
+**page** of a PDF, the **heading** of a DOCX section. Designs:
+`docs/superpowers/specs/2026-09-19-pdf-rag-design.md` (PDF) and
+`docs/superpowers/specs/2026-09-26-docx-rag-design.md` (DOCX).
 
-### How a PDF becomes searchable
+`DocumentKind` (`lib/core/enum/document_kind.dart`) is the single answer to
+"which mimes are documents": the indexer's filter, the vector search and the
+citation resolver all ask it. Legacy `.doc` and `.odt` are not documents — they
+attach and open, and are never read.
+
+### How a document becomes searchable
 
 ```
- You attach a PDF to a note and publish
+ You attach a PDF or DOCX to a note and publish
                 │
                 ▼
-   MediaCacheModel row written      (sha256 → /path/file.pdf, application/pdf)
+   MediaCacheModel row written      (sha256 → /path/file, its mime)
                 │
-                │   PdfIndexer watches this table
+                │   DocumentIndexer watches this table
                 ▼
  ┌──────────────────────────────────────────────────────────┐
- │ 1. READ    PdfrxTextSource → PDFium                      │
- │            walks pages 1..N                              │
- │            → ["page 1 text", "page 2 text", …]           │
+ │ 1. READ    by DocumentKind:                              │
+ │            PDF  → PdfrxTextSource → PDFium, pages 1..N   │
+ │                   → labels "1", "2", …                   │
+ │            DOCX → ArchiveDocxTextSource (zip + XML, in   │
+ │                   Isolate.run) → one section per heading │
+ │                   → labels "Annual Leave", …, or ""      │
  ├──────────────────────────────────────────────────────────┤
  │ 2. GATE    looksLikeProse()                              │
  │            ≥200 chars AND ≥15% Unicode letters?          │
  │            NO  → status notSearchable, stop  (a scan)    │
  │            YES ↓                                         │
  ├──────────────────────────────────────────────────────────┤
- │ 3. CHUNK   chunkPages()  —  ≤700 chars, never across     │
- │            a page boundary                               │
- │            ★ every chunk KEEPS its page number ★         │
+ │ 3. CHUNK   chunkSections() — ≤700 chars, never across    │
+ │            a page or section boundary                    │
+ │            ★ every chunk KEEPS its label ★               │
  ├──────────────────────────────────────────────────────────┤
  │ 4. EMBED   EmbedAndStoreChunkUseCase, per chunk          │
  │            Gecko embedder → vector                       │
@@ -287,16 +297,74 @@ ties the vector store to the text, and the text to the page:
 ```
 
 The vector store never needs to know what a page is — it only returns an id, and
-every later step carries the label that `chunkPages()` stamped on at split time.
+every later step carries the label that the chunker stamped on at split time.
 
-**Pipeline** — `PdfIndexer` (`lib/features/shiv/rag/indexing/`, main isolate,
+### Why a DOCX cites a heading, not a page
+
+A Word file has no fixed pages: pagination depends on fonts, paper size and the
+app rendering it. "Page 5" is true everywhere for a PDF and nowhere for a DOCX,
+and a wrong page number is worse than none. So a DOCX chunk is labelled with the
+nearest heading above it and rendered differently at both ends:
+
+| | PDF | DOCX |
+|---|---|---|
+| Label | `"5"` | `"Annual Leave"` · `""` above the first heading |
+| Prompt line (LLM-facing, English) | `• (p.5) …` | `• (Annual Leave) …` · `• …` when empty |
+| Sources tile | PDF icon · "Page 5" | document icon · "Section: Annual Leave" · no line when empty |
+
+The kind is recorded on `DocumentIndexModel.kind` when the document is indexed
+and read back through its unique index when a hit or citation is resolved. It is
+deliberately not re-derived from `MediaCacheModel.mime`: every download or upload
+of the same blob overwrites that mime with whatever the sender claimed, and a
+heading must never render as a page.
+
+What `ArchiveDocxTextSource` reads, and why each rule exists:
+
+- **Headings by style *name*** (`heading 1`–`9`, `Title`, any case) or an
+  `outlineLvl` 0–8, following `basedOn` — never by style id. Ids are localised
+  (German Word writes `berschrift1`) and free-form in other editors; LibreOffice
+  names the style `Heading 1` where Word writes `heading 1`.
+- **Content controls (`w:sdt`) are walked into.** Word templates wrap whole
+  paragraphs in them — the USPTO fixture's every section header lives in one —
+  and a reader visiting only direct `w:body` children silently drops that text.
+- **Skipped:** `w:delText` (tracked-change deletions, still in the file),
+  `w:instrText` (field codes — the NIST fixture has 330 `FORMCHECKBOX`), text
+  boxes (their fallback copy would repeat them), headers, footers, footnotes.
+- **Tables** become `a | b` lines inside the section they sit in.
+- A heading with no body of its own folds into the next section, so
+  `Chapter 3` directly above `3.1 Scope` yields no title-only chunk.
+- Runs in `Isolate.run` — XML parsing is synchronous Dart and would stall the UI.
+- A `document.xml` over 10 MB uncompressed is refused and a `styles.xml` over
+  2 MB ignored: these files arrive from other people over relays, and the
+  parsed DOM costs ~10x the XML in the app's own heap (`Isolate.run` shares the
+  isolate group), so an unbounded file could crash the app on every launch.
+- **Skipped too:** `w:moveFrom` — a tracked move keeps its old copy as ordinary
+  `w:t`, which would index the moved text twice.
+
+Real-world Word forms often use **no heading styles at all** (both committed
+federal templates mark sections with table rows or custom styles); their chunks
+are cited with the file name and passage and no location line.
+
+**Pipeline** — `DocumentIndexer` (`lib/features/shiv/rag/indexing/`, main isolate,
 started in `main.dart`) watches `MediaCacheModel` and reconciles it against
 `DocumentIndexModel` by SHA-256:
 
 ```
-PDF cache row, no index row   -> index it
-index row, no PDF cache row   -> purge its chunks and index row
+citable document cached, no index row      -> index it
+index row, document not cached or no longer
+  citable                                  -> purge its chunks and index row
 ```
+
+**Which documents Shiv may cite** — the same notes Shiv's note search covers:
+
+| Document attached to | Indexed |
+|---|---|
+| one of your own **feed notes** (kind 1) | yes |
+| a **saved note** — any kind, including a saved DM or group message | yes, **whether or not you opened it**: saving downloads its PDF/DOCX (`SaveNoteUseCase`) |
+| someone else's feed note, a group, or a DM, merely opened | no — opening a file is not asking Shiv to learn it; saving is |
+| your own DM or group message | no |
+
+Unsaving the note removes its document from Shiv on the next pass, unless another saved note carries the same file. The indexer watches the media cache, saved notes and notes (debounced 500 ms), because an own note is written after its attachment was already cached. A saved note's document that fails to download (offline) is indexed when the user next opens it.
 
 Reconciling state rather than reacting to a "blob arrived" event is what makes
 this correct: `MediaRepositoryImpl._upsertCache` has **four** call sites (upload,
@@ -316,14 +384,33 @@ expansion, since they are not graph nodes. `PromptBuilder` renders them under
 Sources sheet, which resolves them on open via `DocumentSourceRepository`.
 
 A Manas-scoped chat never searches documents: it scopes by note membership, and
-a PDF blob has none.
+a document blob has none (#236).
+
+**Indexing is not instant, and says so in the log.** Each chunk is embedded on
+device, competing with the LLM for the phone: a 17-chunk DOCX took ~4 minutes on
+a vivo 1933 while Gemma 4 E2B was extracting knowledge from the note it was
+attached to. A document becomes searchable only when its index row is written,
+so a question asked mid-index sees notes only — which looks exactly like a
+retrieval bug. Watch it with `adb logcat | grep DocumentIndexer`:
+
+```
+📄 DocumentIndexer: indexing 62e59f9e (docx)…
+📄 DocumentIndexer: indexed 62e59f9e (docx) — 17 chunks in 231s
+📄 DocumentIndexer: 3f9a01c2 (pdf) not searchable (noTextLayer) in 2s
+📄 DocumentIndexer: embedder not ready, will retry 62e59f9e (docx)
+```
+
+Nothing in the app UI shows indexing progress yet.
 
 **Scans are kept, not indexed.** No text layer, or text that fails the quality
 gate, is recorded `notSearchable`: the document still attaches and opens, it is
-simply never cited. An embedder that is not ready is different — it leaves the
+simply never cited. The same holds for a DOCX that cannot be read (not a zip,
+password-protected, malformed XML) or holds no text at all. The prose gate itself
+is **PDF-only**: it catches scans and broken font encodings, which a DOCX cannot
+have, so a short DOCX memo or a table of figures is indexed. An embedder that is not ready is different — it leaves the
 document *unindexed* so a later reconcile retries it.
 
-### Two constraints worth knowing before changing this
+### Constraints worth knowing before changing this
 
 **Chunks are capped at 700 characters** because `PromptBudget` gives the
 smallest local model 1024 tokens total and `buildUserMessage` drops any section
@@ -341,14 +428,28 @@ tostore 3.5.1 fixes the delete bug but silently reads back an empty index from a
 store written by 3.1.0 — upgrading needs a version-bumped store path so the data
 re-embeds instead of disappearing.
 
+**ToStore is pinned to 3.1.2.** 3.1.0 declares `struct statvfs` as 88 bytes where
+glibc and 64-bit bionic use 112, so each disk-space check wrote 24 bytes past a
+heap block — random `malloc`/`free` aborts on Linux (the integration tests died
+this way), with Android on the same code path. 3.1.2 fixes the struct and reads
+3.1.0 stores unchanged (verified: 25/25 rows and vectors). 3.1.1 and 3.1.3 are
+retracted.
+
+**ToStore's vector index cannot reach every stored vector.** Measured on 3.1.0
+and 3.1.2 alike, querying each stored vector with itself: it is its own top hit
+for 100% of 10 vectors, 80% of 25 and 33% of 60 — and only 55% of 60 even with
+topK = every row, so some nodes are unreachable from the graph's entry point,
+not merely ranked low. This bounds retrieval quality for notes and documents
+alike as a library grows, and is not specific to documents.
+
 ### Testing
 
 | Tier | Where | Real | Faked |
 |---|---|---|---|
-| Unit | `test/features/shiv/rag/extraction/`, `test/domain/entities/shiv/` | chunker, gate, extraction service, chunk ids | PDF source |
-| Component | `test/features/shiv/rag/indexing/`, `test/data/...` | real PDFium + the committed PDF, real Isar, real ToStore | embedder |
-| Pipeline | `test/integration/pdf_rag_flow_test.dart` | everything above, assembled | embedder |
-| Device | `integration_test/pdf_rag_e2e_test.dart` | **everything, incl. the real Gecko embedder** | nothing |
+| Unit | `test/features/shiv/rag/extraction/`, `test/domain/entities/shiv/`, `test/core/enum/` | chunker, gate, extraction dispatch, chunk ids, `DocumentKind` | PDF/DOCX sources |
+| Component | `test/features/shiv/rag/indexing/`, `test/data/...` | real PDFium + the committed PDF, the real DOCX reader + committed Word/LibreOffice files, real Isar, real ToStore | embedder |
+| Pipeline | `test/integration/document_rag_flow_test.dart` | everything above, assembled, PDF and DOCX | embedder |
+| Device | `integration_test/document_rag_e2e_test.dart` | **everything, incl. the real Gecko embedder** | nothing |
 
 The device tier exists because the embedder loads a 145 MB Git-LFS asset that
 CI does not check out, and `EmbeddingService.embed` returns `[]` instead of
@@ -356,7 +457,7 @@ throwing when the model is missing — so a CI run would go green while embeddin
 nothing. Run it by hand:
 
 ```
-flutter test integration_test/pdf_rag_e2e_test.dart -d <device-id>
+flutter test integration_test/document_rag_e2e_test.dart -d <device-id>
 ```
 
 `flutter test` does not run native-asset build hooks, so PDFium is absent under
@@ -364,5 +465,6 @@ a plain `flutter test`. `test/_helpers/pdfium_test_lib.dart` downloads it once
 and points pdfrx at it, mirroring what `ensureIsarCore()` already does for
 Isar's native binary.
 
-**Not built:** in-app page-jump viewer, documents in Manas-scoped chat, a
-`notSearchable` badge, OCR for scans, DOCX.
+**Not built:** in-app page-jump viewer (#237), documents in Manas-scoped chat
+(#236), a `notSearchable` badge, OCR for scans, `.doc`/`.odt`, DOCX headers,
+footers and footnotes.

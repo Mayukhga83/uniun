@@ -242,6 +242,7 @@ Build order: `freezed` runs before `isar_generator` (enforced via `pubspec.yaml`
 | `injectable`                   | `^2.3.2`    | DI annotation framework                                        |
 | `injectable_generator`         | `^2.4.1`    | DI code generator (dev dependency)                             |
 | `dartz`                        | `^0.10.1`   | Functional Either/Option types                                 |
+| `tostore`                      | `^3.1.2`    | Not 3.1.0: its `statvfs` struct is 24 bytes short, so every disk-space check overflows the heap (random native aborts). 3.1.2 reads 3.1.0 stores unchanged. 3.5.x changes the API and on-disk format — upgrading needs a re-embed path first. |
 | `flutter_bloc`                 | `^8.1.3`    | BLoC state management                                          |
 | `bloc_concurrency`             | `^0.2.4`    | Event transformers (droppable, sequential, restartable)        |
 | `flutter_gemma`                | `^1.5.1`    | Needs `hooks ^2.0.0`; openmls 1.3 still pins `hooks ^1.0.0`, but its pin is conservative — `dependency_overrides: hooks: ^2.0.0` in `pubspec.yaml` lets both coexist (verified: clean build). Drop the override once openmls relaxes upstream. `background_downloader` (flutter_gemma's transitive download engine) is separately pinned to `9.5.6` — `9.5.7` fails the Android Kotlin build on this project's legacy Gradle setup. |

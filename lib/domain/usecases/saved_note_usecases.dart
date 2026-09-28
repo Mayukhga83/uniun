@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/core/usecases/usecase.dart';
 import 'package:uniun/domain/entities/shiv/document_citation.dart';
@@ -11,20 +12,40 @@ import 'package:uniun/domain/entities/saved_note/saved_note_entity.dart';
 import 'package:uniun/domain/repositories/note_resolver_repository.dart';
 import 'package:uniun/domain/repositories/saved_note_repository.dart';
 import 'package:uniun/domain/usecases/knowledge_usecases.dart';
+import 'package:uniun/domain/usecases/media_usecases.dart';
 
 // ── SaveNoteUseCase ───────────────────────────────────────────────────────────
 
 @lazySingleton
 class SaveNoteUseCase extends UseCase<Either<Failure, SavedNoteEntity>, NoteEntity> {
   final SavedNoteRepository _repository;
-  const SaveNoteUseCase(this._repository);
+  final DownloadMediaUseCase _download;
+  const SaveNoteUseCase(this._repository, this._download);
 
   @override
   Future<Either<Failure, SavedNoteEntity>> call(
     NoteEntity input, {
     bool cached = false,
-  }) {
-    return _repository.saveNote(input);
+  }) async {
+    final result = await _repository.saveNote(input);
+    // Fire-and-forget: the save is done, and the UI must not wait on a file.
+    if (result.isRight()) unawaited(_fetchDocuments(input));
+    return result;
+  }
+
+  /// Saving is what puts a note's documents in front of Shiv, but a document
+  /// the user never opened is not on the device yet — the indexer only reads
+  /// cached files. Best-effort: offline, it is fetched when next opened.
+  Future<void> _fetchDocuments(NoteEntity note) async {
+    for (final a in note.attachments) {
+      if (a.localPath != null || a.serverUrls.isEmpty) continue;
+      if (DocumentKind.fromMime(a.mime) == null) continue;
+      await _download.call(DownloadMediaInput(
+        sha256: a.sha256,
+        url: a.serverUrls.first,
+        mime: a.mime,
+      ));
+    }
   }
 }
 

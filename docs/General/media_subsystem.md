@@ -43,6 +43,8 @@ Each sub-string after the tag name is `key value`. Multiple `imeta` tags = multi
 
 The `m` (mime) field is **mime-agnostic** — `image/jpeg`, `video/mp4`, `audio/ogg`, `application/pdf` all valid.
 
+The mime also picks the cached file's extension (`media/<sha256>.<ext>`). A **download** carries no filename, so the mime alone must map — a mime missing from `_mimeToExt` caches as a bare `<sha256>` that the OS cannot open. Once cached, a PDF or `.docx` is also indexed for Shiv (`DocumentIndexer`); see `docs/SHIVA/rag.md` → "Documents (PDF, DOCX)".
+
 ### NIP-B7 — Blossom
 
 The HTTP protocol for content-addressed blob storage. Three BUDs we use:

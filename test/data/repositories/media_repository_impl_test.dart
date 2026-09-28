@@ -360,6 +360,22 @@ void main() {
       expect(row!.sizeBytes, 6); // 'cached'.length
     });
 
+    test('a received .docx is cached with its extension so it can be opened',
+        () async {
+      const docx =
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      final f = await writeFile('w.docx', bytesOf('cached'));
+      when(() => cache.exists('w', 'docx')).thenAnswer((_) async => true);
+      when(() => cache.read('w', 'docx')).thenAnswer((_) async => f);
+
+      final res = await repo.downloadBySha(
+          sha256: 'w', url: 'https://s/w', mime: docx);
+
+      expect(res.isRight(), isTrue,
+          reason: 'downloads carry no filename, so the mime alone must map');
+      verify(() => cache.exists('w', 'docx')).called(1);
+    });
+
     test('downloads from server when cache is empty', () async {
       when(() => cache.exists('abc', 'jpg')).thenAnswer((_) async => false);
       when(() => blossom.downloadFromUrl('https://s/abc.jpg'))
@@ -704,6 +720,10 @@ void main() {
       ['audio/ogg', 'ogg'],
       ['audio/wav', 'wav'],
       ['application/pdf', 'pdf'],
+      [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'docx'
+      ],
       ['text/plain', 'txt'],
       ['application/json', 'json'],
     ]) {

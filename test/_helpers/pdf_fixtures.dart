@@ -3,10 +3,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 /// Absolute path to a committed PDF fixture in `test/_helpers/fixtures/pdf/`.
-///
-/// Walks up to the package root rather than trusting the process cwd, so the
-/// path resolves whatever directory the test runner was invoked from.
-String pdfFixture(String name) {
+String pdfFixture(String name) =>
+    '${packageRoot()}/test/_helpers/fixtures/pdf/$name';
+
+/// The package root, found by walking up to `pubspec.yaml` rather than
+/// trusting the process cwd, so fixture paths resolve whatever directory the
+/// test runner was invoked from.
+String packageRoot() {
   var dir = Directory.current;
   while (!File('${dir.path}/pubspec.yaml').existsSync()) {
     final parent = dir.parent;
@@ -15,7 +18,7 @@ String pdfFixture(String name) {
     }
     dir = parent;
   }
-  return '${dir.path}/test/_helpers/fixtures/pdf/$name';
+  return dir.path;
 }
 
 /// Folds PDF text-layer artefacts so assertions survive extractor differences.

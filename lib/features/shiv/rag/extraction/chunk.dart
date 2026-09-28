@@ -2,9 +2,10 @@ import 'dart:math' as math;
 
 /// One embeddable piece of a document.
 ///
-/// [label] is the 1-based page it came from. It is a first-class field because a
-/// citation to "page 2" cannot be verified if the page number was discarded
-/// during splitting.
+/// [label] says where it came from: the 1-based page for a PDF, the heading
+/// above it for a DOCX, `''` when there is none. It is a first-class field
+/// because a citation cannot be verified if its location was discarded during
+/// splitting.
 class Chunk {
   const Chunk({required this.text, required this.ordinal, required this.label});
 
@@ -15,7 +16,7 @@ class Chunk {
   final String label;
 
   @override
-  String toString() => 'Chunk(p$label #$ordinal, ${text.length} chars)';
+  String toString() => 'Chunk("$label" #$ordinal, ${text.length} chars)';
 }
 
 /// Upper bound on a chunk's length.
@@ -29,24 +30,34 @@ class Chunk {
 /// input.
 const int kMaxChunkChars = 700;
 
-/// Splits [pages] into chunks no longer than [maxChars], never packing across a
-/// page boundary so each chunk's page label stays true.
+/// Splits PDF [pages] into chunks labelled with their 1-based page number.
 ///
 /// Whitespace-only pages are skipped without shifting the labels of later ones.
-List<Chunk> chunkPages(List<String> pages, {int maxChars = kMaxChunkChars}) {
+List<Chunk> chunkPages(List<String> pages, {int maxChars = kMaxChunkChars}) =>
+    chunkSections(
+      [for (var i = 0; i < pages.length; i++) (label: '${i + 1}', text: pages[i])],
+      maxChars: maxChars,
+    );
+
+/// Splits labelled [sections] into chunks no longer than [maxChars], never
+/// packing across a section boundary so each chunk's label stays true.
+List<Chunk> chunkSections(
+  List<({String label, String text})> sections, {
+  int maxChars = kMaxChunkChars,
+}) {
   if (maxChars < 2) {
     throw ArgumentError.value(maxChars, 'maxChars', 'must fit a surrogate pair');
   }
   final out = <Chunk>[];
-  for (var i = 0; i < pages.length; i++) {
-    for (final piece in _pieces(pages[i], maxChars)) {
-      out.add(Chunk(text: piece, ordinal: out.length, label: '${i + 1}'));
+  for (final s in sections) {
+    for (final piece in _pieces(s.text, maxChars)) {
+      out.add(Chunk(text: piece, ordinal: out.length, label: s.label));
     }
   }
   return out;
 }
 
-/// One page → its chunks: split into paragraphs, break any that are too long,
+/// One page or section → its chunks: split into paragraphs, break any that are too long,
 /// then pack neighbours back together up to the cap.
 List<String> _pieces(String page, int maxChars) {
   final atoms = <String>[];

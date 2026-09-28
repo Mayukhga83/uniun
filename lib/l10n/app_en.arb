@@ -1781,6 +1781,21 @@
   "@shivSourcesDocumentOpen": {
     "description": "Tooltip on a PDF source tile in Shiv's Sources sheet"
   },
+  "shivSourcesDocumentSection": "Section: {label}",
+  "@shivSourcesDocumentSection": {
+    "description": "Heading reference on a Word (.docx) source tile in Shiv's Sources sheet, e.g. 'Section: Annual Leave'. A Word file has no fixed pages, so it is located by the heading above the passage.",
+    "placeholders": {
+      "label": { "type": "String" }
+    }
+  },
+  "shivSourcesDocxUntitled": "Word document",
+  "@shivSourcesDocxUntitled": {
+    "description": "Title of a Word (.docx) source tile when the note that attached the file is no longer on this device"
+  },
+  "shivSourcesDocxOpen": "Open document",
+  "@shivSourcesDocxOpen": {
+    "description": "Tooltip on a Word (.docx) source tile in Shiv's Sources sheet"
+  },
   "shivSourcesEmpty": "No sources for this reply",
   "@shivSourcesEmpty": {
     "description": "Empty state when the source notes for a Shiv reply can't be resolved"

@@ -405,6 +405,10 @@ class MediaRepositoryImpl extends MediaRepository {
     'audio/ogg': 'ogg',
     'audio/wav': 'wav',
     'application/pdf': 'pdf',
+    // Shiv can cite a received .docx; without an extension the OS has no way
+    // to tell which app should open the cached file.
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        'docx',
     'text/plain': 'txt',
     'application/json': 'json',
   };

@@ -1464,6 +1464,17 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shivSourcesDocumentOpen => 'PDF खोलें';
 
   @override
+  String shivSourcesDocumentSection(String label) {
+    return 'अनुभाग: $label';
+  }
+
+  @override
+  String get shivSourcesDocxUntitled => 'Word दस्तावेज़';
+
+  @override
+  String get shivSourcesDocxOpen => 'दस्तावेज़ खोलें';
+
+  @override
   String get shivSourcesEmpty => 'इस उत्तर के लिए कोई स्रोत नोट नहीं';
 
   @override

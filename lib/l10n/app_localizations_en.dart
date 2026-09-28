@@ -1448,6 +1448,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shivSourcesDocumentOpen => 'Open PDF';
 
   @override
+  String shivSourcesDocumentSection(String label) {
+    return 'Section: $label';
+  }
+
+  @override
+  String get shivSourcesDocxUntitled => 'Word document';
+
+  @override
+  String get shivSourcesDocxOpen => 'Open document';
+
+  @override
   String get shivSourcesEmpty => 'No sources for this reply';
 
   @override

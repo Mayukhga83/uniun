@@ -2,7 +2,7 @@ import 'package:isar_community/isar.dart';
 
 part 'document_chunk_model.g.dart';
 
-/// One retrievable piece of an indexed PDF.
+/// One retrievable piece of an indexed document.
 ///
 /// RAG infrastructure, not a Note — it sits beside `MemoryNodeModel`, so the
 /// one-Note-collection rule is untouched. The chunk's embedding lives in
@@ -20,7 +20,8 @@ class DocumentChunkModel {
   /// Position across the whole document, `0..n-1`.
   late int ordinal;
 
-  /// 1-based page number, carried so a citation to "page 2" can be verified.
+  /// Where the chunk came from — the 1-based page of a PDF, the heading above
+  /// it in a DOCX, `''` when there is none — so a citation can be verified.
   late String label;
 
   late String text;
