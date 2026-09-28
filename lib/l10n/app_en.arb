@@ -1766,7 +1766,22 @@
   "@shivSourcesSheetTitle": {
     "description": "Title of the Shiv RAG source-notes bottom sheet"
   },
-  "shivSourcesEmpty": "No source notes for this reply",
+  "shivSourcesDocumentPage": "Page {label}",
+  "@shivSourcesDocumentPage": {
+    "description": "Page reference on a PDF source tile in Shiv's Sources sheet, e.g. 'Page 4'",
+    "placeholders": {
+      "label": { "type": "String" }
+    }
+  },
+  "shivSourcesDocumentUntitled": "PDF document",
+  "@shivSourcesDocumentUntitled": {
+    "description": "Title of a PDF source tile when the note that attached the file is no longer on this device"
+  },
+  "shivSourcesDocumentOpen": "Open PDF",
+  "@shivSourcesDocumentOpen": {
+    "description": "Tooltip on a PDF source tile in Shiv's Sources sheet"
+  },
+  "shivSourcesEmpty": "No sources for this reply",
   "@shivSourcesEmpty": {
     "description": "Empty state when the source notes for a Shiv reply can't be resolved"
   },

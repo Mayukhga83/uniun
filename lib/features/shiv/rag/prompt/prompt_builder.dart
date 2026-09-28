@@ -5,6 +5,7 @@ import 'package:uniun/core/enum/message_role.dart';
 import 'package:uniun/domain/entities/graph_edge/graph_edge_entity.dart';
 import 'package:uniun/domain/entities/graph_node/graph_node_entity.dart';
 import 'package:uniun/domain/entities/memory_node/memory_node_entity.dart';
+import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 import 'package:uniun/domain/entities/shiv/scored_note.dart';
 import 'package:uniun/domain/entities/shiv/shiv_message_entity.dart';
 import 'package:uniun/features/shiv/rag/prompt/prompt_budget.dart';
@@ -209,6 +210,20 @@ class PromptBuilder {
       used += PromptBudget.estimateTokens(topSection);
     }
 
+    // ── 3b. PDF document chunks ────────────────────────────────────────────
+    // Chunks are capped (kMaxChunkChars) below this section's share of the
+    // smallest model's budget, so an over-budget section is dropped whole
+    // rather than cut mid-chunk.
+    final docSection = _renderChunksSection(
+      context.seedChunks,
+      budget.topNotesTokens ~/ 2,
+    );
+    if (docSection != null &&
+        used + PromptBudget.estimateTokens(docSection) <= budget.maxTokens) {
+      sections.add(docSection);
+      used += PromptBudget.estimateTokens(docSection);
+    }
+
     // ── 4. Remaining seed notes ────────────────────────────────────────────
     final restSection = _renderNotesSection(
       'Additional Notes',
@@ -272,6 +287,25 @@ class PromptBuilder {
     var any = false;
     for (final n in notes) {
       final line = '• ${n.content}\n';
+      final lineTokens = PromptBudget.estimateTokens(line);
+      if (used + lineTokens > tokenCap && any) break;
+      buf.write(line);
+      used += lineTokens;
+      any = true;
+    }
+    return any ? buf.toString().trimRight() : null;
+  }
+
+  /// Renders retrieved PDF passages. The heading and page markers are
+  /// LLM-facing, never shown to the user, so they stay hard-coded English —
+  /// localising them would change what the model reads.
+  String? _renderChunksSection(List<ScoredChunk> chunks, int tokenCap) {
+    if (chunks.isEmpty) return null;
+    final buf = StringBuffer('## Relevant Documents\n');
+    var used = 0;
+    var any = false;
+    for (final c in chunks) {
+      final line = '• (p.${c.label}) ${c.content}\n';
       final lineTokens = PromptBudget.estimateTokens(line);
       if (used + lineTokens > tokenCap && any) break;
       buf.write(line);

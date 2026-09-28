@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniun/common/widgets/note_card/embedded_note_card.dart';
+import 'package:uniun/features/shiv/chat/widgets/document_source_tile.dart';
 import 'package:uniun/features/shiv/chat/widgets/shiv_sources_cubit.dart';
 import 'package:uniun/l10n/app_localizations.dart';
 
-/// Bottom sheet listing the source notes that seeded the RAG context for the
-/// last Shiv reply. Read-only — each note renders with [EmbeddedNoteCard].
-/// The ids are ephemeral (current turn only); resolution is done on open.
+/// Bottom sheet listing what the last Shiv reply rested on — source notes and
+/// PDF passages in one list, so "what grounded this answer" has a single place
+/// to look. Read-only: notes render with [EmbeddedNoteCard], PDF passages with
+/// [DocumentSourceTile]. The ids are ephemeral (current turn only); resolution
+/// happens on open.
 class ShivSourcesSheet extends StatelessWidget {
-  const ShivSourcesSheet({super.key, required this.noteIds});
+  const ShivSourcesSheet({
+    super.key,
+    required this.noteIds,
+    this.chunkIds = const [],
+  });
 
   final List<String> noteIds;
 
-  static Future<void> show(BuildContext context, List<String> noteIds) {
+  /// `"<sha256>:<ordinal>"` ids of the PDF passages behind this reply.
+  final List<String> chunkIds;
+
+  static Future<void> show(
+    BuildContext context,
+    List<String> noteIds, {
+    List<String> chunkIds = const [],
+  }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -20,14 +34,14 @@ class ShivSourcesSheet extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => ShivSourcesSheet(noteIds: noteIds),
+      builder: (_) => ShivSourcesSheet(noteIds: noteIds, chunkIds: chunkIds),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ShivSourcesCubit()..load(noteIds),
+      create: (_) => ShivSourcesCubit()..load(noteIds, chunkIds: chunkIds),
       child: const _ShivSourcesView(),
     );
   }
@@ -71,7 +85,7 @@ class _ShivSourcesView extends StatelessWidget {
                   if (state.status == ShivSourcesStatus.loading) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  if (state.notes.isEmpty) {
+                  if (state.isEmpty) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -86,12 +100,19 @@ class _ShivSourcesView extends StatelessWidget {
                       ),
                     );
                   }
+                  // Documents first: a page-level citation is more specific
+                  // evidence than a whole note.
+                  final items = <Widget>[
+                    for (final c in state.citations)
+                      DocumentSourceTile(citation: c),
+                    for (final n in state.notes) EmbeddedNoteCard(note: n),
+                  ];
                   return ListView.separated(
                     controller: scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                    itemCount: state.notes.length,
+                    itemCount: items.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (_, i) => EmbeddedNoteCard(note: state.notes[i]),
+                    itemBuilder: (_, i) => items[i],
                   );
                 },
               ),

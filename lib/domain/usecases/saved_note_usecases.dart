@@ -4,6 +4,8 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/core/usecases/usecase.dart';
+import 'package:uniun/domain/entities/shiv/document_citation.dart';
+import 'package:uniun/domain/repositories/document_source_repository.dart';
 import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/entities/saved_note/saved_note_entity.dart';
 import 'package:uniun/domain/repositories/note_resolver_repository.dart';
@@ -167,4 +169,20 @@ class ResolveNotesByIdsUseCase
     ];
     return Right(ordered);
   }
+}
+
+/// Resolves the chunk ids of a reply into displayable citations.
+@lazySingleton
+class ResolveDocumentCitationsUseCase
+    extends UseCase<Either<Failure, List<DocumentCitation>>, List<String>> {
+  const ResolveDocumentCitationsUseCase(this._repository);
+
+  final DocumentSourceRepository _repository;
+
+  @override
+  Future<Either<Failure, List<DocumentCitation>>> call(
+    List<String> input, {
+    bool cached = false,
+  }) =>
+      _repository.resolve(input);
 }

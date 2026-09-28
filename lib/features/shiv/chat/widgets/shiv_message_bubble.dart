@@ -15,6 +15,7 @@ class ShivMessageBubble extends StatelessWidget {
     this.streamingContent,
     this.isLastAssistant = false,
     this.sourceNoteIds = const [],
+    this.sourceChunkIds = const [],
   });
 
   final ShivMessageEntity message;
@@ -28,6 +29,10 @@ class ShivMessageBubble extends StatelessWidget {
   /// Source-note ids that seeded the RAG context for this reply (last reply
   /// only; empty otherwise). Drives the "Sources" chip + sheet.
   final List<String> sourceNoteIds;
+
+  /// `"<sha256>:<ordinal>"` ids of the PDF passages behind this reply, counted
+  /// by the same chip and listed in the same sheet.
+  final List<String> sourceChunkIds;
 
   bool get _isUser => message.role == MessageRole.user;
 
@@ -89,6 +94,7 @@ class ShivMessageBubble extends StatelessWidget {
         isInThinkBlock: parsed.isInThinkBlock,
         isLastAssistant: isLastAssistant,
         sourceNoteIds: sourceNoteIds,
+        sourceChunkIds: sourceChunkIds,
       ),
     );
   }
@@ -165,6 +171,7 @@ class _ShivBubble extends StatelessWidget {
     required this.isInThinkBlock,
     required this.isLastAssistant,
     required this.sourceNoteIds,
+    required this.sourceChunkIds,
   });
 
   final String thinkingText;
@@ -173,6 +180,7 @@ class _ShivBubble extends StatelessWidget {
   final bool isInThinkBlock;
   final bool isLastAssistant;
   final List<String> sourceNoteIds;
+  final List<String> sourceChunkIds;
 
   @override
   Widget build(BuildContext context) {
@@ -247,16 +255,20 @@ class _ShivBubble extends StatelessWidget {
           ),
 
         // "Sources" chip — only under the latest reply, once it's complete,
-        // and only when real source notes seeded the answer.
+        // and only when real notes or PDF passages seeded the answer.
         if (!isInThinkBlock &&
             isLastAssistant &&
             !isStreaming &&
             responseText.isNotEmpty &&
-            sourceNoteIds.isNotEmpty) ...[
+            (sourceNoteIds.isNotEmpty || sourceChunkIds.isNotEmpty)) ...[
           const SizedBox(height: 8),
           _SourcesChip(
-            count: sourceNoteIds.length,
-            onTap: () => ShivSourcesSheet.show(context, sourceNoteIds),
+            count: sourceNoteIds.length + sourceChunkIds.length,
+            onTap: () => ShivSourcesSheet.show(
+              context,
+              sourceNoteIds,
+              chunkIds: sourceChunkIds,
+            ),
           ),
         ],
       ],

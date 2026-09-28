@@ -1453,6 +1453,17 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shivSourcesSheetTitle => 'स्रोत';
 
   @override
+  String shivSourcesDocumentPage(String label) {
+    return 'पृष्ठ $label';
+  }
+
+  @override
+  String get shivSourcesDocumentUntitled => 'PDF दस्तावेज़';
+
+  @override
+  String get shivSourcesDocumentOpen => 'PDF खोलें';
+
+  @override
   String get shivSourcesEmpty => 'इस उत्तर के लिए कोई स्रोत नोट नहीं';
 
   @override

@@ -192,3 +192,177 @@
 
   See docs/graphrag.md for full details.                       
                                                             
+---
+
+## PDF documents
+
+A PDF attached to a note has its text extracted, chunked and embedded, so Shiv
+can answer from it and cite the page it came from. Design:
+`docs/superpowers/specs/2026-09-19-pdf-rag-design.md`.
+
+### How a PDF becomes searchable
+
+```
+ You attach a PDF to a note and publish
+                │
+                ▼
+   MediaCacheModel row written      (sha256 → /path/file.pdf, application/pdf)
+                │
+                │   PdfIndexer watches this table
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │ 1. READ    PdfrxTextSource → PDFium                      │
+ │            walks pages 1..N                              │
+ │            → ["page 1 text", "page 2 text", …]           │
+ ├──────────────────────────────────────────────────────────┤
+ │ 2. GATE    looksLikeProse()                              │
+ │            ≥200 chars AND ≥15% Unicode letters?          │
+ │            NO  → status notSearchable, stop  (a scan)    │
+ │            YES ↓                                         │
+ ├──────────────────────────────────────────────────────────┤
+ │ 3. CHUNK   chunkPages()  —  ≤700 chars, never across     │
+ │            a page boundary                               │
+ │            ★ every chunk KEEPS its page number ★         │
+ ├──────────────────────────────────────────────────────────┤
+ │ 4. EMBED   EmbedAndStoreChunkUseCase, per chunk          │
+ │            Gecko embedder → vector                       │
+ │            (embedding only — no LLM call)                │
+ ├──────────────────────────────────────────────────────────┤
+ │ 5. STORE   text   → Isar    DocumentChunkModel           │
+ │            vector → ToStore document store               │
+ │            both keyed  "<sha256>:<ordinal>"              │
+ ├──────────────────────────────────────────────────────────┤
+ │ 6. MARK    DocumentIndexModel = indexed   ← written LAST │
+ │            so a crash retries rather than lying          │
+ └──────────────────────────────────────────────────────────┘
+```
+
+### How a citation knows its page
+
+The page number is **carried, never recomputed**. The chunk id is the thread that
+ties the vector store to the text, and the text to the page:
+
+```
+ CHUNK ID  =  "<sha256 of the pdf>:<chunk number>"      e.g.  "a3f9…:12"
+                       │                    │
+                       │                    └── which chunk
+                       └── which document
+
+ ┌── the same id addresses BOTH stores ──────────────────────────┐
+ │  ToStore (vectors)            Isar DocumentChunkModel         │
+ │  ───────────────────          ──────────────────────          │
+ │  id  : "a3f9…:12"             sha256  : "a3f9…"               │
+ │  vec : [0.02, -0.11, …]       ordinal : 12                    │
+ │                               label   : "5"   ← THE PAGE      │
+ │                               text    : "Expense Reimburse…"  │
+ └───────────────────────────────────────────────────────────────┘
+
+ "what is the deadline for expense claims?"
+            │
+            ▼
+   embed the question → query vector
+            │
+            ▼
+   ToStore nearest-neighbour  →  id "a3f9…:12"
+            │
+            ▼
+   parseChunkId()  →  (sha256 "a3f9…", ordinal 12)
+            │
+            ▼
+   Isar lookup on the (sha256, ordinal) composite index
+            │            →  label "5",  text "Expense Reimbursement…"
+            │
+            ├──────────► into the PROMPT:  "(p.5) Expense Reimbursement…"
+            │                               the model sees the page too
+            │
+            └──────────► id carried in RagMessage.sourceChunkIds
+                                  │
+                          user taps "Sources"
+                                  │
+                                  ▼
+                    DocumentSourceRepository.resolve(id)
+                        title : filename of the attaching note
+                        label : "5"          ──►  tile shows "Page 5"
+                        path  : cached file  ──►  tap opens the PDF
+```
+
+The vector store never needs to know what a page is — it only returns an id, and
+every later step carries the label that `chunkPages()` stamped on at split time.
+
+**Pipeline** — `PdfIndexer` (`lib/features/shiv/rag/indexing/`, main isolate,
+started in `main.dart`) watches `MediaCacheModel` and reconciles it against
+`DocumentIndexModel` by SHA-256:
+
+```
+PDF cache row, no index row   -> index it
+index row, no PDF cache row   -> purge its chunks and index row
+```
+
+Reconciling state rather than reacting to a "blob arrived" event is what makes
+this correct: `MediaRepositoryImpl._upsertCache` has **four** call sites (upload,
+download cache-hit, fresh download, staged draft) and runs inside a write
+transaction where embedding cannot be awaited; deletion happens in two more
+places, one of them `CleanupManager` in the Gateway isolate, which deletes cache
+rows directly. A crash mid-index is retried because the index row is written
+**last**.
+
+Vectors live in a **separate** ToStore at `tostore_docs_1024d`, never the note
+store. Embedding goes through `EmbeddingQueue`, bounding concurrency at 2.
+
+**Retrieval** — unscoped chat only. `RagPipeline` searches notes and chunks
+independently (chunk top-K = `max(1, topK ~/ 2)`); chunks skip memory and graph
+expansion, since they are not graph nodes. `PromptBuilder` renders them under
+`## Relevant Documents`, and `RagMessage.sourceChunkIds` carries them to the
+Sources sheet, which resolves them on open via `DocumentSourceRepository`.
+
+A Manas-scoped chat never searches documents: it scopes by note membership, and
+a PDF blob has none.
+
+**Scans are kept, not indexed.** No text layer, or text that fails the quality
+gate, is recorded `notSearchable`: the document still attaches and opens, it is
+simply never cited. An embedder that is not ready is different — it leaves the
+document *unindexed* so a later reconcile retries it.
+
+### Two constraints worth knowing before changing this
+
+**Chunks are capped at 700 characters** because `PromptBudget` gives the
+smallest local model 1024 tokens total and `buildUserMessage` drops any section
+that would overshoot. A page-sized chunk would make the document silently vanish
+from the prompt.
+
+**Vectors are never deleted.** ToStore 3.1.0 destroys a table's *entire* vector
+index on any row delete — measured: delete 1 of 3 rows and `vectorSearch`
+returns nothing, and it does not recover across a close/reopen. So Isar owns
+chunk existence: purging deletes the Isar rows, search skips hits it cannot
+resolve, and `search` over-fetches to absorb the orphans. Enough
+equally-similar orphans can still crowd out a real chunk; the fix is a rebuild
+(wipe the store, re-embed from the surviving rows), which is not implemented.
+tostore 3.5.1 fixes the delete bug but silently reads back an empty index from a
+store written by 3.1.0 — upgrading needs a version-bumped store path so the data
+re-embeds instead of disappearing.
+
+### Testing
+
+| Tier | Where | Real | Faked |
+|---|---|---|---|
+| Unit | `test/features/shiv/rag/extraction/`, `test/domain/entities/shiv/` | chunker, gate, extraction service, chunk ids | PDF source |
+| Component | `test/features/shiv/rag/indexing/`, `test/data/...` | real PDFium + the committed PDF, real Isar, real ToStore | embedder |
+| Pipeline | `test/integration/pdf_rag_flow_test.dart` | everything above, assembled | embedder |
+| Device | `integration_test/pdf_rag_e2e_test.dart` | **everything, incl. the real Gecko embedder** | nothing |
+
+The device tier exists because the embedder loads a 145 MB Git-LFS asset that
+CI does not check out, and `EmbeddingService.embed` returns `[]` instead of
+throwing when the model is missing — so a CI run would go green while embedding
+nothing. Run it by hand:
+
+```
+flutter test integration_test/pdf_rag_e2e_test.dart -d <device-id>
+```
+
+`flutter test` does not run native-asset build hooks, so PDFium is absent under
+a plain `flutter test`. `test/_helpers/pdfium_test_lib.dart` downloads it once
+and points pdfrx at it, mirroring what `ensureIsarCore()` already does for
+Isar's native binary.
+
+**Not built:** in-app page-jump viewer, documents in Manas-scoped chat, a
+`notSearchable` badge, OCR for scans, DOCX.

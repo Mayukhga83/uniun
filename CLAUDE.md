@@ -245,7 +245,7 @@ Build order: `freezed` runs before `isar_generator` (enforced via `pubspec.yaml`
 | `flutter_bloc`                 | `^8.1.3`    | BLoC state management                                          |
 | `bloc_concurrency`             | `^0.2.4`    | Event transformers (droppable, sequential, restartable)        |
 | `flutter_gemma`                | `^1.5.1`    | Needs `hooks ^2.0.0`; openmls 1.3 still pins `hooks ^1.0.0`, but its pin is conservative — `dependency_overrides: hooks: ^2.0.0` in `pubspec.yaml` lets both coexist (verified: clean build). Drop the override once openmls relaxes upstream. `background_downloader` (flutter_gemma's transitive download engine) is separately pinned to `9.5.6` — `9.5.7` fails the Android Kotlin build on this project's legacy Gradle setup. |
-| Dart SDK                       | `>=3.2.4 <4.0.0` | Minimum Dart 3.2.4                                        |
+| Dart SDK                       | `>=3.12.0 <4.0.0` | Toolchain: Flutter 3.44.2 / Dart 3.12.2                  |
 
 **Isar import**: Always use `package:isar_community/isar.dart`. Never `package:isar/isar.dart`.
 

@@ -110,6 +110,10 @@ below, or add one if the shape is missing.
 | `fake_note_relations.dart` | `FakeNoteRelations` | Any repo that reads from `NoteRelationRepository`. Seed `.children[parentId]` / `.parents[childId]` before the test runs. |
 | `stub_user_repository.dart` | `StubUserRepository` | Any repo that calls `UserRepository.getActiveKeysHex()` or `getActiveUser()` (both derive from `.keys`). Set `.keys = null` to simulate a logged-out identity. |
 | `stub_followed_users.dart` | `StubFollowedUsers` | Any repo that reads the follow list via `FollowedUserRepository.getAllPubkeys()`. Seed `.pubkeys`; set `.leftOnGetAllPubkeys` to simulate failure. |
+| `pdf_fixtures.dart` | `pdfFixture(name)`, `normalizePdfText(...)`, `minimalPdf(pages)` | Anything touching PDFs. `pdfFixture` resolves a committed fixture from the package root; `normalizePdfText` folds ligatures/NBSP/curly quotes so assertions survive extractor differences; `minimalPdf` generates a synthetic PDF for negative cases. |
+| `pdfium_test_lib.dart` | `ensurePdfium()` | Any test that opens a real PDF. `flutter test` does not run native-asset build hooks, so PDFium is missing; this downloads it once and points pdfrx at it — the same shape as `ensureIsarCore()`. Call it before `pdfrxFlutterInitialize()`, and install `FakePathProviderPlatform` first (pdfrx resolves its cache dir through path_provider). |
+| `fake_pdf_text_source.dart` | `FakePdfTextSource` | Extraction code that needs page text without native PDFium. |
+| `fake_document_vectors.dart` | `FakeDocumentVectors` | Anything reading or writing PDF chunk vectors. |
 | `fake_path_provider.dart` | `FakePathProviderPlatform` | Code that calls `getApplicationDocumentsDirectory()` / `getApplicationSupportDirectory()`. Install via `PathProviderPlatform.instance = FakePathProviderPlatform(docs: ..., support: ...)` pointing at temp dirs. |
 | `mesh_test_helpers.dart` | `stubSecureStorageChannel()`, `MeshIdentity` | Any mesh test. The stub silences flutter_secure_storage's channel (NIP-44 PBKDF2 path) — call once at the top of `main()`. `MeshIdentity.generate()` = real Schnorr keypair + bound `MeshEventCodec`; generate a second one to play the attacker in signed-by-another-identity drop tests. |
 
@@ -123,6 +127,22 @@ directly if you open Isar instances by hand (see `sync_integration_test`).
 Never call `Isar.initializeIsarCore(download: true)` yourself — under
 parallel `flutter test` it races and under `TestWidgetsFlutterBinding` its
 download can never succeed (mocked HTTP 400).
+
+### Binary fixtures — `test/_helpers/fixtures/`
+
+Real-world binaries a test needs, with a `PROVENANCE.md` recording source URL,
+date, licence and sha256 for each. Currently one: a public-domain NIST PDF used
+to prove PDF text extraction against a document from a real publishing pipeline
+rather than one we generated.
+
+Rules: keep them small (< 300 KB); never re-save or re-compress them (a mutated
+fixture stops being evidence); **not** in Git LFS (a CI checkout without
+`lfs: true` yields a pointer file, which parsers reject with a confusing `null`);
+and never referenced from `pubspec.yaml`'s `assets:` — they must not ship to
+users. Load them with `dart:io` via `pdfFixture(...)`, not the asset bundle.
+
+`shard-coverage` greps for `*_test.dart`, so a binary here is invisible to it —
+but never put a `_test.dart` file in this directory.
 
 ### Constants in `fixtures.dart`
 
@@ -319,6 +339,21 @@ test/features, test/integration, test/common
   imported, not executed.
 - Adding a NEW top-level test dir requires updating both the matrix and
   `shard-coverage`. Prefer adding under an existing shard.
+
+The root `integration_test/` directory is **not** part of this and never runs in
+CI — it is device-bound (`IntegrationTestWidgetsFlutterBinding`). Tests that need
+real flutter_gemma (the chat models, or the bundled Gecko embedder) live there
+because the models are Git-LFS assets CI does not check out. Run them by hand:
+
+```
+flutter test integration_test/all_tests.dart -d <device-id>
+```
+
+Adding one means adding an import + `main()` call to `integration_test/all_tests.dart`
+— that list is the source of truth. **Never gate a device test on a silent
+`return`** when the thing it needs ships with the app: `EmbeddingService.embed`
+answers `[]` rather than throwing when the model is missing, so a test that skips
+on that would pass while proving nothing. Assert the model loaded, and fail.
 
 ---
 

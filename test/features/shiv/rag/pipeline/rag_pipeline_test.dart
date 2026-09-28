@@ -6,6 +6,7 @@ import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/domain/entities/graph_edge/graph_edge_entity.dart';
 import 'package:uniun/domain/entities/graph_node/graph_node_entity.dart';
 import 'package:uniun/domain/entities/memory_node/memory_node_entity.dart';
+import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 import 'package:uniun/domain/entities/shiv/scored_note.dart';
 import 'package:uniun/domain/entities/shiv/shiv_message_entity.dart';
 import 'package:uniun/domain/usecases/knowledge_usecases.dart';
@@ -353,6 +354,120 @@ void main() {
     });
   });
 
+  group('buildMessage — document chunks', () {
+    const chunk = ScoredChunk(
+      chunkId: 's:0',
+      sha256: 's',
+      label: '2',
+      score: 0.8,
+      content: 'doc text',
+    );
+
+    setUp(() {
+      when(() => getActiveUser.call())
+          .thenAnswer((_) async => const Left(Failure.errorFailure('x')));
+      when(() => embedding.embed(any())).thenAnswer((_) async => [1.0]);
+      when(() => promptBuilder.buildUserMessage(
+            userQuestion: any(named: 'userQuestion'),
+            context: any(named: 'context'),
+            budget: any(named: 'budget'),
+            userName: any(named: 'userName'),
+          )).thenReturn('USER_MESSAGE');
+      when(() => getMemories.call(any()))
+          .thenAnswer((_) async => const Right([]));
+      when(() => getNeighbours.call(any()))
+          .thenAnswer((_) async => const Right([]));
+      when(() => getNodesByKeys.call(any()))
+          .thenAnswer((_) async => const Right([]));
+      when(() => vectorSearch.search(
+            queryVector: any(named: 'queryVector'),
+            topK: any(named: 'topK'),
+          )).thenAnswer((_) async => const []);
+    });
+
+    void stubChunks(List<ScoredChunk> chunks) =>
+        when(() => vectorSearch.searchChunks(
+              queryVector: any(named: 'queryVector'),
+              topK: any(named: 'topK'),
+            )).thenAnswer((_) async => chunks);
+
+    test('a chunk-only match still produces context and a source chunk id',
+        () async {
+      stubChunks(const [chunk]);
+
+      final result = await pipeline.buildMessage(userQuestion: 'q');
+
+      expect(result.sourceChunkIds, ['s:0']);
+      expect(result.sourceNoteIds, isEmpty);
+      expect(result.contextCount, 1);
+      verifyNever(() => getMemories.call(any()));
+      verifyNever(() => getNeighbours.call(any()));
+      final ctx = verify(() => promptBuilder.buildUserMessage(
+            userQuestion: any(named: 'userQuestion'),
+            context: captureAny(named: 'context'),
+            budget: any(named: 'budget'),
+            userName: any(named: 'userName'),
+          )).captured.single as EnrichedContext;
+      expect(ctx.seedChunks.single.chunkId, 's:0');
+    });
+
+    test('notes and chunks together both reach the result', () async {
+      when(() => vectorSearch.search(
+                queryVector: any(named: 'queryVector'),
+                topK: any(named: 'topK'),
+              ))
+          .thenAnswer((_) async =>
+              const [ScoredNote(noteId: 'n1', score: 0.9, content: 'a note')]);
+      stubChunks(const [chunk]);
+
+      final result = await pipeline.buildMessage(userQuestion: 'q');
+
+      expect(result.sourceNoteIds, ['n1']);
+      expect(result.sourceChunkIds, ['s:0']);
+      expect(result.contextCount, 2);
+    });
+
+    test('chunk top-K is half the note top-K (min 1), notes unchanged',
+        () async {
+      stubChunks(const []);
+
+      await pipeline.buildMessage(userQuestion: 'q');
+
+      // No active model → the local default budget's topK is 3.
+      verify(() => vectorSearch.search(
+          queryVector: any(named: 'queryVector'), topK: 3)).called(1);
+      verify(() => vectorSearch.searchChunks(
+          queryVector: any(named: 'queryVector'), topK: 1)).called(1);
+    });
+
+    test('a chunk search that throws degrades to notes only', () async {
+      when(() => vectorSearch.search(
+                queryVector: any(named: 'queryVector'),
+                topK: any(named: 'topK'),
+              ))
+          .thenAnswer((_) async =>
+              const [ScoredNote(noteId: 'n1', score: 0.9, content: 'a note')]);
+      when(() => vectorSearch.searchChunks(
+            queryVector: any(named: 'queryVector'),
+            topK: any(named: 'topK'),
+          )).thenThrow(Exception('store unavailable'));
+
+      final result = await pipeline.buildMessage(userQuestion: 'q');
+
+      expect(result.sourceNoteIds, ['n1']);
+      expect(result.sourceChunkIds, isEmpty);
+    });
+
+    test('no notes and no chunks is an empty context', () async {
+      stubChunks(const []);
+
+      final result = await pipeline.buildMessage(userQuestion: 'q');
+
+      expect(result.contextCount, 0);
+      expect(result.sourceChunkIds, isEmpty);
+    });
+  });
+
   group('buildMessage — Manas-scoped retrieval', () {
     setUp(() {
       when(() => getActiveUser.call())
@@ -386,8 +501,13 @@ void main() {
           await pipeline.buildMessage(userQuestion: 'q', manasIds: const ['m1']);
 
       expect(result.sourceNoteIds, ['n1']);
+      expect(result.sourceChunkIds, isEmpty);
       verifyNever(() => embedding.embed(any()));
       verifyNever(() => vectorSearch.search(
+            queryVector: any(named: 'queryVector'),
+            topK: any(named: 'topK'),
+          ));
+      verifyNever(() => vectorSearch.searchChunks(
             queryVector: any(named: 'queryVector'),
             topK: any(named: 'topK'),
           ));

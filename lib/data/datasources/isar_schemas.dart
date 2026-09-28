@@ -1,5 +1,7 @@
 // isar_schemas.dart
 
+import 'package:uniun/data/models/documents/document_chunk_model.dart';
+import 'package:uniun/data/models/documents/document_index_model.dart';
 import 'package:uniun/data/models/notes/note_model.dart';
 import 'package:uniun/data/models/profile_model.dart';
 import 'package:uniun/data/models/followed_note_model.dart';
@@ -60,6 +62,8 @@ final List<CollectionSchema> isarSchemas = [
   GraphNodeModelSchema,
   GraphEdgeModelSchema,
   MemoryNodeModelSchema,
+  DocumentIndexModelSchema,
+  DocumentChunkModelSchema,
   PendingExtractionModelSchema,
   NoteRelationModelSchema,
   UnreadNoteModelSchema,

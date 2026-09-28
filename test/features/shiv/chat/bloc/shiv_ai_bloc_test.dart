@@ -280,6 +280,75 @@ void main() {
     );
   });
 
+  group('source ids for the Sources chip', () {
+    setUp(() {
+      when(() => createConversation.call(any()))
+          .thenAnswer((_) async => Right(persistedConv));
+      when(() => saveMessage.call(any()))
+          .thenAnswer((i) async => Right(i.positionalArguments.first));
+      when(() => rag.buildMessage(
+            userQuestion: any(named: 'userQuestion'),
+            manasIds: any(named: 'manasIds'),
+          )).thenAnswer((_) async => const RagMessage(
+            userMessage: 'q',
+            contextCount: 2,
+            sourceNoteIds: ['n1'],
+            sourceChunkIds: ['s:0'],
+          ));
+      when(() => sendChatStream.call(any()))
+          .thenAnswer((_) => const Stream.empty());
+    });
+
+    blocTest<ShivAIBloc, ShivAIState>(
+      'a reply keeps both the note ids and the PDF chunk ids that grounded it',
+      build: build,
+      act: (b) async {
+        b.add(const ShivAIEvent.createConversation());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ShivAIEvent.sendMessage('question'));
+      },
+      wait: const Duration(milliseconds: 40),
+      verify: (b) {
+        expect(b.state.lastTurnSourceNoteIds, ['n1']);
+        expect(b.state.lastTurnSourceChunkIds, ['s:0']);
+      },
+    );
+
+    blocTest<ShivAIBloc, ShivAIState>(
+      'closing the conversation clears both id lists',
+      build: build,
+      act: (b) async {
+        b.add(const ShivAIEvent.createConversation());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ShivAIEvent.sendMessage('question'));
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+        b.add(const ShivAIEvent.closeConversation());
+      },
+      wait: const Duration(milliseconds: 40),
+      verify: (b) {
+        expect(b.state.lastTurnSourceNoteIds, isEmpty);
+        expect(b.state.lastTurnSourceChunkIds, isEmpty);
+      },
+    );
+
+    blocTest<ShivAIBloc, ShivAIState>(
+      'starting a new conversation clears both id lists',
+      build: build,
+      act: (b) async {
+        b.add(const ShivAIEvent.createConversation());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ShivAIEvent.sendMessage('question'));
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+        b.add(const ShivAIEvent.createConversation());
+      },
+      wait: const Duration(milliseconds: 40),
+      verify: (b) {
+        expect(b.state.lastTurnSourceNoteIds, isEmpty);
+        expect(b.state.lastTurnSourceChunkIds, isEmpty);
+      },
+    );
+  });
+
   group('mid-stream interruption never leaves a permanently blank bubble', () {
     late StreamController<String> tokenController;
 
