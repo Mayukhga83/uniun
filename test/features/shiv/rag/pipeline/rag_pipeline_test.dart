@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/core/enum/message_role.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/domain/entities/graph_edge/graph_edge_entity.dart';
@@ -358,6 +359,7 @@ void main() {
     const chunk = ScoredChunk(
       chunkId: 's:0',
       sha256: 's',
+      kind: DocumentKind.pdf,
       label: '2',
       score: 0.8,
       content: 'doc text',

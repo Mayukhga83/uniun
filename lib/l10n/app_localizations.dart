@@ -2660,6 +2660,24 @@ abstract class AppLocalizations {
   /// **'Open PDF'**
   String get shivSourcesDocumentOpen;
 
+  /// Heading reference on a Word (.docx) source tile in Shiv's Sources sheet, e.g. 'Section: Annual Leave'. A Word file has no fixed pages, so it is located by the heading above the passage.
+  ///
+  /// In en, this message translates to:
+  /// **'Section: {label}'**
+  String shivSourcesDocumentSection(String label);
+
+  /// Title of a Word (.docx) source tile when the note that attached the file is no longer on this device
+  ///
+  /// In en, this message translates to:
+  /// **'Word document'**
+  String get shivSourcesDocxUntitled;
+
+  /// Tooltip on a Word (.docx) source tile in Shiv's Sources sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Open document'**
+  String get shivSourcesDocxOpen;
+
   /// Empty state when the source notes for a Shiv reply can't be resolved
   ///
   /// In en, this message translates to:

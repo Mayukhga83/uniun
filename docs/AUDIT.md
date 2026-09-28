@@ -6,6 +6,74 @@ Format: one dated section per audit pass, newest first. Each item states what wa
 
 ---
 
+## 2026-09-28 — document RAG: PDF (#226, PR #229) and DOCX (#238) — work in progress toward v2.4.0 (unreleased)
+
+Shiv now answers from PDFs and Word files attached to notes and cites where the answer came from — the **page** of a PDF, the **heading** of a DOCX section. Design and behaviour: `docs/SHIVA/rag.md` → "Documents (PDF, DOCX)"; specs in `docs/superpowers/specs/2026-09-19-pdf-rag-design.md` and `2026-09-26-docx-rag-design.md`.
+
+### Dependency decisions
+
+- **PDF via `pdfrx` (MIT, PDFium).** `syncfusion_flutter_pdf` was first proposed and rejected: it is proprietary, not permissively licensed as initially assumed. PDFium is a native asset that `flutter test` does not build, so `test/_helpers/pdfium_test_lib.dart` downloads the prebuilt the way `ensureIsarCore()` already does for Isar.
+- **DOCX via `archive` + `xml`**, both already in the lockfile (promoted to direct dependencies) — no new package. The PDF spec had deferred DOCX as lacking "a strong pure-Dart reader"; for text extraction a `.docx` is a zip around `word/document.xml` and needs none.
+- **`tostore` pinned to 3.1.2** — see the heap bug below. 3.1.1 and 3.1.3 are retracted; 3.5.x changes both the API (`precision`/`maxDegree` gone) and the on-disk format.
+
+### ToStore 3.1.0 overflows the heap — found, root-caused, fixed
+
+- Symptom: the document integration tests aborted in `malloc()`/`free()` 2 runs in 3, with a different glibc message each time (`unaligned tcache chunk`, `invalid pointer`, `invalid next size (fast)`) — real heap corruption.
+- Bisected, not guessed: it survived removing PDFium, then removing the DOCX reader and its isolate, and finally reproduced in a test process containing **only ToStore**. The committed PDF-only flow test from #229 also crashed (1 run in 5), so it predates this work.
+- Root cause: `SystemFfiHelper` declares `struct statvfs` as 11 × 8 = **88 bytes**; glibc — and 64-bit bionic, which shares the code path via `_isPosix => _isLinux || _isAndroid` — is **112**, ending in `__f_spare[6]`. Every periodic disk-space check `calloc`s 88 bytes and lets `statvfs()` write 112. Android is therefore on the same path in the shipped app.
+- Fixed upstream in 3.1.2 (`fSpare0..5` added). Verified before pinning: 3.1.2 reads a store written by 3.1.0 unchanged (25/25 rows, every vector its own top hit); per-upsert-and-flush cost is the same (~70 ms on both — an earlier "twice as slow" reading was run-to-run noise); the full suite runs with zero native crashes.
+
+### ToStore's vector index cannot reach every stored vector — measured, not fixed
+
+- Querying each stored vector with itself, it is its own top hit for **100 % of 10, 80 % of 25 and 33 % of 60** — and only **55 % of 60 even with topK = every row**, so nodes are unreachable from the graph's entry point, not merely ranked low. Identical on 3.1.0 and 3.1.2. Our index config (`maxDegree: 32`, `efSearch: 64`) is not the cause: a search width above the row count should find nearly everything.
+- This bounds retrieval for **notes and documents alike** as a library grows. It first surfaced as three DOCX flow tests returning no hit — initially misattributed to the one-hot test embedder, which was then shown to be only part of it. The DOCX search tests now index only the DOCX, so they test DOCX wiring rather than this limit.
+
+### ToStore cannot delete a vector without destroying the index
+
+- Measured on 3.1.0: deleting 1 of 3 rows makes `vectorSearch` return nothing, with no recovery across a close/reopen. The document store therefore never deletes vectors — Isar owns chunk existence, search skips hits that no longer resolve and over-fetches to absorb the orphans. A rebuild path is not implemented (#233).
+
+### DOCX reader — rules the real files forced
+
+Tested against two public-domain Microsoft Word templates (NIST CUI SSP, USPTO initial filing) and a LibreOffice export; provenance in `test/_helpers/fixtures/docx/PROVENANCE.md`.
+
+- **Content controls.** The USPTO template wraps every section header in a block-level `w:sdt`; the planned reader walked only direct `w:body` children and would have silently dropped that text. It now descends into `w:sdt`/`w:sdtContent`/`w:customXml`.
+- **Field codes.** The NIST template holds 330 `w:instrText` (`FORMCHECKBOX`); none reach the extracted text.
+- **Heading detection by style name, not id.** LibreOffice writes `Heading 1` where Word writes `heading 1`, and German Word's id is `berschrift1`. Headings are matched case-insensitively by name or outline level, following `basedOn`.
+- **Real forms often have no heading styles at all** — both federal templates mark sections with table rows or custom styles. Their chunks are cited with the file name and passage and no location line, by design.
+
+### Code review of the DOCX diff — findings verified, then fixed
+
+- **Out-of-memory crash loop.** The parsed XML DOM costs **~10×** the XML (measured: 20 MB → 205 MB RSS) in the app's own heap — `Isolate.run` shares the isolate group. The 50 MB cap allowed ~500 MB; an OOM before the index row is written would re-extract the same file on every launch. Capped `document.xml` at 10 MB and `styles.xml` (previously uncapped) at 2 MB.
+- **Kind drift.** The document kind was re-derived from `MediaCacheModel.mime` at search time, but `_upsertCache` overwrites that mime on every download or upload of the same blob — a later sender's `application/pdf` would render a heading as "Page Annual Leave". Kind is now recorded on `DocumentIndexModel.kind` at index time and read through its unique index.
+- **Received `.docx` files were not openable** (pre-existing). `downloadBySha` resolves the cache file's extension from the mime alone — downloads carry no filename — and the DOCX mime was missing from `_mimeToExt`, so other people's Word files cached as a bare `<sha256>`.
+- **The prose gate was PDF-shaped.** `looksLikeProse` (≥200 chars, ≥15 % letters) catches scans and broken font encodings; a DOCX has neither failure mode, so a short memo or a table of figures was permanently `notSearchable`. The gate now applies to PDFs only.
+- Also fixed: tracked moves (`w:moveFrom` is ordinary `w:t`) and text boxes inside table cells were indexed twice; a 100-char heading cap could split an emoji's surrogate pair.
+- **Indexing scope was wrong, found in review with the product owner.** The indexer indexed every cached PDF/DOCX — so a DM or feed attachment the user merely *opened* became citable in Shiv, while a *saved* note's document the user never opened was never indexed (saving does not download attachments; files download only on tap). Now: only documents on the user's own feed notes (kind 1) and on saved notes are indexed, matching what Shiv's note search already covers; saving downloads the note's PDF/DOCX; unsaving purges them on the next pass. The indexer now also watches saved notes and notes, because an own note's row is written after its attachment was cached.
+- **Not fixed, deliberately:** `DocumentIndexer`, a feature-folder class from #229, reads and writes Isar directly, which this repo's layer rules forbid for presentation code. Restructuring it behind a repository is a design change to the PDF PR, not a DOCX fix.
+
+### Mistakes corrected along the way
+
+- The 768-vs-1024 embedding dimension (#234) was first blamed for empty note retrieval. Tested on host: ToStore tolerates the mismatch. The real cause was notes never being re-embedded (#231).
+- The device test's gate asserted `hasLength(1024)` against a model that emits 768, so it failed on every device before reaching its retrieval assertions. It now asserts the model loaded (`isNotEmpty`).
+- The manual test kit said to wait "~10 seconds" after attaching a document. On device a 17-chunk DOCX took **~4 minutes** while Gemma 4 E2B held the phone; both questions asked in that window saw notes only and looked like a retrieval failure. Established from the device's own Isar (pulled with `run-as`) against the log timeline. `DocumentIndexer` now logs start, finish (chunk count, seconds) and not-searchable reasons for every document.
+
+### Verification
+
+- `flutter analyze lib/ test/ integration_test/`: no errors, no warnings. Full suite **3,342 tests** green with zero native crashes; the indexer (21) and document flow (19) suites re-run green after the logging change, and again after the scope change (indexer 31, flow 20, saved-note use cases 19).
+- 12 deliberate sabotages — deleted text leaking, moved text doubled, content controls skipped, headings by id, no heading folding, emoji split, table text boxes doubled, a DOCX rendered as a page in the prompt, the tile ignoring kind, kind from mime, the prose gate on DOCX, the indexer dropping DOCX — each turned its tests red.
+- On device (vivo 1933): the PDF answered with correct figures and correct page tiles; the DOCX indexed 17 chunks with the expected section labels (read from the device DB), and answers with section tiles were confirmed by manual testing.
+
+### Still open
+
+- **Not filed yet:** ToStore's recall limit above.
+- No UI indication that a document is still indexing — only the log.
+- `integration_test/document_rag_e2e_test.dart` (real Gecko, PDF + DOCX) was written but not run on a device this pass.
+- iOS is unverified for both PDFium (`pdfrx` is FFI) and the DOCX isolate.
+- `test/gateway/outbound/outbound_pump_test.dart` flaked again under full-suite load (a read racing an async Isar write); passes 3/3 alone. Untouched by this work.
+- Follow-ups tracked under epic **#228**: #231 (notes never re-embedded), #232 (version-stamped store path), #233 (orphan rebuild), #234 (declared dimension), #235 (documents in the knowledge graph), #236 (documents in Manas-scoped chat), #237 (jump to the cited page), #238 (formats beyond PDF — DOCX now done; `.doc`, `.odt`, text and CSV remain).
+
+---
+
 ## 2026-09-16 — work in progress toward v2.4.0 (unreleased)
 
 ### flutter_gemma 1.5.2 → 1.8.3 (issues #198, #202)

@@ -1,10 +1,13 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/core/error/failures.dart';
+import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/domain/repositories/note_resolver_repository.dart';
 import 'package:uniun/domain/repositories/saved_note_repository.dart';
 import 'package:uniun/domain/usecases/knowledge_usecases.dart';
+import 'package:uniun/domain/usecases/media_usecases.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
 
 import '../../_helpers/fixtures.dart';
@@ -17,28 +20,109 @@ class _MockNoteResolverRepository extends Mock
 class _MockDeleteKnowledge extends Mock
     implements DeleteKnowledgeForNoteUseCase {}
 
+class _MockDownloadMedia extends Mock implements DownloadMediaUseCase {}
+
 void main() {
   late _MockSavedNoteRepository repo;
   late _MockNoteResolverRepository resolver;
   late _MockDeleteKnowledge deleteKnowledge;
+  late _MockDownloadMedia download;
 
   setUpAll(() {
     registerFallbackValue(aNote());
+    registerFallbackValue(
+        const DownloadMediaInput(sha256: '', url: '', mime: ''));
   });
 
   setUp(() {
     repo = _MockSavedNoteRepository();
     resolver = _MockNoteResolverRepository();
     deleteKnowledge = _MockDeleteKnowledge();
+    download = _MockDownloadMedia();
+    when(() => download.call(any()))
+        .thenAnswer((_) async => Right(aMediaBlob()));
   });
 
   test('SaveNoteUseCase delegates to saveNote', () async {
     when(() => repo.saveNote(any())).thenAnswer((_) async => Right(aSavedNote()));
 
-    final result = await SaveNoteUseCase(repo).call(aNote());
+    final result = await SaveNoteUseCase(repo, download).call(aNote());
 
     expect(result.isRight(), isTrue);
     verify(() => repo.saveNote(any())).called(1);
+  });
+
+  group('SaveNoteUseCase fetches documents for Shiv', () {
+    const docx = DocumentKind.docx;
+
+    Future<void> save(NoteEntity note) async {
+      await SaveNoteUseCase(repo, download).call(note);
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    setUp(() => when(() => repo.saveNote(any()))
+        .thenAnswer((_) async => Right(aSavedNote())));
+
+    test('an unopened PDF or DOCX on a saved note is downloaded', () async {
+      await save(aNote(attachments: [
+        aMediaBlob(sha256: 'p', mime: 'application/pdf',
+            serverUrls: ['https://s/p', 'https://mirror/p']),
+        aMediaBlob(sha256: 'w', mime: docx.mime, serverUrls: ['https://s/w']),
+      ]));
+
+      final inputs = verify(() => download.call(captureAny()))
+          .captured
+          .cast<DownloadMediaInput>();
+      expect([for (final i in inputs) (i.sha256, i.url, i.mime)], [
+        ('p', 'https://s/p', 'application/pdf'),
+        ('w', 'https://s/w', docx.mime),
+      ]);
+    });
+
+    test('a document already on the device is not downloaded again', () async {
+      await save(aNote(attachments: [
+        aMediaBlob(mime: 'application/pdf', localPath: '/cache/p.pdf'),
+      ]));
+
+      verifyNever(() => download.call(any()));
+    });
+
+    test('images, videos and other files are left alone', () async {
+      await save(aNote(attachments: [
+        aMediaBlob(mime: 'image/jpeg'),
+        aMediaBlob(mime: 'video/mp4'),
+        aMediaBlob(mime: 'application/msword'),
+      ]));
+
+      verifyNever(() => download.call(any()));
+    });
+
+    test('an attachment with no server to fetch from is skipped', () async {
+      await save(aNote(attachments: [
+        aMediaBlob(mime: 'application/pdf', serverUrls: const []),
+      ]));
+
+      verifyNever(() => download.call(any()));
+    });
+
+    test('nothing is downloaded when the save itself fails', () async {
+      when(() => repo.saveNote(any())).thenAnswer(
+          (_) async => const Left(Failure.errorFailure('disk full')));
+
+      await save(aNote(attachments: [aMediaBlob(mime: 'application/pdf')]));
+
+      verifyNever(() => download.call(any()));
+    });
+
+    test('a failed download does not fail the save', () async {
+      when(() => download.call(any())).thenAnswer(
+          (_) async => const Left(Failure.errorFailure('offline')));
+
+      final result = await SaveNoteUseCase(repo, download)
+          .call(aNote(attachments: [aMediaBlob(mime: 'application/pdf')]));
+
+      expect(result.isRight(), isTrue);
+    });
   });
 
   group('UnsaveNoteUseCase', () {

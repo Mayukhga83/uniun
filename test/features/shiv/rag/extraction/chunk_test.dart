@@ -31,6 +31,58 @@ void main() {
     });
   });
 
+  group('sections', () {
+    test('each chunk carries its section label, including an empty one', () {
+      final chunks = chunkSections([
+        (label: '', text: 'Preamble.'),
+        (label: 'Annual Leave', text: 'Annual Leave\n\n24 days.'),
+      ]);
+
+      expect([for (final c in chunks) c.label], ['', 'Annual Leave']);
+    });
+
+    test('ordinals run 0..n-1 across sections', () {
+      final chunks = chunkSections([
+        (label: 'A', text: 'x' * 800),
+        (label: 'B', text: 'y'),
+      ]);
+
+      expect([for (final c in chunks) c.ordinal], [0, 1, 2]);
+      expect([for (final c in chunks) c.label], ['A', 'A', 'B']);
+    });
+
+    test('paragraphs never pack across a section boundary', () {
+      final chunks = chunkSections([
+        (label: 'A', text: 'short a'),
+        (label: 'B', text: 'short b'),
+      ]);
+
+      expect([for (final c in chunks) c.text], ['short a', 'short b']);
+    });
+
+    test('a whitespace-only section yields nothing and shifts no labels', () {
+      final chunks = chunkSections([
+        (label: 'A', text: ' \n\n '),
+        (label: 'B', text: 'body'),
+      ]);
+
+      expect(chunks.single.label, 'B');
+      expect(chunks.single.ordinal, 0);
+    });
+
+    test('chunkPages labels exactly as page-numbered sections would', () {
+      final pages = ['one\n\ntwo', '', 'x' * 900];
+
+      expect(
+        chunkPages(pages).map((c) => c.toString()),
+        chunkSections([
+          for (var i = 0; i < pages.length; i++)
+            (label: '${i + 1}', text: pages[i]),
+        ]).map((c) => c.toString()),
+      );
+    });
+  });
+
   group('packing', () {
     test('short paragraphs on one page pack into a single chunk', () {
       final chunks =

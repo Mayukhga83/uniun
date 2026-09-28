@@ -3,15 +3,20 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar_community/isar.dart';
 import 'package:tostore/tostore.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/data/datasources/tostore_module.dart';
 import 'package:uniun/data/models/documents/document_chunk_model.dart';
+import 'package:uniun/data/models/documents/document_index_model.dart';
+import 'package:uniun/data/models/media/media_cache_model.dart';
 import 'package:uniun/data/repositories/tostore_document_vector_repository_impl.dart';
 import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 
+import '../../_helpers/fixtures.dart';
+import '../../_helpers/isar_seeds.dart';
 import '../../_helpers/isar_test_harness.dart';
 
-/// Covers: chunk vector upsert and search over a real ToStore, text and page
-/// resolution from Isar, score ordering and filtering, orphan tolerance,
+/// Covers: chunk vector upsert and search over a real ToStore, text, label and
+/// kind resolution from Isar, score ordering and filtering, orphan tolerance,
 /// persistence across a reopen.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -24,15 +29,25 @@ void main() {
   List<double> oneHot(int k) =>
       List<double>.generate(embeddingsDimensions, (i) => i == k ? 1.0 : 0.0);
 
+  /// A chunk row plus its cached file and index row, as the indexer leaves
+  /// them.
   Future<void> seedChunk(String sha, int ordinal, String text,
-          {String label = '1'}) =>
-      isar.writeTxn(
-        () => isar.documentChunkModels.put(DocumentChunkModel()
+          {String label = '1', DocumentKind kind = DocumentKind.pdf}) =>
+      isar.writeTxn(() async {
+        if (await isar.mediaCacheModels.getBySha256(sha) == null) {
+          await isar.mediaCacheModels.put(mediaCacheRow(sha, mime: kind.mime));
+          await isar.documentIndexModels.put(DocumentIndexModel()
+            ..sha256 = sha
+            ..kind = kind
+            ..status = DocumentIndexStatus.indexed
+            ..indexedAt = tNow);
+        }
+        await isar.documentChunkModels.put(DocumentChunkModel()
           ..sha256 = sha
           ..ordinal = ordinal
           ..label = label
-          ..text = text),
-      );
+          ..text = text);
+      });
 
   setUp(() async {
     isar = await openTestIsar();
@@ -64,6 +79,56 @@ void main() {
       expect(hits.single.label, '4');
       expect(hits.single.content, 'leave policy text');
       expect(hits.single.score, closeTo(1.0, 0.01));
+    });
+
+    test('a DOCX chunk comes back with its kind and heading label', () async {
+      await seedChunk('w', 0, 'annual leave text',
+          label: 'Annual Leave', kind: DocumentKind.docx);
+      await repo.upsert(chunkIdOf('w', 0), oneHot(0));
+
+      final hit = (await repo.search(oneHot(0))).single;
+
+      expect(hit.kind, DocumentKind.docx);
+      expect(hit.label, 'Annual Leave');
+    });
+
+    test('a PDF chunk comes back as a PDF', () async {
+      await seedChunk('s', 0, 'x');
+      await repo.upsert(chunkIdOf('s', 0), oneHot(0));
+
+      expect((await repo.search(oneHot(0))).single.kind, DocumentKind.pdf);
+    });
+
+    test('a hit whose document is no longer indexed is dropped', () async {
+      await seedChunk('s', 0, 'x');
+      await repo.upsert(chunkIdOf('s', 0), oneHot(0));
+      await isar.writeTxn(() => isar.documentIndexModels.deleteBySha256('s'));
+
+      expect(await repo.search(oneHot(0)), isEmpty);
+    });
+
+    test('a re-download that rewrites the cached mime keeps the kind',
+        () async {
+      await seedChunk('w', 0, 'x', label: 'Scope', kind: DocumentKind.docx);
+      await repo.upsert(chunkIdOf('w', 0), oneHot(0));
+      await isar.writeTxn(() async {
+        final row = (await isar.mediaCacheModels.getBySha256('w'))!;
+        await isar.mediaCacheModels.put(row..mime = 'application/octet-stream');
+      });
+
+      expect((await repo.search(oneHot(0))).single.kind, DocumentKind.docx,
+          reason: 'the kind is what was indexed, not what the last sender '
+              'claimed');
+    });
+
+    test('several chunks of one document are all returned', () async {
+      await seedChunk('s', 0, 'a');
+      await seedChunk('s', 1, 'b');
+      await repo.upsert(chunkIdOf('s', 0), oneHot(0));
+      await repo.upsert(chunkIdOf('s', 1),
+          List<double>.generate(embeddingsDimensions, (i) => i < 2 ? 1.0 : 0.0));
+
+      expect(await repo.search(oneHot(0), minScore: 0.0), hasLength(2));
     });
 
     test('results come back ordered by similarity', () async {
@@ -140,7 +205,8 @@ void main() {
       // Documents the current behaviour rather than endorsing it — see
       // DocumentVectorRepository on why vectors cannot be deleted.
       expect(await repo.search(oneHot(0), topK: 3), isEmpty);
-    });
+      // 41 flushed upserts (~70 ms each) can pass 30 s under full-suite load.
+    }, timeout: const Timeout(Duration(minutes: 2)));
   });
 
   group('persistence', () {

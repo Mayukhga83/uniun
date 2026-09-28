@@ -1,10 +1,13 @@
-/// A PDF chunk paired with its cosine similarity to a query vector.
+import 'package:uniun/core/enum/document_kind.dart';
+
+/// A document chunk paired with its cosine similarity to a query vector.
 ///
 /// Sibling of `ScoredNote`; [content] is what gets injected into the RAG prompt.
 class ScoredChunk {
   const ScoredChunk({
     required this.chunkId,
     required this.sha256,
+    required this.kind,
     required this.label,
     required this.score,
     required this.content,
@@ -16,7 +19,11 @@ class ScoredChunk {
   /// The document's blob hash, joining to `MediaCacheModel.sha256`.
   final String sha256;
 
-  /// 1-based page number the chunk came from.
+  /// Which format the chunk came from — decides whether [label] is a page or
+  /// a heading wherever it is shown.
+  final DocumentKind kind;
+
+  /// The page of a PDF, the heading above the chunk in a DOCX, or `''`.
   final String label;
 
   /// Cosine similarity in [0, 1]. Higher = more relevant.

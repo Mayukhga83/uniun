@@ -1,16 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar_community/isar.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/data/models/documents/document_chunk_model.dart';
+import 'package:uniun/data/models/documents/document_index_model.dart';
 import 'package:uniun/data/models/media/media_cache_model.dart';
 import 'package:uniun/data/models/notes/note_model.dart';
 import 'package:uniun/data/models/saved_note_model.dart';
 import 'package:uniun/data/repositories/document_source_repository_impl.dart';
 
+import '../../_helpers/fixtures.dart';
 import '../../_helpers/isar_seeds.dart';
 import '../../_helpers/isar_test_harness.dart';
 
-/// Covers: chunk-id resolution to citations, title lookup from the attaching
-/// note or saved copy, skipping unresolvable ids, order preservation.
+/// Covers: chunk-id resolution to citations with their document kind, title
+/// lookup from the attaching note or saved copy, skipping unresolvable or
+/// unclassifiable ids, order preservation.
 void main() {
   late Isar isar;
   late DocumentSourceRepositoryImpl repo;
@@ -32,9 +36,18 @@ void main() {
           ..text = text),
       );
 
-  Future<void> seedFile(String sha, {String path = '/p/doc.pdf'}) =>
-      isar.writeTxn(() => isar.mediaCacheModels
-          .put(mediaCacheRow(sha, localPath: path, mime: 'application/pdf')));
+  /// The cached file plus the index row the indexer writes for it.
+  Future<void> seedFile(String sha,
+          {String path = '/p/doc.pdf', DocumentKind kind = DocumentKind.pdf}) =>
+      isar.writeTxn(() async {
+        await isar.mediaCacheModels
+            .put(mediaCacheRow(sha, localPath: path, mime: kind.mime));
+        await isar.documentIndexModels.put(DocumentIndexModel()
+          ..sha256 = sha
+          ..kind = kind
+          ..status = DocumentIndexStatus.indexed
+          ..indexedAt = tNow);
+      });
 
   Future<List<String>> resolvedIds(List<String> ids) async =>
       (await repo.resolve(ids))
@@ -52,9 +65,28 @@ void main() {
 
       expect(citation.chunkId, 's:0');
       expect(citation.sha256, 's');
+      expect(citation.kind, DocumentKind.pdf);
       expect(citation.label, '4');
       expect(citation.snippet, 'the leave policy');
       expect(citation.localPath, '/p/circular.pdf');
+    });
+
+    test('a DOCX chunk resolves with its kind and heading', () async {
+      await seedChunk('w', 0, 'annual leave text', label: 'Annual Leave');
+      await seedFile('w', path: '/p/policy.docx', kind: DocumentKind.docx);
+
+      final citation = (await repo.resolve(['w:0'])).getOrElse(() => []).single;
+
+      expect(citation.kind, DocumentKind.docx);
+      expect(citation.label, 'Annual Leave');
+      expect(citation.localPath, '/p/policy.docx');
+    });
+
+    test('a chunk with no heading keeps its empty label', () async {
+      await seedChunk('w', 0, 'preamble', label: '');
+      await seedFile('w', kind: DocumentKind.docx);
+
+      expect((await repo.resolve(['w:0'])).getOrElse(() => []).single.label, '');
     });
 
     test('order follows the requested ids', () async {
@@ -134,6 +166,28 @@ void main() {
       await seedChunk('s', 0, 'x');
 
       expect(await resolvedIds(['s:0']), isEmpty);
+    });
+
+    test('a document with no index row (mid-purge)', () async {
+      await seedChunk('s', 0, 'x');
+      await seedFile('s');
+      await isar.writeTxn(() => isar.documentIndexModels.deleteBySha256('s'));
+
+      expect(await resolvedIds(['s:0']), isEmpty);
+    });
+
+    test('the kind comes from the index, not a since-rewritten cache mime',
+        () async {
+      await seedChunk('w', 0, 'x', label: 'Scope');
+      await seedFile('w', kind: DocumentKind.docx);
+      await isar.writeTxn(() async {
+        final row = (await isar.mediaCacheModels.getBySha256('w'))!;
+        await isar.mediaCacheModels.put(row..mime = 'application/pdf');
+      });
+
+      final c = (await repo.resolve(['w:0'])).getOrElse(() => []).single;
+      expect(c.kind, DocumentKind.docx,
+          reason: 'else "Scope" would render as "Page Scope"');
     });
 
     test('malformed ids', () async {

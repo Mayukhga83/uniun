@@ -3,12 +3,14 @@ import 'dart:math' as math;
 import 'package:injectable/injectable.dart';
 import 'package:isar_community/isar.dart';
 import 'package:tostore/tostore.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/data/datasources/tostore_module.dart';
 import 'package:uniun/data/models/documents/document_chunk_model.dart';
+import 'package:uniun/data/models/documents/document_index_model.dart';
 import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 import 'package:uniun/domain/repositories/document_vector_repository.dart';
 
-/// PDF chunk vectors in their own ToStore, with text resolved from Isar.
+/// Document chunk vectors in their own ToStore, with text resolved from Isar.
 ///
 /// Mirrors `TostoreVectorRepositoryImpl` (notes) but against
 /// [documentChunkEmbeddingsTableName] in the `documentTostore` instance.
@@ -60,6 +62,8 @@ class TostoreDocumentVectorRepositoryImpl implements DocumentVectorRepository {
     );
 
     final results = <ScoredChunk>[];
+    // One index lookup per document, not per hit.
+    final kinds = <String, DocumentKind?>{};
     for (final h in hits) {
       if (results.length == topK) break;
       if (h.score < minScore) continue;
@@ -72,9 +76,14 @@ class TostoreDocumentVectorRepositoryImpl implements DocumentVectorRepository {
       // The chunk row can vanish between the vector search and this lookup (a
       // purge racing a query); skip rather than return a hit with no text.
       if (row == null) continue;
+      final kind = kinds[row.sha256] ??= await _kindOf(row.sha256);
+      // No index row means the document is mid-purge; drop it like any hit
+      // that no longer resolves.
+      if (kind == null) continue;
       results.add(ScoredChunk(
         chunkId: h.primaryKey,
         sha256: row.sha256,
+        kind: kind,
         label: row.label,
         score: h.score,
         content: row.text,
@@ -82,4 +91,7 @@ class TostoreDocumentVectorRepositoryImpl implements DocumentVectorRepository {
     }
     return results;
   }
+
+  Future<DocumentKind?> _kindOf(String sha) async =>
+      (await _isar.documentIndexModels.getBySha256(sha))?.kind;
 }

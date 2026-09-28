@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/domain/entities/shiv/document_citation.dart';
 import 'package:uniun/domain/usecases/saved_note_usecases.dart';
 import 'package:uniun/features/shiv/chat/widgets/document_source_tile.dart';
@@ -40,9 +41,12 @@ void main() {
         ),
       );
 
-  DocumentCitation citation(String id, String snippet) => DocumentCitation(
+  DocumentCitation citation(String id, String snippet,
+          {DocumentKind kind = DocumentKind.pdf}) =>
+      DocumentCitation(
         chunkId: id,
         sha256: 's',
+        kind: kind,
         label: '1',
         snippet: snippet,
         localPath: '/p/doc.pdf',
@@ -60,6 +64,21 @@ void main() {
     expect(find.byType(DocumentSourceTile), findsNWidgets(2));
     expect(t.getTopLeft(find.text('first passage')).dy,
         lessThan(t.getTopLeft(find.text('second passage')).dy));
+  });
+
+  testWidgets('PDF and DOCX passages sit side by side with their locations',
+      (t) async {
+    when(() => docs.call(any())).thenAnswer((_) async => Right([
+          citation('s:0', 'pdf passage'),
+          citation('w:0', 'docx passage', kind: DocumentKind.docx),
+        ]));
+
+    await t.pumpWidget(host(chunkIds: const ['s:0', 'w:0']));
+    await t.pumpAndSettle();
+
+    expect(find.byType(DocumentSourceTile), findsNWidgets(2));
+    expect(find.text('Page 1'), findsOneWidget);
+    expect(find.text('Section: 1'), findsOneWidget);
   });
 
   testWidgets('with nothing to show it says so', (t) async {

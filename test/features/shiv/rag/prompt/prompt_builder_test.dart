@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/core/enum/message_role.dart';
 import 'package:uniun/domain/entities/graph_edge/graph_edge_entity.dart';
 import 'package:uniun/domain/entities/graph_node/graph_node_entity.dart';
@@ -38,10 +39,16 @@ GraphNodeEntity _node(String key, String name) => GraphNodeEntity(
       updatedAt: DateTime(2026, 1, 1),
     );
 
-ScoredChunk _chunk(String content, {String label = '3', int ordinal = 0}) =>
+ScoredChunk _chunk(
+  String content, {
+  String label = '3',
+  int ordinal = 0,
+  DocumentKind kind = DocumentKind.pdf,
+}) =>
     ScoredChunk(
       chunkId: 's:$ordinal',
       sha256: 's',
+      kind: kind,
       label: label,
       score: 0.9,
       content: content,
@@ -441,6 +448,47 @@ void main() {
 
       expect(msg, contains('(p.1) first'));
       expect(msg, contains('(p.7) seventh'));
+    });
+
+    test('a DOCX chunk is marked with its heading, not as a page', () {
+      final msg = builder.buildUserMessage(
+        userQuestion: 'q',
+        context: ctx(chunks: [
+          _chunk('24 days a year', label: 'Annual Leave', kind: DocumentKind.docx),
+        ]),
+        budget: defaultBudget,
+      );
+
+      expect(msg, contains('• (Annual Leave) 24 days a year'));
+      expect(msg, isNot(contains('(p.')));
+    });
+
+    test('a chunk with no location gets no marker', () {
+      final msg = builder.buildUserMessage(
+        userQuestion: 'q',
+        context: ctx(chunks: [
+          _chunk('untitled passage', label: '', kind: DocumentKind.docx),
+        ]),
+        budget: defaultBudget,
+      );
+
+      expect(msg, contains('• untitled passage'));
+      expect(msg, isNot(contains('()')));
+    });
+
+    test('PDF and DOCX chunks render side by side in their own forms', () {
+      final msg = builder.buildUserMessage(
+        userQuestion: 'q',
+        context: ctx(chunks: [
+          _chunk('from a pdf', label: '5'),
+          _chunk('from a docx',
+              label: 'Remote Work', ordinal: 1, kind: DocumentKind.docx),
+        ]),
+        budget: defaultBudget,
+      );
+
+      expect(msg, contains('(p.5) from a pdf'));
+      expect(msg, contains('(Remote Work) from a docx'));
     });
 
     test('documents come after the notes', () {

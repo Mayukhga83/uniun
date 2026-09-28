@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:isar_community/isar.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/data/models/documents/document_chunk_model.dart';
+import 'package:uniun/data/models/documents/document_index_model.dart';
 import 'package:uniun/data/models/media/media_cache_model.dart';
 import 'package:uniun/data/models/notes/media_attachment.dart';
 import 'package:uniun/data/models/notes/note_model.dart';
@@ -22,7 +23,7 @@ class DocumentSourceRepositoryImpl implements DocumentSourceRepository {
       List<String> chunkIds) async {
     try {
       // One title lookup per distinct document, not per chunk — several chunks
-      // of the same PDF are the common case.
+      // of the same document are the common case.
       final titles = <String, String?>{};
       final out = <DocumentCitation>[];
 
@@ -43,10 +44,16 @@ class DocumentSourceRepositoryImpl implements DocumentSourceRepository {
         // No cached file means nothing to open — drop rather than offer a
         // citation that cannot be verified.
         if (file == null) continue;
+        // The kind recorded at index time, not the cache mime, which a later
+        // download can overwrite. No index row means mid-purge: drop it.
+        final kind = (await isar.documentIndexModels.getBySha256(ref.sha256))
+            ?.kind;
+        if (kind == null) continue;
 
         out.add(DocumentCitation(
           chunkId: id,
           sha256: ref.sha256,
+          kind: kind,
           label: chunk.label,
           snippet: chunk.text,
           localPath: file.localPath,

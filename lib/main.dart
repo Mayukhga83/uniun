@@ -17,7 +17,7 @@ import 'package:uniun/core/l10n/locale_cubit.dart';
 import 'package:uniun/core/router/app_router.dart';
 import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/core/theme/app_theme_mode.dart';
-import 'package:uniun/features/shiv/rag/indexing/pdf_indexer.dart';
+import 'package:uniun/features/shiv/rag/indexing/document_indexer.dart';
 import 'package:uniun/core/theme/theme_cubit.dart';
 import 'package:uniun/common/locator.dart';
 import 'package:uniun/data/datasources/app_settings_store.dart';
@@ -73,9 +73,9 @@ Future<void> main() async {
   // touching the native host (Android's foreground-service start rule).
   getIt<MeshService>().start();
 
-  // Keeps Shiv's PDF index in step with the media cache. Idle — no extraction
-  // or embedding work — until a PDF is actually cached on this device.
-  getIt<PdfIndexer>().start();
+  // Keeps Shiv's document index (PDF, DOCX) in step with the media cache.
+  // Idle — no extraction or embedding work — until a document is cached.
+  getIt<DocumentIndexer>().start();
 
   // Resolve the startup locale synchronously (the AppSettingsStore singleton is
   // already pre-resolved) so the first frame renders in the right language with

@@ -22,6 +22,7 @@ import 'package:uniun/core/share_intent/share_intent_service.dart' as _i794;
 import 'package:uniun/data/datasources/app_settings_store.dart' as _i107;
 import 'package:uniun/data/datasources/blossom_client.dart' as _i706;
 import 'package:uniun/data/datasources/cloud/uniun_gateway_client.dart' as _i83;
+import 'package:uniun/data/datasources/docx/docx_text_source.dart' as _i729;
 import 'package:uniun/data/datasources/feed_read_state_store.dart' as _i752;
 import 'package:uniun/data/datasources/isar_module.dart' as _i146;
 import 'package:uniun/data/datasources/llm/embedding_queue.dart' as _i1031;
@@ -252,9 +253,10 @@ import 'package:uniun/features/shiv/rag/embedding/embedding_model_downloader.dar
     as _i850;
 import 'package:uniun/features/shiv/rag/embedding/embedding_service.dart'
     as _i587;
-import 'package:uniun/features/shiv/rag/extraction/pdf_extraction_service.dart'
-    as _i742;
-import 'package:uniun/features/shiv/rag/indexing/pdf_indexer.dart' as _i909;
+import 'package:uniun/features/shiv/rag/extraction/document_extraction_service.dart'
+    as _i139;
+import 'package:uniun/features/shiv/rag/indexing/document_indexer.dart'
+    as _i1026;
 import 'package:uniun/features/shiv/rag/pipeline/rag_pipeline.dart' as _i681;
 import 'package:uniun/features/shiv/rag/prompt/prompt_builder.dart' as _i207;
 import 'package:uniun/features/shiv/rag/retrieval/vector_search_service.dart'
@@ -330,6 +332,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i266.ShivRepository>(
       () => _i412.ShivRepositoryImpl(gh<_i214.Isar>()),
     );
+    gh.lazySingleton<_i729.DocxTextSource>(() => _i729.ArchiveDocxTextSource());
     gh.factory<_i633.SourceLabelRepository>(
       () => _i395.SourceLabelRepositoryImpl(isar: gh<_i214.Isar>()),
     );
@@ -379,9 +382,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i182.NoteAttachmentsEnricher>(
       () => _i182.NoteAttachmentsEnricher(isar: gh<_i214.Isar>()),
-    );
-    gh.lazySingleton<_i742.PdfExtractionService>(
-      () => _i742.PdfExtractionService(gh<_i623.PdfTextSource>()),
     );
     gh.factory<_i1039.EventQueueRepository>(
       () => _i116.EventQueueRepositoryImpl(isar: gh<_i214.Isar>()),
@@ -434,6 +434,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i978.ResolveSourceLabelsUseCase>(
       () => _i978.ResolveSourceLabelsUseCase(gh<_i633.SourceLabelRepository>()),
+    );
+    gh.lazySingleton<_i139.DocumentExtractionService>(
+      () => _i139.DocumentExtractionService(
+        gh<_i623.PdfTextSource>(),
+        gh<_i729.DocxTextSource>(),
+      ),
     );
     gh.factory<_i331.MemoryRepository>(
       () => _i849.MemoryRepositoryImpl(isar: gh<_i214.Isar>()),
@@ -890,9 +896,6 @@ extension GetItInjectableX on _i174.GetIt {
         signer: gh<_i558.MeshEventSigner>(),
       ),
     );
-    gh.lazySingleton<_i858.SaveNoteUseCase>(
-      () => _i858.SaveNoteUseCase(gh<_i43.SavedNoteRepository>()),
-    );
     gh.lazySingleton<_i858.IsSavedNoteUseCase>(
       () => _i858.IsSavedNoteUseCase(gh<_i43.SavedNoteRepository>()),
     );
@@ -990,6 +993,14 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i629.PublishMediaNoteUseCase(
         gh<_i47.NoteRepository>(),
         gh<_i1039.EventQueueRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i1026.DocumentIndexer>(
+      () => _i1026.DocumentIndexer(
+        gh<_i214.Isar>(),
+        gh<_i139.DocumentExtractionService>(),
+        gh<_i756.EmbedAndStoreChunkUseCase>(),
+        gh<_i799.GetActiveUserUseCase>(),
       ),
     );
     gh.lazySingleton<_i303.DeleteSurroundingNoteUseCase>(
@@ -1238,13 +1249,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i985.GetRelaysUseCase>(),
         gh<_i391.RequestProfileFetchUseCase>(),
         gh<_i733.DrawerDataSource>(),
-      ),
-    );
-    gh.lazySingleton<_i909.PdfIndexer>(
-      () => _i909.PdfIndexer(
-        gh<_i214.Isar>(),
-        gh<_i742.PdfExtractionService>(),
-        gh<_i756.EmbedAndStoreChunkUseCase>(),
       ),
     );
     gh.factory<_i968.CreateGroupBloc>(
@@ -1506,6 +1510,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1.ShareNoteUseCase>(),
         gh<_i629.UploadMediaUseCase>(),
         gh<_i799.GetActiveUserUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i858.SaveNoteUseCase>(
+      () => _i858.SaveNoteUseCase(
+        gh<_i43.SavedNoteRepository>(),
+        gh<_i629.DownloadMediaUseCase>(),
       ),
     );
     gh.factory<_i395.NatarajBloc>(

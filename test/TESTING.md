@@ -110,10 +110,12 @@ below, or add one if the shape is missing.
 | `fake_note_relations.dart` | `FakeNoteRelations` | Any repo that reads from `NoteRelationRepository`. Seed `.children[parentId]` / `.parents[childId]` before the test runs. |
 | `stub_user_repository.dart` | `StubUserRepository` | Any repo that calls `UserRepository.getActiveKeysHex()` or `getActiveUser()` (both derive from `.keys`). Set `.keys = null` to simulate a logged-out identity. |
 | `stub_followed_users.dart` | `StubFollowedUsers` | Any repo that reads the follow list via `FollowedUserRepository.getAllPubkeys()`. Seed `.pubkeys`; set `.leftOnGetAllPubkeys` to simulate failure. |
-| `pdf_fixtures.dart` | `pdfFixture(name)`, `normalizePdfText(...)`, `minimalPdf(pages)` | Anything touching PDFs. `pdfFixture` resolves a committed fixture from the package root; `normalizePdfText` folds ligatures/NBSP/curly quotes so assertions survive extractor differences; `minimalPdf` generates a synthetic PDF for negative cases. |
+| `pdf_fixtures.dart` | `pdfFixture(name)`, `packageRoot()`, `normalizePdfText(...)`, `minimalPdf(pages)` | Anything touching PDFs. `pdfFixture` resolves a committed fixture from the package root; `normalizePdfText` folds ligatures/NBSP/curly quotes so assertions survive extractor differences; `minimalPdf` generates a synthetic PDF for negative cases. |
 | `pdfium_test_lib.dart` | `ensurePdfium()` | Any test that opens a real PDF. `flutter test` does not run native-asset build hooks, so PDFium is missing; this downloads it once and points pdfrx at it — the same shape as `ensureIsarCore()`. Call it before `pdfrxFlutterInitialize()`, and install `FakePathProviderPlatform` first (pdfrx resolves its cache dir through path_provider). |
 | `fake_pdf_text_source.dart` | `FakePdfTextSource` | Extraction code that needs page text without native PDFium. |
-| `fake_document_vectors.dart` | `FakeDocumentVectors` | Anything reading or writing PDF chunk vectors. |
+| `docx_fixtures.dart` | `docxFixture(name)`, `minimalDocx(document:, styles:, extra:)`, `wDocument`, `wP`, `wTable`, `wStyles`, `englishHeadingStyles`, `withDeclaredSize(...)`, `writeTempDocx(...)` | Anything touching DOCX. Build each case as exact XML with `minimalDocx` rather than committing a file per case; `withDeclaredSize` rewrites a zip entry's declared size so the size-cap test needs no 50 MB fixture. |
+| `fake_docx_text_source.dart` | `FakeDocxTextSource` | Extraction and indexing code that needs DOCX sections without a real file. |
+| `fake_document_vectors.dart` | `FakeDocumentVectors` | Anything reading or writing document chunk vectors. |
 | `fake_path_provider.dart` | `FakePathProviderPlatform` | Code that calls `getApplicationDocumentsDirectory()` / `getApplicationSupportDirectory()`. Install via `PathProviderPlatform.instance = FakePathProviderPlatform(docs: ..., support: ...)` pointing at temp dirs. |
 | `mesh_test_helpers.dart` | `stubSecureStorageChannel()`, `MeshIdentity` | Any mesh test. The stub silences flutter_secure_storage's channel (NIP-44 PBKDF2 path) — call once at the top of `main()`. `MeshIdentity.generate()` = real Schnorr keypair + bound `MeshEventCodec`; generate a second one to play the attacker in signed-by-another-identity drop tests. |
 
@@ -130,16 +132,18 @@ download can never succeed (mocked HTTP 400).
 
 ### Binary fixtures — `test/_helpers/fixtures/`
 
-Real-world binaries a test needs, with a `PROVENANCE.md` recording source URL,
-date, licence and sha256 for each. Currently one: a public-domain NIST PDF used
-to prove PDF text extraction against a document from a real publishing pipeline
-rather than one we generated.
+Real-world binaries a test needs, with a `PROVENANCE.md` per directory recording
+source URL, date, licence and sha256 for each. `pdf/` holds a public-domain NIST
+PDF; `docx/` holds two public-domain Microsoft Word templates (NIST, USPTO) and
+one LibreOffice export — each proving the reader against what a real producer
+writes rather than what we generated.
 
 Rules: keep them small (< 300 KB); never re-save or re-compress them (a mutated
 fixture stops being evidence); **not** in Git LFS (a CI checkout without
 `lfs: true` yields a pointer file, which parsers reject with a confusing `null`);
 and never referenced from `pubspec.yaml`'s `assets:` — they must not ship to
-users. Load them with `dart:io` via `pdfFixture(...)`, not the asset bundle.
+users. Load them with `dart:io` via `pdfFixture(...)` / `docxFixture(...)`, not
+the asset bundle.
 
 `shard-coverage` greps for `*_test.dart`, so a binary here is invisible to it —
 but never put a `_test.dart` file in this directory.
@@ -354,6 +358,9 @@ Adding one means adding an import + `main()` call to `integration_test/all_tests
 `return`** when the thing it needs ships with the app: `EmbeddingService.embed`
 answers `[]` rather than throwing when the model is missing, so a test that skips
 on that would pass while proving nothing. Assert the model loaded, and fail.
+Assert it is non-empty, not a specific length: the bundled Gecko model emits 768
+dimensions where the app declares 1024 (#234), so a length check fails on every
+device and the test never reaches what it was written to prove.
 
 ---
 

@@ -26,7 +26,7 @@ packages:
     source: hosted
     version: "2.0.3"
   archive:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: archive
       sha256: a96e8b390886ee8abb49b7bd3ac8df6f451c621619f52a26e815fdcf568959ff
@@ -1894,10 +1894,10 @@ packages:
     dependency: "direct main"
     description:
       name: tostore
-      sha256: d780ec875a93cc4f20580d2c32e15db21d0b9c342f769718b229c79712d51440
+      sha256: "745f217424118059d80b90eb9ebf34ce1492068659eb8bd94717e5593e5aa4bb"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.0"
+    version: "3.1.2"
   typed_data:
     dependency: transitive
     description:
@@ -2139,7 +2139,7 @@ packages:
     source: hosted
     version: "1.1.0"
   xml:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: xml
       sha256: "971043b3a0d3da28727e40ed3e0b5d18b742fa5a68665cca88e74b7876d5e025"

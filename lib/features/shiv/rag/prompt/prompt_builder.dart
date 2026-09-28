@@ -1,6 +1,7 @@
 import 'package:uniun/core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/core/enum/message_role.dart';
 import 'package:uniun/domain/entities/graph_edge/graph_edge_entity.dart';
 import 'package:uniun/domain/entities/graph_node/graph_node_entity.dart';
@@ -296,8 +297,8 @@ class PromptBuilder {
     return any ? buf.toString().trimRight() : null;
   }
 
-  /// Renders retrieved PDF passages. The heading and page markers are
-  /// LLM-facing, never shown to the user, so they stay hard-coded English —
+  /// Renders retrieved document passages. The heading and location markers
+  /// are LLM-facing, never shown to the user, so they stay hard-coded English —
   /// localising them would change what the model reads.
   String? _renderChunksSection(List<ScoredChunk> chunks, int tokenCap) {
     if (chunks.isEmpty) return null;
@@ -305,7 +306,15 @@ class PromptBuilder {
     var used = 0;
     var any = false;
     for (final c in chunks) {
-      final line = '• (p.${c.label}) ${c.content}\n';
+      // A DOCX label is a heading, not a page: "(p.Annual Leave)" would tell
+      // the model something false.
+      final where = c.label.isEmpty
+          ? ''
+          : switch (c.kind) {
+              DocumentKind.pdf => '(p.${c.label}) ',
+              DocumentKind.docx => '(${c.label}) ',
+            };
+      final line = '• $where${c.content}\n';
       final lineTokens = PromptBudget.estimateTokens(line);
       if (used + lineTokens > tokenCap && any) break;
       buf.write(line);

@@ -1,6 +1,6 @@
 import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 
-/// Vector storage and similarity search over PDF chunks.
+/// Vector storage and similarity search over document chunks.
 ///
 /// Sibling of `VectorRepository` (notes), deliberately separate so the note
 /// retrieval path is untouched by document indexing.
