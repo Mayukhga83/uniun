@@ -1459,7 +1459,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shivSourcesDocxOpen => 'Open document';
 
   @override
-  String get shivSourcesImageText => 'Text in image';
+  String get shivSourcesImageFound => 'Found in image';
 
   @override
   String get shivSourcesImageUntitled => 'Image';

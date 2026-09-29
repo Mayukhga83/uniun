@@ -3,11 +3,12 @@ import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/features/shiv/rag/extraction/document_extraction_service.dart';
 
 import '../../../../_helpers/fake_docx_text_source.dart';
+import '../../../../_helpers/fake_image_label_source.dart';
 import '../../../../_helpers/fake_ocr_text_source.dart';
 import '../../../../_helpers/fake_pdf_text_source.dart';
 
 /// Covers: DocumentExtractionService dispatching by kind (PDF, DOCX, image
-/// OCR) and composing source,
+/// OCR and labels) and composing source,
 /// gate and chunker; both not-searchable reasons; page counts; no exception
 /// leak.
 void main() {
@@ -15,13 +16,15 @@ void main() {
   late FakePdfTextSource source;
   late FakeDocxTextSource docx;
   late FakeOcrTextSource ocr;
+  late FakeImageLabelSource labels;
   late DocumentExtractionService service;
 
   setUp(() {
     source = FakePdfTextSource();
     docx = FakeDocxTextSource();
     ocr = FakeOcrTextSource();
-    service = DocumentExtractionService(source, docx, ocr);
+    labels = FakeImageLabelSource();
+    service = DocumentExtractionService(source, docx, ocr, labels);
   });
 
   group('readable prose', () {
@@ -123,6 +126,59 @@ void main() {
             .reason,
         NotSearchableReason.noTextLayer,
       );
+    });
+
+    test('a photo without text is described by what is in it', () async {
+      ocr.texts['/dog.jpg'] = '';
+      labels.labels['/dog.jpg'] = ['Dog', 'Beach', 'Sky'];
+
+      final e = await service.extract('/dog.jpg', DocumentKind.image)
+          as Extracted;
+
+      expect(e.chunks.single.text, 'Photo showing: dog, beach, sky');
+      expect(e.chunks.single.label, '');
+    });
+
+    test('text and contents become separate passages', () async {
+      ocr.texts['/board.jpg'] = 'Q3 rollout: freeze on 12 Oct';
+      labels.labels['/board.jpg'] = ['Whiteboard', 'Room'];
+
+      final e = await service.extract('/board.jpg', DocumentKind.image)
+          as Extracted;
+
+      expect(e.chunks.map((c) => c.text).toList(), [
+        'Q3 rollout: freeze on 12 Oct',
+        'Photo showing: whiteboard, room',
+      ]);
+    });
+
+    test('OCR noise is dropped but the photo\'s contents are kept', () async {
+      ocr.texts['/street.jpg'] = '|| ;; 1 / .';
+      labels.labels['/street.jpg'] = ['Car', 'Road'];
+
+      final e = await service.extract('/street.jpg', DocumentKind.image)
+          as Extracted;
+
+      expect(e.chunks.single.text, 'Photo showing: car, road');
+    });
+
+    test('text is still indexed when labeling cannot read the file', () async {
+      ocr.texts['/n.jpg'] = 'PLATFORM 3 → DELHI 14:20';
+      labels.labels['/n.jpg'] = null;
+
+      final e = await service.extract('/n.jpg', DocumentKind.image)
+          as Extracted;
+
+      expect(e.chunks.single.text, 'PLATFORM 3 → DELHI 14:20');
+    });
+
+    test('a file neither OCR nor labeling can read is unreadable', () async {
+      labels.labels['/bad.jpg'] = null;
+
+      final n = await service.extract('/bad.jpg', DocumentKind.image)
+          as NotSearchable;
+
+      expect(n.reason, NotSearchableReason.unreadable);
     });
 
     test('a photo with no text in it is noTextLayer', () async {

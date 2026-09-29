@@ -170,7 +170,7 @@ void main() {
       await t.pumpWidget(host(imageCitation(title: 'notice.jpg')));
       await t.pump();
 
-      expect(find.text('Text in image'), findsOneWidget);
+      expect(find.text('Found in image'), findsOneWidget);
       expect(find.byType(Image), findsOneWidget);
       expect(find.textContaining('Page'), findsNothing);
       expect(find.textContaining('Section'), findsNothing);

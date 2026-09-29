@@ -388,12 +388,23 @@ Sources sheet, which resolves them on open via `DocumentSourceRepository`.
 A Manas-scoped chat never searches documents: it scopes by note membership, and
 a document blob has none (#236).
 
-### Images — the text inside them
+### Images — the text inside them, and what they show
 
-An image is read with **on-device OCR** (`MlKitOcrTextSource`,
-`lib/data/datasources/ocr/`, ML Kit Text Recognition v2) and its text goes
-through the same chunker, embedder, store and citation path as a document. No
-LLM is involved at index time.
+An image is read twice, both **on device**, and each result goes through the
+same chunker, embedder, store and citation path as a document. No LLM is
+involved at index time.
+
+- **Its text** — OCR (`MlKitOcrTextSource`, `lib/data/datasources/ocr/`, ML Kit
+  Text Recognition v2).
+- **What it shows** — labeling (`MlKitImageLabelSource`,
+  `lib/data/datasources/image_labels/`, ML Kit's bundled base labeler, 400+
+  general categories, confidence ≥ 0.6, top 6). The labels become one passage,
+  `Photo showing: dog, beach, sky` (English, LLM-facing, not localised).
+
+Text and contents are **separate passages**, so "the photo of my dog" matches
+the labels and "what does the notice say" matches the OCR text. A photo with
+no readable text is still indexed by its labels; one with neither is
+`notSearchable`.
 
 - **Two recognisers, both bundled:** Latin and Devanagari, ~4 MB each per CPU
   architecture (so ~8 MB per install from the Play Store). ML Kit's Flutter
@@ -412,7 +423,7 @@ LLM is involved at index time.
   requires it).
 - **Label** `''` — an image has no pages or headings. The prompt marks the
   passage `• (image) …` so the model does not present OCR text as something the
-  user wrote. The Sources tile shows a **thumbnail** and "Text in image", and
+  user wrote. The Sources tile shows a **thumbnail** and "Found in image", and
   tapping opens the in-app image viewer (`AppRoutes.mediaDetail`) — or says
   the image is no longer on the device, since that viewer waits forever for a
   cache row that is gone. The thumbnail decodes at tile size, not the photo's.
@@ -431,8 +442,18 @@ LLM is involved at index time.
 - ML Kit runs only on Android and iOS — never under `flutter test`. CI covers
   images through `FakeOcrTextSource`; `integration_test/` runs real OCR.
 
-Not built: labels for photos without text (ML Kit Image Labeling, a possible
-follow-up), CLIP-style image embeddings.
+**Labeling ships without Firebase.** `google_mlkit_image_labeling` hard-depends
+on `com.google.mlkit:linkfirebase` — which brings `firebase-common` and
+`firebase-iid` — solely for Firebase-hosted custom models. UNIUN uses only the
+bundled base labeler, so `android/app/build.gradle.kts` excludes `linkfirebase`
+and `proguard-rules.pro` tells R8 the unused branch's references are expected.
+The `firebase-components`/`firebase-encoders` utility libraries that remain
+were already in the app through `mobile_scanner`; they are ML Kit plumbing, not
+Firebase services.
+
+Not built: CLIP-style image embeddings (TinyCLIP is MIT but weak; MobileCLIP's
+weights are research-only; SigLIP 2 is too large for a phone), and captions
+from a vision LLM.
 
 **Indexing is not instant, and says so in the log.** Each chunk is embedded on
 device, competing with the LLM for the phone: a 17-chunk DOCX took ~4 minutes on

@@ -1475,7 +1475,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shivSourcesDocxOpen => 'दस्तावेज़ खोलें';
 
   @override
-  String get shivSourcesImageText => 'छवि में लिखा पाठ';
+  String get shivSourcesImageFound => 'छवि में मिला';
 
   @override
   String get shivSourcesImageUntitled => 'छवि';

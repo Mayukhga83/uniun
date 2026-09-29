@@ -20,6 +20,7 @@ import 'package:uniun/features/shiv/rag/extraction/document_extraction_service.d
 import 'package:uniun/features/shiv/rag/indexing/document_indexer.dart';
 
 import '../../../../_helpers/fake_docx_text_source.dart';
+import '../../../../_helpers/fake_image_label_source.dart';
 import '../../../../_helpers/fake_ocr_text_source.dart';
 import '../../../../_helpers/fake_pdf_text_source.dart';
 import '../../../../_helpers/fixtures.dart';
@@ -69,7 +70,7 @@ void main() {
     ).thenAnswer((_) async => Right(aUserKey(pubkeyHex: kSelfPub)));
     indexer = DocumentIndexer(
       isar,
-      DocumentExtractionService(source, docx, ocr),
+      DocumentExtractionService(source, docx, ocr, FakeImageLabelSource()),
       embedAndStore,
       activeUser,
     );

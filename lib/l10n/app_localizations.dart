@@ -2678,11 +2678,11 @@ abstract class AppLocalizations {
   /// **'Open document'**
   String get shivSourcesDocxOpen;
 
-  /// Location line on an image source tile in Shiv's Sources sheet: the answer drew on text read from the picture by OCR
+  /// Location line on an image source tile in Shiv's Sources sheet: the answer drew on the picture — its text (read by OCR) or what it shows (on-device labels)
   ///
   /// In en, this message translates to:
-  /// **'Text in image'**
-  String get shivSourcesImageText;
+  /// **'Found in image'**
+  String get shivSourcesImageFound;
 
   /// Title of an image source tile when the attaching note gave the image no file name
   ///

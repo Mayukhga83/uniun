@@ -430,7 +430,7 @@
   "shivSourcesDocumentSection": "अनुभाग: {label}",
   "shivSourcesDocxUntitled": "Word दस्तावेज़",
   "shivSourcesDocxOpen": "दस्तावेज़ खोलें",
-  "shivSourcesImageText": "छवि में लिखा पाठ",
+  "shivSourcesImageFound": "छवि में मिला",
   "shivSourcesImageUntitled": "छवि",
   "shivSourcesImageOpen": "छवि खोलें",
   "shivSourcesImageGone": "यह छवि अब इस डिवाइस पर नहीं है",

@@ -19,6 +19,18 @@
 // Run:
 //   flutter test integration_test/document_rag_e2e_test.dart -d <device-id>
 //
+// The image-labeling group needs real photographs (a drawing proves nothing
+// about what ML Kit recognises). Copy them into the app's private cache, then
+// pass the directory:
+//   for f in labrador_dog_photo.jpg food_plate_photo.jpg \
+//            snowy_street_car_photo.jpg computer_desk_photo.jpg; do
+//     adb push $f /data/local/tmp/$f
+//     adb shell run-as in.uniun.app sh -c \
+//       "mkdir -p cache/label_photos && cp /data/local/tmp/$f cache/label_photos/"
+//   done
+//   flutter test integration_test/document_rag_e2e_test.dart -d <device-id> \
+//     --dart-define=LABEL_PHOTOS_DIR=/data/user/0/in.uniun.app/cache/label_photos
+//
 // By default the PDF test indexes a generated two-page PDF whose pages are
 // about clearly different subjects. To run it against a real document instead:
 //   adb push test/_helpers/fixtures/pdf/nist_sp800-145.pdf /sdcard/Download/
@@ -39,6 +51,7 @@ import 'package:isar_community/isar.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:uniun/common/locator.dart';
 import 'package:uniun/core/enum/document_kind.dart';
+import 'package:uniun/data/datasources/image_labels/image_label_source.dart';
 import 'package:uniun/data/datasources/ocr/ocr_text_source.dart';
 import 'package:uniun/data/models/documents/document_chunk_model.dart';
 import 'package:uniun/data/models/documents/document_index_model.dart';
@@ -359,6 +372,74 @@ void main() {
       expect(await chunksOf(sha), isEmpty);
       await purge(sha);
     });
+  });
+
+  group('image labels (real ML Kit, real photographs)', () {
+    const dir = String.fromEnvironment('LABEL_PHOTOS_DIR');
+    const skip = dir == ''
+        ? 'pass --dart-define=LABEL_PHOTOS_DIR (see the header comment)'
+        : false;
+    String photo(String name) => '$dir/$name';
+
+    test('ML Kit names what is in each photo', () async {
+      final labeler = getIt<ImageLabelSource>();
+      final seen = {
+        for (final f in [
+          'labrador_dog_photo.jpg',
+          'food_plate_photo.jpg',
+          'snowy_street_car_photo.jpg',
+          'computer_desk_photo.jpg',
+        ])
+          f: (await labeler.imageLabels(photo(f)))!,
+      };
+      // ignore: avoid_print
+      seen.forEach((f, l) => print('LABELS $f → $l'));
+
+      bool has(String f, List<String> any) =>
+          seen[f]!.any((l) => any.contains(l.toLowerCase()));
+      expect(has('labrador_dog_photo.jpg', ['dog']), isTrue);
+      expect(
+        has('food_plate_photo.jpg', ['food', 'cuisine', 'dish', 'meal']),
+        isTrue,
+      );
+      expect(
+        has('snowy_street_car_photo.jpg', ['car', 'vehicle', 'snow', 'winter']),
+        isTrue,
+      );
+    }, skip: skip);
+
+    test(
+      '"the picture of my dog" finds the dog photo, not the meal',
+      () async {
+        await expectModelLoaded();
+        final dogSha = await index(
+          photo('labrador_dog_photo.jpg'),
+          DocumentKind.image,
+        );
+        final foodSha = await index(
+          photo('food_plate_photo.jpg'),
+          DocumentKind.image,
+        );
+
+        final hits = await vectors.search(
+          await embedding.embed('show me the picture of my dog'),
+          topK: 3,
+          minScore: 0.0,
+        );
+
+        // ignore: avoid_print
+        print(
+          'E2E LABELS top hit: ${hits.first.content} '
+          '(${hits.first.score.toStringAsFixed(3)})',
+        );
+        expect(hits.first.kind, DocumentKind.image);
+        expect(hits.first.sha256, dogSha);
+        await purge(dogSha);
+        await purge(foodSha);
+      },
+      skip: skip,
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
   });
 }
 

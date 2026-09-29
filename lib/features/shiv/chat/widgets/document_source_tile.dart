@@ -11,7 +11,7 @@ import 'package:uniun/domain/entities/shiv/document_citation.dart';
 import 'package:uniun/l10n/app_localizations.dart';
 
 /// One document passage in Shiv's Sources sheet: file name, where in the file
-/// (a PDF's page, a DOCX's heading, or "text in image"), and the passage the
+/// (a PDF's page, a DOCX's heading, or "found in image"), and the passage the
 /// answer drew on.
 ///
 /// Tapping opens the file the way an attachment opens elsewhere — a document
@@ -31,7 +31,7 @@ class DocumentSourceTile extends StatelessWidget {
     // A DOCX has no pages; a passage above its first heading has no location
     // at all, and showing an empty "Section:" would claim one.
     final location = switch (kind) {
-      DocumentKind.image => l10n.shivSourcesImageText,
+      DocumentKind.image => l10n.shivSourcesImageFound,
       _ when citation.label.isEmpty => null,
       DocumentKind.pdf => l10n.shivSourcesDocumentPage(citation.label),
       DocumentKind.docx => l10n.shivSourcesDocumentSection(citation.label),

@@ -134,6 +134,10 @@ dependencies:
   # lib/data/datasources/ocr/ocr_text_source.dart. Devanagari needs its own
   # native dependency — see android/app/build.gradle.kts and ios/Podfile.
   google_mlkit_text_recognition: ^0.17.1
+  # On-device labels ("dog", "food") for Shiv's image search. Imported only by
+  # lib/data/datasources/image_labels/image_label_source.dart. Its Firebase
+  # dependency is excluded in android/app/build.gradle.kts — see CLAUDE.md.
+  google_mlkit_image_labeling: ^0.16.1
 
 dev_dependencies:
   flutter_test:

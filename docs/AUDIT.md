@@ -6,7 +6,7 @@ Format: one dated section per audit pass, newest first. Each item states what wa
 
 ---
 
-## 2026-09-28 — images in Shiv's RAG: on-device OCR (#240) — work in progress
+## 2026-09-28 — images in Shiv's RAG: on-device OCR and labels (#240) — work in progress
 
 Text inside images on the user's own feed notes and saved notes is read with ML Kit, embedded, and cited with the image itself. No LLM at index time. Design and scope: #240 and `docs/SHIVA/rag.md` → "Images — the text inside them".
 
@@ -34,6 +34,18 @@ Text inside images on the user's own feed notes and saved notes is read with ML 
 - The document flow test timed out once under full-suite load (30 s default, real PDF indexing with a flush per chunk). The file now carries a two-minute timeout with the reason beside it.
 - Sabotage: 13 deliberate breaks (images not a kind, no gate on OCR noise, the image gate at 200, the gate's letter ratio, no `(image)` prompt marker, OS viewer instead of in-app, no "text in image" line, saving not fetching images, DM images indexed, an image labelled like a page, the stray-glyph rule, a vanished image opening the viewer, full-resolution thumbnails) — each turned its tests red.
 
+### Image labels — what photos without text show
+
+- ML Kit's bundled base labeler (`google_mlkit_image_labeling` 0.16.1; 400+ general labels, confidence ≥ 0.6, top 6) turns a photo into a passage `Photo showing: dog, beach, sky`, kept **separate** from the OCR text so each matches the questions it is about. No LLM.
+- **The plugin hard-depends on Firebase** — `com.google.mlkit:linkfirebase` → `firebase-common` + `firebase-iid` (Firebase Instance ID) — solely for Firebase-hosted custom models, against the project's no-Firebase rule. Found by reading the resolved Gradle dependency tree, not the plugin's README. Excluded in `android/app/build.gradle.kts` (the base labeler's code path never touches it) with a matching R8 `-dontwarn`. **Verified in the minified release code:** no `com.google.firebase` package and no `linkfirebase` class; only two dangling type references in the plugin's never-called remote branch. `firebase-components`/`firebase-encoders` remain — already present through `mobile_scanner`, ML Kit plumbing rather than Firebase services.
+- Labeled images need no tile or scope change: same `DocumentKind.image`, same own/saved rule. The tile line reads "Found in image" (was "Text in image") since the passage can now be either.
+- Sabotage: 5 breaks (labels ignored, labels merged into the OCR passage, labels put through the prose gate, a labeling failure hiding OCR text, an unreadable file indexed) — each red.
+
+### Release builds were broken — found by building one
+
+- **Every release build of this branch failed in R8** once OCR landed: `google_mlkit_text_recognition` declares the Chinese/Japanese/Korean recognisers `compileOnly` and references them from a switch UNIUN never takes. Debug builds skip R8, so the debug APK, the device tests and the full suite were all green while a release build could not be produced. Fixed with `-dontwarn` for those three packages in `proguard-rules.pro`; the release build now gets through R8 and stops only at signing (no release keystore on the dev machine — expected).
+- Lesson recorded: for a native plugin, **build a release APK**, not only a debug one.
+
 ### Verified on a device (vivo 1933, Android 11)
 
 `integration_test/document_rag_e2e_test.dart`, real Gecko embedder, real ML Kit, real PDFium — **6/6 pass**:
@@ -52,7 +64,9 @@ Text inside images on the user's own feed notes and saved notes is read with ML 
 
 ### Still open
 
+- **Image labels have not run on a device yet** — the phone disconnected before the labeling device tests (`--dart-define=LABEL_PHOTOS_DIR`, four real public-domain photographs) could run. How useful the labels are in practice is therefore still unmeasured.
 - The manual kit (`~/Desktop/uniun-pdf-test/IMAGE_QUESTIONS_TO_ASK.md`) — real photos in the real app, Sources tile included — has not been run.
+- **Selective OCR for PDFs and DOCX** (researched, not built): decide per page, not per document. The current whole-document gate silently drops scanned annexure pages inside otherwise born-digital PDFs. PDFium exposes every signal needed (image coverage, invisible text render mode, unmapped unicode, font names — via `pdfium_dart`, not pdfrx's API); legacy Hindi fonts (Kruti Dev and similar) extract as letter-rich gibberish that passes today's gate. Embedding (~12 s per chunk), not OCR, dominates cost — so the rule that matters is never to index OCR text on top of a good text layer for the same area.
 - iOS — the Podfile change cannot be built from the Linux machine.
 - Not committed; pending review.
 

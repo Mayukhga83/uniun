@@ -24,6 +24,8 @@ import 'package:uniun/data/datasources/blossom_client.dart' as _i706;
 import 'package:uniun/data/datasources/cloud/uniun_gateway_client.dart' as _i83;
 import 'package:uniun/data/datasources/docx/docx_text_source.dart' as _i729;
 import 'package:uniun/data/datasources/feed_read_state_store.dart' as _i752;
+import 'package:uniun/data/datasources/image_labels/image_label_source.dart'
+    as _i35;
 import 'package:uniun/data/datasources/isar_module.dart' as _i146;
 import 'package:uniun/data/datasources/llm/embedding_queue.dart' as _i1031;
 import 'package:uniun/data/datasources/llm/flutter_gemma_gateway.dart' as _i93;
@@ -323,6 +325,7 @@ extension GetItInjectableX on _i174.GetIt {
       instanceName: 'documentTostore',
       preResolve: true,
     );
+    gh.lazySingleton<_i35.ImageLabelSource>(() => _i35.MlKitImageLabelSource());
     gh.factory<_i93.FlutterGemmaGateway>(() => _i93.FlutterGemmaGatewayImpl());
     gh.lazySingleton<_i623.PdfTextSource>(() => _i623.PdfrxTextSource());
     gh.lazySingleton<_i179.DocumentVectorRepository>(
@@ -525,6 +528,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i331.MemoryRepository>(),
       ),
     );
+    gh.lazySingleton<_i139.DocumentExtractionService>(
+      () => _i139.DocumentExtractionService(
+        gh<_i623.PdfTextSource>(),
+        gh<_i729.DocxTextSource>(),
+        gh<_i787.OcrTextSource>(),
+        gh<_i35.ImageLabelSource>(),
+      ),
+    );
     gh.factory<_i160.GanaRepository>(
       () => _i899.GanaRepositoryImpl(
         isar: gh<_i214.Isar>(),
@@ -551,13 +562,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1055.GetPrivateGroupJoinRequestsUsecase>(
       () => _i1055.GetPrivateGroupJoinRequestsUsecase(
         gh<_i635.E2EEGroupRepository>(),
-      ),
-    );
-    gh.lazySingleton<_i139.DocumentExtractionService>(
-      () => _i139.DocumentExtractionService(
-        gh<_i623.PdfTextSource>(),
-        gh<_i729.DocxTextSource>(),
-        gh<_i787.OcrTextSource>(),
       ),
     );
     gh.lazySingleton<_i58.GetStorageStatsUseCase>(

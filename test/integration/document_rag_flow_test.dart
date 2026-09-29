@@ -46,6 +46,7 @@ import 'package:uniun/core/error/failures.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../_helpers/docx_fixtures.dart';
+import '../_helpers/fake_image_label_source.dart';
 import '../_helpers/fake_ocr_text_source.dart';
 import '../_helpers/fake_path_provider.dart';
 import '../_helpers/isar_seeds.dart';
@@ -73,6 +74,7 @@ void main() {
   late VectorSearchService searchService;
   late _FakeNoteVectors noteVectors;
   late FakeOcrTextSource ocr;
+  late FakeImageLabelSource labels;
 
   const sha = 'nistsha';
   const docxSha = 'leavesha';
@@ -156,12 +158,13 @@ void main() {
     );
     indexer = DocumentIndexer(
       isar,
-      // Real PDF and DOCX readers; OCR is faked — ML Kit runs only on a
-      // phone, and integration_test/ covers the real one.
+      // Real PDF and DOCX readers; OCR and labeling are faked — ML Kit runs
+      // only on a phone, and integration_test/ covers the real ones.
       DocumentExtractionService(
         PdfrxTextSource(),
         ArchiveDocxTextSource(),
         ocr = FakeOcrTextSource(),
+        labels = FakeImageLabelSource(),
       ),
       // Real use case over the real vector repository — only the embedder
       // itself is stubbed.
@@ -580,6 +583,36 @@ void main() {
         expect(citation.localPath, '/photos/notice.jpg');
       },
     );
+
+    test('a photo without text is found by what is in it', () async {
+      await dropPdf();
+      ocr.texts['/photos/dog.jpg'] = '';
+      labels.labels['/photos/dog.jpg'] = ['Dog', 'Beach', 'Sky'];
+      await isar.writeTxn(
+        () => isar.mediaCacheModels.put(
+          mediaCacheRow(
+            'dogsha',
+            localPath: '/photos/dog.jpg',
+            mime: 'image/jpeg',
+          ),
+        ),
+      );
+      await saveNoteWith('dogsha', 'image/jpeg');
+
+      await indexer.reconcile();
+
+      final chunk = (await chunksOf('dogsha')).single;
+      expect(chunk.text, 'Photo showing: dog, beach, sky');
+      final hit = (await vectors.search(
+        embedding.vectorFor(chunk.text),
+        topK: 3,
+      )).first;
+      final citation = (await sources.resolve([
+        hit.chunkId,
+      ])).getOrElse(() => []).single;
+      expect(citation.kind, DocumentKind.image);
+      expect(citation.localPath, '/photos/dog.jpg');
+    });
 
     test('a photo with no text is kept but never cited', () async {
       await dropPdf();

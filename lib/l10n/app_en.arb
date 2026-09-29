@@ -1796,9 +1796,9 @@
   "@shivSourcesDocxOpen": {
     "description": "Tooltip on a Word (.docx) source tile in Shiv's Sources sheet"
   },
-  "shivSourcesImageText": "Text in image",
-  "@shivSourcesImageText": {
-    "description": "Location line on an image source tile in Shiv's Sources sheet: the answer drew on text read from the picture by OCR"
+  "shivSourcesImageFound": "Found in image",
+  "@shivSourcesImageFound": {
+    "description": "Location line on an image source tile in Shiv's Sources sheet: the answer drew on the picture — its text (read by OCR) or what it shows (on-device labels)"
   },
   "shivSourcesImageUntitled": "Image",
   "@shivSourcesImageUntitled": {
