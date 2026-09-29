@@ -7,6 +7,7 @@ library;
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:isar_community/isar.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -54,9 +55,9 @@ import '../_helpers/isar_test_harness.dart';
 import '../_helpers/pdf_fixtures.dart';
 import '../_helpers/pdfium_test_lib.dart';
 
-/// End-to-end document RAG flow against real PDF and DOCX files, real PDFium,
-/// the real DOCX reader, real Isar and a real ToStore — and images through a
-/// faked OCR step: cache row → extract → chunk → embed → store → retrieve →
+/// End-to-end document RAG flow against real PDF and DOCX files, real PDFium
+/// (including which pages it renders for OCR), the real DOCX reader, real
+/// Isar and a real ToStore — and images through a faked OCR step: cache row → extract → chunk → embed → store → retrieve →
 /// citation. Only the embedder is faked
 /// (deterministic vectors) — it needs flutter_gemma, which is device-only;
 /// `integration_test/` covers the real one.
@@ -636,6 +637,157 @@ void main() {
           .findFirst();
       expect(row?.status, DocumentIndexStatus.notSearchable);
       expect(await chunksOf('beachsha'), isEmpty);
+    });
+  });
+
+  group('selective OCR', () {
+    const annexure =
+        'ANNEXURE. Approval of the competent authority for the revised '
+        'office timings, conveyed by the Secretary on 20 October 2026.';
+    const photoNotice =
+        'NOTICE. The record room will remain closed for digitisation from '
+        '3 to 7 November. Urgent certified-copy requests go to the Tehsil office.';
+
+    /// Every file OCR was asked to read, with its pixel size.
+    late List<({String path, int width, int height})> read;
+
+    setUp(() {
+      read = [];
+      ocr.reader = (path) {
+        final png = img.decodePng(File(path).readAsBytesSync())!;
+        read.add((path: path, width: png.width, height: png.height));
+        return path.endsWith('_1.png') ? annexure : photoNotice;
+      };
+    });
+
+    Future<void> cachePdf(String sha, String fixture) async {
+      await isar.writeTxn(
+        () => isar.mediaCacheModels.put(
+          mediaCacheRow(
+            sha,
+            localPath: pdfFixture(fixture),
+            mime: 'application/pdf',
+          ),
+        ),
+      );
+      await saveNoteWith(sha, 'application/pdf');
+    }
+
+    Future<DocumentIndexModel?> rowOf(String sha) =>
+        isar.documentIndexModels.filter().sha256EqualTo(sha).findFirst();
+
+    test('a typed publication is never rendered for OCR', () async {
+      await indexer.reconcile();
+
+      expect((await rowOf(sha))?.status, DocumentIndexStatus.indexed);
+      expect(ocr.calls, 0);
+    });
+
+    test(
+      'a scanned PDF, once unsearchable, is read and cited by page',
+      () async {
+        await dropPdf();
+        await cachePdf('scansha', 'scanned_notice.pdf');
+
+        await indexer.reconcile();
+
+        expect((await rowOf('scansha'))?.status, DocumentIndexStatus.indexed);
+        final chunk = (await chunksOf('scansha')).single;
+        expect(chunk.text, photoNotice);
+        expect(chunk.label, '1');
+        final page = (await PdfrxTextSource().pageSignals(
+          pdfFixture('scanned_notice.pdf'),
+        ))!.single;
+        expect(
+          read.single.width,
+          closeTo(page.width * 200 / 72, 2),
+          reason: 'the whole page, at 200 dpi',
+        );
+        expect(
+          File(read.single.path).existsSync(),
+          isFalse,
+          reason: 'the render is deleted once read',
+        );
+      },
+    );
+
+    test('only the scanned annexure of a mixed circular is OCRed', () async {
+      await dropPdf();
+      await cachePdf('mixedsha', 'mixed_circular_with_scanned_annexure.pdf');
+
+      await indexer.reconcile();
+
+      final chunks = await chunksOf('mixedsha');
+      expect(read, hasLength(1));
+      expect(read.single.path, endsWith('_1.png'));
+      expect(
+        chunks.where((c) => c.label == '1').map((c) => c.text).join(' '),
+        contains('Revised Office Timings'),
+      );
+      expect(chunks.where((c) => c.label == '2').single.text, annexure);
+    });
+
+    test('a pasted photo is read on its own, beside the typed text', () async {
+      await dropPdf();
+      await cachePdf('reportsha', 'typed_report_with_pasted_notice.pdf');
+
+      await indexer.reconcile();
+
+      final text = (await chunksOf('reportsha')).map((c) => c.text).join('\n');
+      expect(text, contains('District Record Room'));
+      expect(text, contains(photoNotice));
+      expect(
+        read.single.width,
+        lessThan(595 * 200 / 72 * 0.8),
+        reason: 'just the photo is rendered, not the page',
+      );
+    });
+
+    test('a large picture in a DOCX is read where it sits', () async {
+      await dropPdf();
+      final dir = await Directory.systemTemp.createTemp('flow_docx');
+      addTearDown(() => dir.delete(recursive: true));
+      final path = '${dir.path}/memo.docx';
+      await File(path).writeAsBytes(
+        minimalDocx(
+          document: wDocument(
+            wP('Memo on the record room closure.') +
+                wDrawing('rId1') +
+                wP('Please plan certified-copy work accordingly.'),
+          ),
+          extra: {
+            'word/_rels/document.xml.rels': wRels({'rId1': 'media/image1.png'}),
+          },
+          media: {
+            'word/media/image1.png': img.encodePng(
+              img.Image(width: 1200, height: 800),
+            ),
+          },
+        ),
+      );
+      await isar.writeTxn(
+        () => isar.mediaCacheModels.put(
+          mediaCacheRow(
+            'memosha',
+            localPath: path,
+            mime: DocumentKind.docx.mime,
+          ),
+        ),
+      );
+      await saveNoteWith('memosha', DocumentKind.docx.mime);
+
+      await indexer.reconcile();
+
+      final text = (await chunksOf('memosha')).map((c) => c.text).join('\n');
+      expect(text, contains('Memo on the record room closure.'));
+      expect(
+        text.indexOf(photoNotice),
+        allOf(
+          greaterThan(text.indexOf('Memo')),
+          lessThan(text.indexOf('Please plan')),
+        ),
+      );
+      expect(File(read.single.path).existsSync(), isFalse);
     });
   });
 

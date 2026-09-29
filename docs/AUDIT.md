@@ -6,6 +6,39 @@ Format: one dated section per audit pass, newest first. Each item states what wa
 
 ---
 
+## 2026-09-29 — selective OCR for PDF pages and DOCX pictures (#242) — work in progress
+
+A PDF is now read page by page: the text layer where it is good, OCR where a page is scanned or its text layer is garbled, and OCR of one large pasted picture beside a typed page's text. Large pictures inside a DOCX are OCRed where they sit. Rules, thresholds and costs: `docs/SHIVA/rag.md` → "Scanned pages and pasted pictures".
+
+### Built on PDFium directly — pdfrx exposes none of the signals
+
+- Per-page signals (text-render mode, unmapped glyphs, font names, image bounds including images wrapped in form XObjects, characters drawn over the largest image) come from `pdfium_dart` 0.2.5's bindings, run through `PdfrxEntryFunctions.instance.compute` on pdfrx's own PDFium worker with the document handle from `useNativeDocumentHandle`. PDFium is not thread-safe; a second loader or thread would race pdfrx's calls.
+- Verified against real PDFium, not a double: the NIST publication plans no OCR on any page; a Pillow-built scan, a LibreOffice typed page with a pasted photo, and a `pdfunite` mixed circular each get the expected plan; invisible (render mode 3) text and a `KrutiDev010` base font are recognised; a page renders at 200 dpi to a one-channel PNG, and a region renders at the region's size.
+- A fixture finding recorded in `PROVENANCE.md`: the pasted photo at 10 × 12.5 cm covered only ~20 % of an A4 page — under the 25 % region threshold, so it would have gone unread. That threshold is a guess; it must be measured on real circulars.
+
+### Behaviour changes worth knowing
+
+- **A scanned PDF is no longer `notSearchable`** — it is OCRed and cited by page. So is a scanned annexure inside a typed circular, which the old whole-document gate silently dropped.
+- With page signals, the gate is per page (≥ 16 chars, ≥ 15 % letters), so a short but real one-page PDF is now indexed. Without signals (PDFium failed after the text layer opened) the old whole-document 200-character gate still applies.
+- One page that fails to render or OCR costs only that page; one corrupt DOCX picture costs only that picture, never the document's text.
+- Every render and extracted picture is a temp file deleted once read.
+
+### Sabotage — each break turned its tests red
+
+Service: falling back to a garbled layer when OCR finds nothing, not deleting renders, the whole-document gate over planned pages, an OCR failure failing the document, the region OCR reading the whole page, DOCX pictures not substituted, the picture folder not removed. PDFium analysis: invisible text not counted, legacy fonts not detected, images inside form XObjects missed. DOCX reader: repeats not deduplicated, the area floor, the picture cap, each pixel floor on its own, a heading label carrying a marker, a corrupt picture failing the document.
+
+Three checks that survived their sabotage were removed rather than kept untested: PDFium's "generated character" flag (the whitespace filter already drops those), the `TargetMode="External"` check (a linked picture's URL names no zip entry) and the empty-section and blank-line cleanup in the service (the chunker already does both). A PNG/JPEG-only rule for DOCX pictures was dropped too — it rested on nothing measured; anything the decoder can size is read.
+
+### Still open
+
+- **Not yet run on a device.** The device group (`--plain-name 'selective OCR'`) builds scanned, mixed and pasted-photo PDFs and a DOCX with a pasted notice on the phone and runs real PDFium + ML Kit + Gecko; `--dart-define=OCR_TIMING_PDF=…` prints each page's plan with render and OCR time for a real circular. Speed must be measured before the thresholds are trusted.
+- Unmeasured thresholds: 50 % mostly-image, 25 % region, 20 characters over an image, the DOCX size floors, 20 pictures per DOCX.
+- Pictures in DOCX text boxes and legacy VML (`w:pict`) are not read.
+- iOS unverified (no Mac).
+- Not committed; pending review.
+
+---
+
 ## 2026-09-28 — images in Shiv's RAG: on-device OCR and labels (#240) — work in progress
 
 Text inside images on the user's own feed notes and saved notes is read with ML Kit, embedded, and cited with the image itself. No LLM at index time. Design and scope: #240 and `docs/SHIVA/rag.md` → "Images — the text inside them".
@@ -66,7 +99,7 @@ Text inside images on the user's own feed notes and saved notes is read with ML 
 
 - **Image labels have not run on a device yet** — the phone disconnected before the labeling device tests (`--dart-define=LABEL_PHOTOS_DIR`, four real public-domain photographs) could run. How useful the labels are in practice is therefore still unmeasured.
 - The manual kit (`~/Desktop/uniun-pdf-test/IMAGE_QUESTIONS_TO_ASK.md`) — real photos in the real app, Sources tile included — has not been run.
-- **Selective OCR for PDFs and DOCX** (researched, not built): decide per page, not per document. The current whole-document gate silently drops scanned annexure pages inside otherwise born-digital PDFs. PDFium exposes every signal needed (image coverage, invisible text render mode, unmapped unicode, font names — via `pdfium_dart`, not pdfrx's API); legacy Hindi fonts (Kruti Dev and similar) extract as letter-rich gibberish that passes today's gate. Embedding (~12 s per chunk), not OCR, dominates cost — so the rule that matters is never to index OCR text on top of a good text layer for the same area.
+- **Selective OCR for PDFs and DOCX** (built since — see the #242 entry above): decide per page, not per document. The current whole-document gate silently drops scanned annexure pages inside otherwise born-digital PDFs. PDFium exposes every signal needed (image coverage, invisible text render mode, unmapped unicode, font names — via `pdfium_dart`, not pdfrx's API); legacy Hindi fonts (Kruti Dev and similar) extract as letter-rich gibberish that passes today's gate. Embedding (~12 s per chunk), not OCR, dominates cost — so the rule that matters is never to index OCR text on top of a good text layer for the same area.
 - iOS — the Podfile change cannot be built from the Linux machine.
 - Not committed; pending review.
 

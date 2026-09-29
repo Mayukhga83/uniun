@@ -223,13 +223,18 @@ never read.
  │ 1. READ    by DocumentKind:                              │
  │            PDF  → PdfrxTextSource → PDFium, pages 1..N   │
  │                   → labels "1", "2", …                   │
+ │                   each page planned: text layer, OCR the │
+ │                   page, OCR one pasted image, or skip    │
  │            DOCX → ArchiveDocxTextSource (zip + XML, in   │
  │                   Isolate.run) → one section per heading │
  │                   → labels "Annual Leave", …, or ""      │
+ │                   large pictures OCRed where they sit    │
  ├──────────────────────────────────────────────────────────┤
  │ 2. GATE    looksLikeProse()                              │
- │            ≥200 chars AND ≥15% Unicode letters?          │
- │            NO  → status notSearchable, stop  (a scan)    │
+ │            PDF: per page, ≥16 chars AND ≥15% letters     │
+ │            (whole document ≥200 chars if PDFium gave no  │
+ │            page signals)                                 │
+ │            nothing left → notSearchable, stop            │
  │            YES ↓                                         │
  ├──────────────────────────────────────────────────────────┤
  │ 3. CHUNK   chunkSections() — ≤700 chars, never across    │
@@ -471,13 +476,63 @@ retrieval bug. Watch it with `adb logcat | grep DocumentIndexer`:
 
 Nothing in the app UI shows indexing progress yet.
 
-**Scans are kept, not indexed.** No text layer, or text that fails the quality
-gate, is recorded `notSearchable`: the document still attaches and opens, it is
-simply never cited. The same holds for a DOCX that cannot be read (not a zip,
+**Scans are read by OCR, page by page** — see *Scanned pages and pasted
+pictures* below. A PDF where no page yields readable text, even after OCR, is
+recorded `notSearchable`: the document still attaches and opens, it is simply
+never cited. The same holds for a DOCX that cannot be read (not a zip,
 password-protected, malformed XML) or holds no text at all. The prose gate itself
 is **PDF-only**: it catches scans and broken font encodings, which a DOCX cannot
 have, so a short DOCX memo or a table of figures is indexed. An embedder that is not ready is different — it leaves the
 document *unindexed* so a later reconcile retries it.
+
+### Scanned pages and pasted pictures (selective OCR, #242)
+
+OCR costs about a second a page and every chunk it adds costs an embedding, so
+only the pages and pictures that need it are read. OCR text never lands on top
+of a good text layer for the same area — that would index each passage twice.
+
+**PDF: one plan per page** (`planPage`, `lib/features/shiv/rag/extraction/page_ocr_plan.dart`),
+from what PDFium reports about the page (`PdfPageSignals`, read in
+`pdfium_page_analysis.dart` on pdfrx's own PDFium worker — pdfrx exposes none
+of it):
+
+| Page | Plan |
+|---|---|
+| < 10 characters and no image ≥ 25 % of the page | skip |
+| garbled layer: < 15 % letters, > 10 % unmapped glyphs, or a legacy Hindi font (Kruti Dev, DevLys, Chanakya…) | OCR the page, drop the layer |
+| images ≥ 85 % of the page and < 200 characters (a scan) | OCR the page |
+| images ≥ 50 % and < 200 characters (a photo with a header line) | OCR the page, keep the longer of the two readings |
+| one image ≥ 25 % of the page with < 20 characters drawn over it | keep the layer **and** OCR just that image |
+| otherwise | the text layer |
+
+A scan with a good invisible OCR layer (≥ 200 real characters) is trusted, not
+re-read. Legacy Hindi fonts are caught by name because their text extracts as
+Latin gibberish that passes the letter ratio. On a rotated page the image rule
+reads the whole page instead of mapping the rectangle.
+
+A page to OCR is rendered at 200 dpi (long side capped at 3000 px) to a
+grayscale PNG, read by `OcrTextSource`, and deleted. Each page is gated on its
+own (≥ 16 chars, ≥ 15 % letters), so a page OCR could not read — or a render or
+OCR failure — costs only that page.
+
+**DOCX: large pictures only.** With a picture directory, the reader writes out
+each embedded picture drawn at least 2.5 in wide and about 5 × 4 in in area,
+with at least 500 × 100 pixels, and leaves a marker in its section's text; the
+service swaps each marker for the picture's OCR text, so it keeps its place
+and its heading. Logos, signatures, vector drawings (EMF/WMF/SVG), linked
+pictures and repeats of one picture are skipped; at most 20 per document.
+
+**The thresholds are unmeasured.** The 85 % scan and 10-character/10 % unmapped
+figures come from published tools (bibr, Apache Tika); the 50 %, 25 %,
+20-character and DOCX sizes are guesses. Measure on real circulars on a phone
+before trusting them — the device test prints each page's plan and its render
+and OCR time:
+
+```
+flutter test integration_test/document_rag_e2e_test.dart -d <device-id> \
+  --plain-name 'selective OCR' \
+  --dart-define=OCR_TIMING_PDF=/sdcard/Download/circular.pdf
+```
 
 ### Constraints worth knowing before changing this
 
@@ -515,8 +570,8 @@ alike as a library grows, and is not specific to documents.
 
 | Tier | Where | Real | Faked |
 |---|---|---|---|
-| Unit | `test/features/shiv/rag/extraction/`, `test/domain/entities/shiv/`, `test/core/enum/` | chunker, gate, extraction dispatch, chunk ids, `DocumentKind` | PDF/DOCX/OCR sources |
-| Component | `test/features/shiv/rag/indexing/`, `test/data/...` | real PDFium + the committed PDF, the real DOCX reader + committed Word/LibreOffice files, real Isar, real ToStore | embedder |
+| Unit | `test/features/shiv/rag/extraction/`, `test/domain/entities/shiv/`, `test/core/enum/` | chunker, gate, extraction dispatch, per-page OCR plans, chunk ids, `DocumentKind` | PDF/DOCX/OCR sources |
+| Component | `test/features/shiv/rag/indexing/`, `test/data/...` | real PDFium + the committed PDFs (page signals and OCR renders too), the real DOCX reader + committed Word/LibreOffice files, real Isar, real ToStore | embedder |
 | Pipeline | `test/integration/document_rag_flow_test.dart` | everything above, assembled, PDF, DOCX and images | embedder, OCR |
 | Device | `integration_test/document_rag_e2e_test.dart` | **everything, incl. the real Gecko embedder and real ML Kit OCR** | nothing |
 
@@ -535,5 +590,5 @@ and points pdfrx at it, mirroring what `ensureIsarCore()` already does for
 Isar's native binary.
 
 **Not built:** in-app page-jump viewer (#237), documents in Manas-scoped chat
-(#236), a `notSearchable` badge, OCR for scans, `.doc`/`.odt`, DOCX headers,
+(#236), a `notSearchable` badge, OCR of pictures inside DOCX text boxes, headers or tables' VML, `.doc`/`.odt`, DOCX headers,
 footers and footnotes.

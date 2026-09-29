@@ -138,6 +138,8 @@ dependencies:
   # lib/data/datasources/image_labels/image_label_source.dart. Its Firebase
   # dependency is excluded in android/app/build.gradle.kts — see CLAUDE.md.
   google_mlkit_image_labeling: ^0.16.1
+  ffi: ^2.2.0
+  pdfium_dart: ^0.2.5
 
 dev_dependencies:
   flutter_test:

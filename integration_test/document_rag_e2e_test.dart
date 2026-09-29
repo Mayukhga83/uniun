@@ -36,12 +36,22 @@
 //   adb push test/_helpers/fixtures/pdf/nist_sp800-145.pdf /sdcard/Download/
 //   flutter test integration_test/document_rag_e2e_test.dart -d <device-id> \
 //     --dart-define=PDF_FIXTURE_PATH=/sdcard/Download/nist_sp800-145.pdf
+//
+// Selective OCR (#242) runs on PDFs built on the device, so it needs nothing
+// pushed. To time it on a real circular, page by page — the measurement to
+// take before trusting the thresholds in `page_ocr_plan.dart`:
+//   adb push circular.pdf /sdcard/Download/
+//   flutter test integration_test/document_rag_e2e_test.dart -d <device-id> \
+//     --plain-name 'selective OCR' \
+//     --dart-define=OCR_TIMING_PDF=/sdcard/Download/circular.pdf
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:archive/archive.dart';
+import 'package:image/image.dart' as img;
 import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_gemma_litertlm/flutter_gemma_litertlm.dart';
 import 'package:flutter_gemma_mediapipe/flutter_gemma_mediapipe.dart';
@@ -53,6 +63,8 @@ import 'package:uniun/common/locator.dart';
 import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/data/datasources/image_labels/image_label_source.dart';
 import 'package:uniun/data/datasources/ocr/ocr_text_source.dart';
+import 'package:uniun/data/datasources/pdf/pdf_text_source.dart';
+import 'package:uniun/features/shiv/rag/extraction/page_ocr_plan.dart';
 import 'package:uniun/data/models/documents/document_chunk_model.dart';
 import 'package:uniun/data/models/documents/document_index_model.dart';
 import 'package:uniun/data/models/media/media_cache_model.dart';
@@ -81,6 +93,13 @@ const _gardeningPage =
     'so the stems are supported before the fruit becomes heavy. Prune the side '
     'shoots to concentrate growth in the main stem and harvest when the fruit '
     'is firm and fully coloured.';
+
+/// A notice as it would be photographed or scanned: short lines, distinctive
+/// words the OCR assertions look for.
+const _notice =
+    'RECORD ROOM NOTICE\nThe record room stays closed\nfrom 3 to 7 November '
+    'for the\ndigitisation of old files.\nUrgent certified copies\nmay be '
+    'requested at the\nTehsil office.';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -374,6 +393,199 @@ void main() {
     });
   });
 
+  group('selective OCR (real PDFium + ML Kit)', () {
+    // A4 at 150 dpi, and a photo of about the page's proportions to paste.
+    late _GrayImage scan;
+    late _GrayImage photo;
+    setUpAll(() async {
+      scan = _GrayImage.fromPng(
+        await _renderText(_notice, width: 1240, height: 1754, fontSize: 44),
+      );
+      photo = _GrayImage.fromPng(
+        await _renderText(_notice, width: 1240, height: 1000, fontSize: 44),
+      );
+    });
+
+    String allText(List<DocumentChunkModel> chunks) =>
+        chunks.map((c) => c.text).join('\n').toLowerCase();
+
+    Future<String> timed(String name, Future<String> Function() body) async {
+      final watch = Stopwatch()..start();
+      final sha = await body();
+      // ignore: avoid_print
+      print('SELECTIVE OCR $name — indexed in ${watch.elapsedMilliseconds} ms');
+      return sha;
+    }
+
+    test(
+      'a scanned page is read by OCR and cited by its page',
+      () async {
+        await expectModelLoaded();
+        final file = await tempFile(
+          'scan.pdf',
+          _pdf([(text: '', image: (pixels: scan, box: _a4Page))]),
+        );
+
+        final sha = await timed(
+          'scanned page',
+          () => index(file.path, DocumentKind.pdf),
+        );
+
+        final chunks = await chunksOf(sha);
+        expect(chunks.map((c) => c.label).toSet(), {'1'});
+        expect(
+          allText(chunks),
+          allOf(contains('record room'), contains('november')),
+        );
+        await purge(sha);
+      },
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
+
+    test(
+      'only the scanned page of a mixed PDF is read by OCR',
+      () async {
+        await expectModelLoaded();
+        final file = await tempFile(
+          'mixed.pdf',
+          _pdf([
+            (text: _cloudPage, image: null),
+            (text: '', image: (pixels: scan, box: _a4Page)),
+          ]),
+        );
+
+        final sha = await timed(
+          'mixed typed + scanned',
+          () => index(file.path, DocumentKind.pdf),
+        );
+
+        final chunks = await chunksOf(sha);
+        expect(
+          allText(chunks.where((c) => c.label == '1').toList()),
+          contains('cloud computing'),
+        );
+        expect(
+          allText(chunks.where((c) => c.label == '2').toList()),
+          contains('record room'),
+        );
+        await purge(sha);
+      },
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
+
+    test(
+      'a photo pasted into a typed page is read beside the text',
+      () async {
+        await expectModelLoaded();
+        final file = await tempFile(
+          'pasted.pdf',
+          _pdf([
+            (
+              text: _gardeningPage,
+              // About a third of the page, below the typed paragraph.
+              image: (
+                pixels: photo,
+                box: (left: 60, bottom: 60, right: 535, top: 443),
+              ),
+            ),
+          ]),
+        );
+
+        final sha = await timed(
+          'typed page + pasted photo',
+          () => index(file.path, DocumentKind.pdf),
+        );
+
+        expect(
+          allText(await chunksOf(sha)),
+          allOf(contains('tomato'), contains('record room')),
+        );
+        await purge(sha);
+      },
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
+
+    test(
+      'a large picture in a DOCX is read where it sits',
+      () async {
+        await expectModelLoaded();
+        final file = await tempFile(
+          'memo.docx',
+          _docxWithPicture(
+            before: 'Memo on the closure of the record room.',
+            png: await _renderText(_notice),
+            after: 'Please plan certified-copy work accordingly.',
+          ),
+        );
+
+        final sha = await timed(
+          'DOCX with a pasted notice',
+          () => index(file.path, DocumentKind.docx),
+        );
+
+        final text = allText(await chunksOf(sha));
+        expect(
+          text.indexOf('record room notice'),
+          allOf(
+            greaterThan(text.indexOf('memo on')),
+            lessThan(text.indexOf('please plan')),
+          ),
+        );
+        await purge(sha);
+      },
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
+
+    const timingPdf = String.fromEnvironment('OCR_TIMING_PDF');
+    test(
+      'timings on a real PDF, page by page',
+      () async {
+        expect(
+          File(timingPdf).existsSync(),
+          isTrue,
+          reason: 'OCR_TIMING_PDF was set but no file is there',
+        );
+        final pdf = getIt<PdfTextSource>();
+        final ocr = getIt<OcrTextSource>();
+
+        final watch = Stopwatch()..start();
+        final signals = (await pdf.pageSignals(timingPdf))!;
+        // ignore: avoid_print
+        print(
+          'TIMING signals for ${signals.length} page(s): '
+          '${watch.elapsedMilliseconds} ms',
+        );
+
+        for (var i = 0; i < signals.length; i++) {
+          final s = signals[i];
+          final plan = planPage(s);
+          final region = plan is OcrRegion ? plan.region : null;
+          var line =
+              'TIMING p.${i + 1} ${plan.runtimeType} '
+              'chars=${s.chars} images=${(s.imageCoverage * 100).round()}% '
+              'largest=${(s.largestImageCoverage * 100).round()}%';
+          if (plan is OcrWholePage || plan is OcrRegion) {
+            watch.reset();
+            final png = (await pdf.renderForOcr(timingPdf, i, region: region))!;
+            final renderMs = watch.elapsedMilliseconds;
+            watch.reset();
+            final text = await ocr.imageText(png) ?? '';
+            line +=
+                ' render=${renderMs}ms ocr=${watch.elapsedMilliseconds}ms '
+                'read=${text.length} chars';
+            await File(png).delete();
+          }
+          // ignore: avoid_print
+          print(line);
+        }
+      },
+      skip: timingPdf.isEmpty
+          ? 'pass --dart-define=OCR_TIMING_PDF (see the header comment)'
+          : false,
+      timeout: const Timeout(Duration(minutes: 10)),
+    );
+  });
+
   group('image labels (real ML Kit, real photographs)', () {
     const dir = String.fromEnvironment('LABEL_PHOTOS_DIR');
     const skip = dir == ''
@@ -561,22 +773,28 @@ String _wrap(String text, {int width = 42}) {
 }
 
 /// [text] drawn black on white, large enough for OCR, as a PNG — rendered on
-/// the device with its own fonts, so Devanagari needs no bundled font.
-Future<List<int>> _renderText(String text) async {
-  final builder = ui.ParagraphBuilder(ui.ParagraphStyle(fontSize: 36))
+/// the device with its own fonts, so Devanagari needs no bundled font. A
+/// [height] gives a fixed page-shaped canvas, so a scan is not stretched.
+Future<List<int>> _renderText(
+  String text, {
+  int width = 1080,
+  int? height,
+  double fontSize = 36,
+}) async {
+  final builder = ui.ParagraphBuilder(ui.ParagraphStyle(fontSize: fontSize))
     ..pushStyle(ui.TextStyle(color: const ui.Color(0xFF000000)))
     ..addText(text);
   final paragraph = builder.build()
-    ..layout(const ui.ParagraphConstraints(width: 1000));
-  final height = paragraph.height.ceil() + 80;
+    ..layout(ui.ParagraphConstraints(width: width - 80.0));
+  final h = height ?? paragraph.height.ceil() + 80;
   final recorder = ui.PictureRecorder();
   ui.Canvas(recorder)
     ..drawRect(
-      ui.Rect.fromLTWH(0, 0, 1080, height.toDouble()),
+      ui.Rect.fromLTWH(0, 0, width.toDouble(), h.toDouble()),
       ui.Paint()..color = const ui.Color(0xFFFFFFFF),
     )
     ..drawParagraph(paragraph, const ui.Offset(40, 40));
-  final image = await recorder.endRecording().toImage(1080, height);
+  final image = await recorder.endRecording().toImage(width, h);
   final png = await image.toByteData(format: ui.ImageByteFormat.png);
   return png!.buffer.asUint8List();
 }
@@ -591,4 +809,166 @@ Future<List<int>> _renderBlank() async {
   final image = await recorder.endRecording().toImage(800, 600);
   final png = await image.toByteData(format: ui.ImageByteFormat.png);
   return png!.buffer.asUint8List();
+}
+
+/// An A4 page, in points.
+const _a4Page = (left: 0.0, bottom: 0.0, right: 595.0, top: 842.0);
+
+/// 8-bit grayscale pixels, as a PDF image XObject takes them.
+class _GrayImage {
+  _GrayImage(this.width, this.height, this.bytes);
+
+  factory _GrayImage.fromPng(List<int> png) {
+    final gray = img
+        .decodePng(Uint8List.fromList(png))!
+        .convert(numChannels: 1);
+    return _GrayImage(gray.width, gray.height, gray.getBytes());
+  }
+
+  final int width;
+  final int height;
+  final Uint8List bytes;
+}
+
+typedef _PdfBox = ({double left, double bottom, double right, double top});
+
+/// An A4 PDF, one entry per page: typed [text] (a real text layer) and/or an
+/// image drawn at a box — a scan when it fills the page with no text, a
+/// pasted photo when it sits beside text.
+List<int> _pdf(
+  List<({String text, ({_GrayImage pixels, _PdfBox box})? image})> pages,
+) {
+  String esc(String s) =>
+      s.replaceAll(r'\', r'\\').replaceAll('(', r'\(').replaceAll(')', r'\)');
+  String textOps(String text) {
+    if (text.isEmpty) return '';
+    final lines = _wrap(text, width: 90).split('\n');
+    return 'BT /F1 11 Tf 54 790 Td 14 TL\n'
+        '${lines.map((l) => '(${esc(l)}) Tj T*').join('\n')}\nET\n';
+  }
+
+  final objs = <List<int>>[];
+  int add(List<int> body) {
+    objs.add(body);
+    return objs.length;
+  }
+
+  List<int> ascii(String s) => latin1.encode(s);
+  List<int> stream(String dict, List<int> data) => [
+    ...ascii('<< $dict /Length ${data.length} >>\nstream\n'),
+    ...data,
+    ...ascii('\nendstream'),
+  ];
+
+  add(ascii('<< /Type /Catalog /Pages 2 0 R >>'));
+  add(const []); // pages tree, filled in once the page ids are known
+  add(ascii('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'));
+  final pageIds = <int>[];
+  for (final page in pages) {
+    final image = page.image;
+    var ops = textOps(page.text);
+    var xobject = '';
+    if (image != null) {
+      final b = image.box;
+      final id = add(
+        stream(
+          '/Type /XObject /Subtype /Image /Width ${image.pixels.width} '
+          '/Height ${image.pixels.height} /ColorSpace /DeviceGray '
+          '/BitsPerComponent 8 /Filter /FlateDecode',
+          zlib.encode(image.pixels.bytes),
+        ),
+      );
+      ops +=
+          'q ${b.right - b.left} 0 0 ${b.top - b.bottom} ${b.left} '
+          '${b.bottom} cm /Im1 Do Q\n';
+      xobject = '/XObject << /Im1 $id 0 R >>';
+    }
+    final content = add(stream('', ascii(ops)));
+    pageIds.add(
+      add(
+        ascii(
+          '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] '
+          '/Contents $content 0 R /Resources << /Font << /F1 3 0 R >> $xobject >> >>',
+        ),
+      ),
+    );
+  }
+  objs[1] = ascii(
+    '<< /Type /Pages /Kids [${pageIds.map((i) => '$i 0 R').join(' ')}] '
+    '/Count ${pageIds.length} >>',
+  );
+
+  final out = BytesBuilder()..add(ascii('%PDF-1.4\n'));
+  final offsets = <int>[];
+  for (var i = 0; i < objs.length; i++) {
+    offsets.add(out.length);
+    out
+      ..add(ascii('${i + 1} 0 obj\n'))
+      ..add(objs[i])
+      ..add(ascii('\nendobj\n'));
+  }
+  final xrefAt = out.length;
+  out.add(
+    ascii(
+      'xref\n0 ${objs.length + 1}\n0000000000 65535 f \n'
+      '${offsets.map((o) => '${o.toString().padLeft(10, '0')} 00000 n \n').join()}'
+      'trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\n'
+      'startxref\n$xrefAt\n%%EOF\n',
+    ),
+  );
+  return out.toBytes();
+}
+
+/// A Word package with [png] pasted at 6 × 4 in between two paragraphs.
+List<int> _docxWithPicture({
+  required String before,
+  required List<int> png,
+  required String after,
+}) {
+  const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  String p(String text) =>
+      '<w:p><w:r><w:t xml:space="preserve">${const HtmlEscape(HtmlEscapeMode.element).convert(text)}</w:t></w:r></w:p>';
+  const picture =
+      '<w:p><w:r><w:drawing '
+      'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
+      'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+      'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" '
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+      '<wp:inline><wp:extent cx="5486400" cy="3657600"/><a:graphic><a:graphicData>'
+      '<pic:pic><pic:blipFill><a:blip r:embed="rId1"/></pic:blipFill></pic:pic>'
+      '</a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+  final parts = <String, List<int>>{
+    '[Content_Types].xml': utf8.encode(
+      '<?xml version="1.0" encoding="UTF-8"?>'
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+      '<Default Extension="xml" ContentType="application/xml"/>'
+      '<Default Extension="png" ContentType="image/png"/>'
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+      '</Types>',
+    ),
+    '_rels/.rels': utf8.encode(
+      '<?xml version="1.0" encoding="UTF-8"?>'
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+      '</Relationships>',
+    ),
+    'word/_rels/document.xml.rels': utf8.encode(
+      '<?xml version="1.0" encoding="UTF-8"?>'
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>'
+      '</Relationships>',
+    ),
+    'word/document.xml': utf8.encode(
+      '<?xml version="1.0" encoding="UTF-8"?>'
+      '<w:document xmlns:w="$w"><w:body>${p(before)}$picture${p(after)}'
+      '</w:body></w:document>',
+    ),
+    'word/media/image1.png': png,
+  };
+  final archive = Archive();
+  parts.forEach(
+    (name, bytes) => archive.addFile(ArchiveFile.bytes(name, bytes)),
+  );
+  return ZipEncoder().encodeBytes(archive);
 }
