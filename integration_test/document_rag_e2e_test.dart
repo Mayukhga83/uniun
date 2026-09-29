@@ -12,7 +12,9 @@
 // chunking, real Isar, real ToStore, purge, idempotency) is proven in CI by
 // `test/integration/document_rag_flow_test.dart`. What ONLY this test can
 // prove is that genuine Gecko vectors retrieve the *semantically right* chunk
-// — and, for a DOCX, that the chunk carries the right heading.
+// — and, for a DOCX, that the chunk carries the right heading — and that real
+// ML Kit OCR reads text (English and Hindi) out of an image, which never runs
+// under `flutter test`.
 //
 // Run:
 //   flutter test integration_test/document_rag_e2e_test.dart -d <device-id>
@@ -25,6 +27,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:archive/archive.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
@@ -36,6 +39,7 @@ import 'package:isar_community/isar.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:uniun/common/locator.dart';
 import 'package:uniun/core/enum/document_kind.dart';
+import 'package:uniun/data/datasources/ocr/ocr_text_source.dart';
 import 'package:uniun/data/models/documents/document_chunk_model.dart';
 import 'package:uniun/data/models/documents/document_index_model.dart';
 import 'package:uniun/data/models/media/media_cache_model.dart';
@@ -101,7 +105,11 @@ void main() {
 
   /// Registers [path] in the media cache as a downloaded blob would be,
   /// indexes it, and returns its sha.
-  Future<String> index(String path, DocumentKind kind) async {
+  Future<String> index(
+    String path,
+    DocumentKind kind, {
+    DocumentIndexStatus expected = DocumentIndexStatus.indexed,
+  }) async {
     final sha = 'e2e${kind.name}${DateTime.now().microsecondsSinceEpoch}';
     final size = await File(path).length();
     await isar.writeTxn(
@@ -123,6 +131,9 @@ void main() {
           ..sig = ''
           ..content = 'e2e document note'
           ..type = NoteType.text
+          ..eTagRefs = const []
+          ..pTagRefs = const []
+          ..tTags = const []
           ..created = DateTime.now()
           ..savedAt = DateTime.now()
           ..attachments = [
@@ -139,7 +150,7 @@ void main() {
         .findFirst();
     expect(
       row?.status,
-      DocumentIndexStatus.indexed,
+      expected,
       reason: 'the document should have been extracted and embedded',
     );
     return sha;
@@ -253,6 +264,102 @@ void main() {
     );
     await purge(sha);
   }, timeout: const Timeout(Duration(minutes: 5)));
+
+  group('images (real ML Kit OCR)', () {
+    test('OCR reads the words of an English notice', () async {
+      final png = await _renderText(
+        'OFFICE ORDER\nEarned leave may be carried forward\nup to 15 days.',
+      );
+      final file = await tempFile('en_notice.png', png);
+
+      final text = (await getIt<OcrTextSource>().imageText(file.path))!;
+
+      // ignore: avoid_print
+      print('OCR EN → ${text.replaceAll('\n', ' ⏎ ')}');
+      expect(
+        text.toLowerCase(),
+        allOf(contains('office order'), contains('15 days')),
+      );
+    });
+
+    test(
+      'OCR keeps both languages of a mixed Hindi and English notice',
+      () async {
+        final png = await _renderText(
+          'कार्यालय आदेश\nसभी कर्मचारियों के लिए\nOFFICE ORDER\nLeave rules 2026',
+        );
+        final file = await tempFile('mixed_notice.png', png);
+
+        final text = (await getIt<OcrTextSource>().imageText(file.path))!;
+
+        // ignore: avoid_print
+        print('OCR MIXED → ${text.replaceAll('\n', ' ⏎ ')}');
+        expect(text, contains('आदेश'), reason: 'the Hindi line');
+        expect(
+          text.toUpperCase(),
+          contains('OFFICE ORDER'),
+          reason:
+              'the English line — if this fails, the Devanagari '
+              'recogniser drops Latin text and the two passes must be merged',
+        );
+      },
+    );
+
+    test(
+      'an image of text is retrieved semantically with real Gecko',
+      () async {
+        await expectModelLoaded();
+        final cloud = await tempFile(
+          'cloud.png',
+          await _renderText(_wrap(_cloudPage)),
+        );
+        final garden = await tempFile(
+          'garden.png',
+          await _renderText(_wrap(_gardeningPage)),
+        );
+        final cloudSha = await index(cloud.path, DocumentKind.image);
+        final gardenSha = await index(garden.path, DocumentKind.image);
+
+        final hits = await vectors.search(
+          await embedding.embed(
+            'how should I water and support tomato plants?',
+          ),
+          topK: 3,
+          minScore: 0.0,
+        );
+
+        expect(hits, isNotEmpty);
+        expect(hits.first.kind, DocumentKind.image);
+        expect(
+          hits.first.sha256,
+          gardenSha,
+          reason:
+              'the tomato question should reach the tomato image, not '
+              '${hits.first.content}',
+        );
+        // ignore: avoid_print
+        print(
+          'E2E IMAGE OK — top hit score ${hits.first.score.toStringAsFixed(3)}',
+        );
+        await purge(cloudSha);
+        await purge(gardenSha);
+      },
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
+
+    test('a picture with no text is kept but not searchable', () async {
+      final blank = await tempFile('sky.png', await _renderBlank());
+
+      final sha = await index(
+        blank.path,
+        DocumentKind.image,
+        expected: DocumentIndexStatus.notSearchable,
+      );
+
+      expect(await chunksOf(sha), isEmpty);
+      await purge(sha);
+    });
+  });
 }
 
 /// Minimal Word package: one Heading 1 per subject, each followed by its
@@ -355,4 +462,52 @@ List<int> _twoPagePdf() {
     'startxref\n$xrefAt\n%%EOF\n',
   );
   return sb.toString().codeUnits;
+}
+
+/// Breaks [text] into short lines so a rendered notice stays readable.
+String _wrap(String text, {int width = 42}) {
+  final lines = <String>[];
+  var line = '';
+  for (final w in text.split(' ')) {
+    if (line.isNotEmpty && line.length + 1 + w.length > width) {
+      lines.add(line);
+      line = '';
+    }
+    line = line.isEmpty ? w : '$line $w';
+  }
+  if (line.isNotEmpty) lines.add(line);
+  return lines.join('\n');
+}
+
+/// [text] drawn black on white, large enough for OCR, as a PNG — rendered on
+/// the device with its own fonts, so Devanagari needs no bundled font.
+Future<List<int>> _renderText(String text) async {
+  final builder = ui.ParagraphBuilder(ui.ParagraphStyle(fontSize: 36))
+    ..pushStyle(ui.TextStyle(color: const ui.Color(0xFF000000)))
+    ..addText(text);
+  final paragraph = builder.build()
+    ..layout(const ui.ParagraphConstraints(width: 1000));
+  final height = paragraph.height.ceil() + 80;
+  final recorder = ui.PictureRecorder();
+  ui.Canvas(recorder)
+    ..drawRect(
+      ui.Rect.fromLTWH(0, 0, 1080, height.toDouble()),
+      ui.Paint()..color = const ui.Color(0xFFFFFFFF),
+    )
+    ..drawParagraph(paragraph, const ui.Offset(40, 40));
+  final image = await recorder.endRecording().toImage(1080, height);
+  final png = await image.toByteData(format: ui.ImageByteFormat.png);
+  return png!.buffer.asUint8List();
+}
+
+/// A plain sky-blue square: a photo with nothing to read.
+Future<List<int>> _renderBlank() async {
+  final recorder = ui.PictureRecorder();
+  ui.Canvas(recorder).drawRect(
+    const ui.Rect.fromLTWH(0, 0, 800, 600),
+    ui.Paint()..color = const ui.Color(0xFF87CEEB),
+  );
+  final image = await recorder.endRecording().toImage(800, 600);
+  final png = await image.toByteData(format: ui.ImageByteFormat.png);
+  return png!.buffer.asUint8List();
 }

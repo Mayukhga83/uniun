@@ -1,3 +1,9 @@
+// Every test indexes real files — the 20-chunk NIST PDF, flushing ToStore per
+// chunk — so under full-suite contention one can pass the 30 s default (it
+// did, once). Minutes, not seconds, is the honest budget for this file.
+@Timeout(Duration(minutes: 2))
+library;
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -40,6 +46,7 @@ import 'package:uniun/core/error/failures.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../_helpers/docx_fixtures.dart';
+import '../_helpers/fake_ocr_text_source.dart';
 import '../_helpers/fake_path_provider.dart';
 import '../_helpers/isar_seeds.dart';
 import '../_helpers/isar_test_harness.dart';
@@ -47,8 +54,9 @@ import '../_helpers/pdf_fixtures.dart';
 import '../_helpers/pdfium_test_lib.dart';
 
 /// End-to-end document RAG flow against real PDF and DOCX files, real PDFium,
-/// the real DOCX reader, real Isar and a real ToStore: cache row → extract →
-/// chunk → embed → store → retrieve → citation. Only the embedder is faked
+/// the real DOCX reader, real Isar and a real ToStore — and images through a
+/// faked OCR step: cache row → extract → chunk → embed → store → retrieve →
+/// citation. Only the embedder is faked
 /// (deterministic vectors) — it needs flutter_gemma, which is device-only;
 /// `integration_test/` covers the real one.
 void main() {
@@ -64,6 +72,7 @@ void main() {
   late ResolveDocumentCitationsUseCase resolveCitations;
   late VectorSearchService searchService;
   late _FakeNoteVectors noteVectors;
+  late FakeOcrTextSource ocr;
 
   const sha = 'nistsha';
   const docxSha = 'leavesha';
@@ -147,7 +156,13 @@ void main() {
     );
     indexer = DocumentIndexer(
       isar,
-      DocumentExtractionService(PdfrxTextSource(), ArchiveDocxTextSource()),
+      // Real PDF and DOCX readers; OCR is faked — ML Kit runs only on a
+      // phone, and integration_test/ covers the real one.
+      DocumentExtractionService(
+        PdfrxTextSource(),
+        ArchiveDocxTextSource(),
+        ocr = FakeOcrTextSource(),
+      ),
       // Real use case over the real vector repository — only the embedder
       // itself is stubbed.
       EmbedAndStoreChunkUseCase(embedding, vectors, EmbeddingQueue()),
@@ -469,6 +484,28 @@ void main() {
       expect(citation.localPath, endsWith('leave-policy-libreoffice.docx'));
     });
 
+    test('an image passage reaches the prompt marked as from an image', () async {
+      await dropPdf();
+      ocr.texts['/photos/n.jpg'] =
+          'OFFICE ORDER. Earned leave may be carried forward up to 15 days '
+          'into the next calendar year, and encashment requests must reach the '
+          'Establishment Section before 31 January of that year. This order '
+          'is issued with the approval of the competent authority.';
+      await isar.writeTxn(
+        () => isar.mediaCacheModels.put(
+          mediaCacheRow('nsha', localPath: '/photos/n.jpg', mime: 'image/jpeg'),
+        ),
+      );
+      await saveNoteWith('nsha', 'image/jpeg');
+      await indexer.reconcile();
+      final chunk = (await chunksOf('nsha')).single;
+
+      final msg = await pipeline.buildMessage(userQuestion: chunk.text);
+
+      expect(msg.sourceChunkIds, contains(chunkIdOf('nsha', chunk.ordinal)));
+      expect(msg.userMessage, contains('• (image) OFFICE ORDER'));
+    });
+
     test('a document purged after indexing is no longer cited', () async {
       await indexer.reconcile();
       final target =
@@ -488,6 +525,84 @@ void main() {
       final after = await pipeline.buildMessage(userQuestion: target.text);
       expect(after.sourceChunkIds, isEmpty);
       expect(after.userMessage, isNot(contains('Relevant Documents')));
+    });
+  });
+
+  group('image', () {
+    const imageSha = 'noticesha';
+    const notice =
+        'OFFICE ORDER. With effect from 1 October 2026 every '
+        'employee may carry forward up to 15 days of earned leave into the '
+        'next calendar year. Requests for encashment of leave must reach the '
+        'Establishment Section before 31 January. This order is issued with '
+        'the approval of the competent authority.';
+
+    Future<void> cacheNotice() async {
+      await dropPdf();
+      ocr.texts['/photos/notice.jpg'] = notice;
+      await isar.writeTxn(
+        () => isar.mediaCacheModels.put(
+          mediaCacheRow(
+            imageSha,
+            localPath: '/photos/notice.jpg',
+            mime: 'image/jpeg',
+          ),
+        ),
+      );
+      await saveNoteWith(imageSha, 'image/jpeg');
+    }
+
+    test(
+      'a photographed notice becomes searchable and cites the image',
+      () async {
+        await cacheNotice();
+
+        await indexer.reconcile();
+
+        final row = await isar.documentIndexModels
+            .filter()
+            .sha256EqualTo(imageSha)
+            .findFirst();
+        expect(row?.status, DocumentIndexStatus.indexed);
+        expect(row?.kind, DocumentKind.image);
+
+        final chunk = (await chunksOf(imageSha)).single;
+        final hit = (await vectors.search(
+          embedding.vectorFor(chunk.text),
+          topK: 3,
+        )).first;
+        expect(hit.kind, DocumentKind.image);
+
+        final citation = (await sources.resolve([
+          hit.chunkId,
+        ])).getOrElse(() => []).single;
+        expect(citation.kind, DocumentKind.image);
+        expect(citation.localPath, '/photos/notice.jpg');
+      },
+    );
+
+    test('a photo with no text is kept but never cited', () async {
+      await dropPdf();
+      ocr.texts['/photos/beach.jpg'] = '';
+      await isar.writeTxn(
+        () => isar.mediaCacheModels.put(
+          mediaCacheRow(
+            'beachsha',
+            localPath: '/photos/beach.jpg',
+            mime: 'image/jpeg',
+          ),
+        ),
+      );
+      await saveNoteWith('beachsha', 'image/jpeg');
+
+      await indexer.reconcile();
+
+      final row = await isar.documentIndexModels
+          .filter()
+          .sha256EqualTo('beachsha')
+          .findFirst();
+      expect(row?.status, DocumentIndexStatus.notSearchable);
+      expect(await chunksOf('beachsha'), isEmpty);
     });
   });
 

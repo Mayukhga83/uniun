@@ -2678,6 +2678,30 @@ abstract class AppLocalizations {
   /// **'Open document'**
   String get shivSourcesDocxOpen;
 
+  /// Location line on an image source tile in Shiv's Sources sheet: the answer drew on text read from the picture by OCR
+  ///
+  /// In en, this message translates to:
+  /// **'Text in image'**
+  String get shivSourcesImageText;
+
+  /// Title of an image source tile when the attaching note gave the image no file name
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get shivSourcesImageUntitled;
+
+  /// Tooltip on an image source tile in Shiv's Sources sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Open image'**
+  String get shivSourcesImageOpen;
+
+  /// Shown when the user taps an image source whose cached file was removed since the answer was given
+  ///
+  /// In en, this message translates to:
+  /// **'This image is no longer on this device'**
+  String get shivSourcesImageGone;
+
   /// Empty state when the source notes for a Shiv reply can't be resolved
   ///
   /// In en, this message translates to:

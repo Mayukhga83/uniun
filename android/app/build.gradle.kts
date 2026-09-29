@@ -72,6 +72,13 @@ flutter {
     source = "../.."
 }
 
+dependencies {
+    // Hindi/Devanagari OCR for Shiv's image search. google_mlkit_text_recognition
+    // bundles only the Latin recogniser and declares the others compileOnly, so
+    // without this the Devanagari recogniser fails at runtime. ~4 MB per ABI.
+    implementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
+}
+
 // Suppress obsolete -source/-target 8 warnings from transitive dependencies
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(listOf("-Xlint:-options"))

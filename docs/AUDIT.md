@@ -6,6 +6,58 @@ Format: one dated section per audit pass, newest first. Each item states what wa
 
 ---
 
+## 2026-09-28 — images in Shiv's RAG: on-device OCR (#240) — work in progress
+
+Text inside images on the user's own feed notes and saved notes is read with ML Kit, embedded, and cited with the image itself. No LLM at index time. Design and scope: #240 and `docs/SHIVA/rag.md` → "Images — the text inside them".
+
+### Dependency — checked before building on it
+
+- `google_mlkit_text_recognition` 0.17.1 (plugin MIT; the ML Kit SDK beneath it is Google's free-to-use, closed binary). A debug APK was built first, as the go/no-go gate, before any code depended on it.
+- **Trap found in the plugin's own build file:** it bundles only the Latin recogniser (`implementation`) and declares Devanagari, Chinese, Japanese and Korean `compileOnly`. Without an app-level `text-recognition-devanagari` dependency (`android/app/build.gradle.kts`) and the `GoogleMLKit/TextRecognitionDevanagari` pod (`ios/Podfile`), Hindi text goes unread at runtime while the build passes. Bundled cost from Google's documentation: ~4 MB per script per CPU architecture.
+- The enum value is spelled `TextRecognitionScript.devanagiri` in the plugin — caught by reading its source before the first compile.
+- **Settled on a device:** Google does not document whether the Devanagari recogniser also reads Latin script. On a vivo 1933 it does — a rendered mixed notice came back as `कार्यालय आदेश / सभी कर्मचारियों के लिए / OFFICE ORDER / Leave rules 2026`, both languages intact. Both recognisers still run, and English-only pages still take the Latin result.
+
+### Code review of the OCR diff — all eight findings verified and fixed
+
+- **The PDF prose gate buried short real text.** Images went through `looksLikeProse`'s 200-character floor, so a sign, receipt or chat caption was recorded `notSearchable` — permanently. Images now use `kMinImageTextChars` (16) with the same letter-ratio check against noise.
+- **One try/catch around both recognisers** meant a failing Devanagari pass discarded a successful Latin result and marked every image unreadable. Each pass now fails on its own.
+- **One misread glyph flipped the script choice** for a whole English page. The Devanagari result now needs ≥ 3 Devanagari letters and ≥ 10 % of all letters (`isMostlyDevanagari`, unit-tested).
+- Two recognisers were created and closed per image; they now load once for the app's lifetime.
+- **Every reconcile scanned every cached image** — thousands of feed photos, on a pass that runs after each note write — only to discard the uncitable ones. The indexer now looks up only citable files through the cache's unique index.
+- The Sources thumbnail decoded full-resolution photos (~48 MB each for a 12 MP image) for a 44-point square; it now decodes at tile size.
+- Tapping an image whose cached file had since been removed opened `MediaDetailPage`, which waits forever when the cache row is gone (a latent viewer defect the gallery never reaches). The tile now says the image is no longer on the device.
+- `main.dart` still called the indexer idle until a document is cached; the first launch after upgrading in fact works through the backlog of existing images.
+
+### Test findings
+
+- A tile test passed alone and failed in its file: every image case loaded the same path, and a load left in flight by one test was reused from Flutter's image cache by the next and never completed. Fixed by clearing the image cache between those tests — not by lengthening a delay.
+- The document flow test timed out once under full-suite load (30 s default, real PDF indexing with a flush per chunk). The file now carries a two-minute timeout with the reason beside it.
+- Sabotage: 13 deliberate breaks (images not a kind, no gate on OCR noise, the image gate at 200, the gate's letter ratio, no `(image)` prompt marker, OS viewer instead of in-app, no "text in image" line, saving not fetching images, DM images indexed, an image labelled like a page, the stray-glyph rule, a vanished image opening the viewer, full-resolution thumbnails) — each turned its tests red.
+
+### Verified on a device (vivo 1933, Android 11)
+
+`integration_test/document_rag_e2e_test.dart`, real Gecko embedder, real ML Kit, real PDFium — **6/6 pass**:
+
+| Test | Result |
+|---|---|
+| PDF, semantic retrieval | tomato question → page 2, score 0.813 |
+| DOCX, semantic retrieval | → "Growing Tomatoes", score 0.811 |
+| English OCR | read exactly |
+| Mixed Hindi/English OCR | both languages kept |
+| Image, semantic retrieval | tomato question → the tomato image, score 0.813 |
+| Photo without text | `notSearchable (noTextLayer)` in 0 s |
+
+- The first run failed 4 of 6 — in the **test**, not the app: its hand-built `SavedNoteModel` left three `late` list fields unset. The analyzer cannot see an uninitialised `late` field, and this code runs only on a phone, so it had never executed. Fixed; the re-run passed.
+- **Indexing costs ~12 s per chunk on this device** (2 chunks → 24 s; one image → 12 s). That is the embedder, not OCR, and it is what made a 17-chunk DOCX take ~4 minutes. It is also the first-launch backlog cost per image.
+
+### Still open
+
+- The manual kit (`~/Desktop/uniun-pdf-test/IMAGE_QUESTIONS_TO_ASK.md`) — real photos in the real app, Sources tile included — has not been run.
+- iOS — the Podfile change cannot be built from the Linux machine.
+- Not committed; pending review.
+
+---
+
 ## 2026-09-28 — document RAG: PDF (#226, PR #229) and DOCX (#238) — work in progress toward v2.4.0 (unreleased)
 
 Shiv now answers from PDFs and Word files attached to notes and cites where the answer came from — the **page** of a PDF, the **heading** of a DOCX section. Design and behaviour: `docs/SHIVA/rag.md` → "Documents (PDF, DOCX)"; specs in `docs/superpowers/specs/2026-09-19-pdf-rag-design.md` and `2026-09-26-docx-rag-design.md`.

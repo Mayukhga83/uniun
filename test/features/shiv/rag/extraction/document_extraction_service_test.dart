@@ -3,21 +3,25 @@ import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/features/shiv/rag/extraction/document_extraction_service.dart';
 
 import '../../../../_helpers/fake_docx_text_source.dart';
+import '../../../../_helpers/fake_ocr_text_source.dart';
 import '../../../../_helpers/fake_pdf_text_source.dart';
 
-/// Covers: DocumentExtractionService dispatching by kind and composing source,
+/// Covers: DocumentExtractionService dispatching by kind (PDF, DOCX, image
+/// OCR) and composing source,
 /// gate and chunker; both not-searchable reasons; page counts; no exception
 /// leak.
 void main() {
   const prose = 'The quarterly leave policy has been revised. ';
   late FakePdfTextSource source;
   late FakeDocxTextSource docx;
+  late FakeOcrTextSource ocr;
   late DocumentExtractionService service;
 
   setUp(() {
     source = FakePdfTextSource();
     docx = FakeDocxTextSource();
-    service = DocumentExtractionService(source, docx);
+    ocr = FakeOcrTextSource();
+    service = DocumentExtractionService(source, docx, ocr);
   });
 
   group('readable prose', () {
@@ -82,6 +86,94 @@ void main() {
       final result = await service.extract('/a.pdf', DocumentKind.pdf);
 
       expect((result as NotSearchable).reason, NotSearchableReason.unreadable);
+    });
+  });
+
+  group('image', () {
+    test('text read in an image becomes unlabelled chunks with no page count',
+        () async {
+      ocr.texts['/a.png'] = 'OFFICE ORDER\n\n${prose * 6}';
+
+      final e = await service.extract('/a.png', DocumentKind.image) as Extracted;
+
+      expect(e.pageCount, 0);
+      expect(e.chunks.map((c) => c.label).toSet(), {''});
+      expect(e.chunks.first.text, startsWith('OFFICE ORDER'));
+    });
+
+    test('a short sign, receipt or caption is still indexed', () async {
+      for (final (path, text) in [
+        ('/sign.jpg', 'PLATFORM 3 → DELHI 14:20'),
+        ('/receipt.jpg', 'TOTAL Rs 1,240.00\nPAID BY UPI'),
+        ('/board.jpg', 'Q3 rollout: freeze on 12 Oct'),
+      ]) {
+        ocr.texts[path] = text;
+
+        expect(await service.extract(path, DocumentKind.image),
+            isA<Extracted>(),
+            reason: text);
+      }
+    });
+
+    test('a few stray characters are still too little to index', () async {
+      ocr.texts['/a.jpg'] = 'Il oO';
+
+      expect(
+        ((await service.extract('/a.jpg', DocumentKind.image)) as NotSearchable)
+            .reason,
+        NotSearchableReason.noTextLayer,
+      );
+    });
+
+    test('a photo with no text in it is noTextLayer', () async {
+      ocr.texts['/a.jpg'] = '';
+
+      final n = await service.extract('/a.jpg', DocumentKind.image)
+          as NotSearchable;
+
+      expect(n.reason, NotSearchableReason.noTextLayer);
+    });
+
+    test('OCR noise fails the prose gate, like a scan', () async {
+      ocr.texts['/a.jpg'] = '|| ;; 1 / . - = ~ ' * 20;
+
+      expect(
+        ((await service.extract('/a.jpg', DocumentKind.image)) as NotSearchable)
+            .reason,
+        NotSearchableReason.noTextLayer,
+      );
+    });
+
+    test('a file OCR cannot read is unreadable', () async {
+      final n = await service.extract('/gone.png', DocumentKind.image)
+          as NotSearchable;
+
+      expect(n.reason, NotSearchableReason.unreadable);
+    });
+
+    test('an OCR engine that throws is unreadable, never an exception',
+        () async {
+      ocr.throwOnRead = StateError('ml kit exploded');
+
+      final n = await service.extract('/a.png', DocumentKind.image)
+          as NotSearchable;
+
+      expect(n.reason, NotSearchableReason.unreadable);
+    });
+
+    test('Devanagari text passes the gate and chunks', () async {
+      ocr.texts['/a.png'] = 'कार्यालय आदेश। सभी कर्मचारियों के लिए अवकाश नीति। ' * 8;
+
+      expect(await service.extract('/a.png', DocumentKind.image),
+          isA<Extracted>());
+    });
+
+    test('an image never touches the PDF or DOCX readers', () async {
+      ocr.texts['/a.png'] = prose * 6;
+
+      await service.extract('/a.png', DocumentKind.image);
+
+      expect((source.calls, docx.calls, ocr.calls), (0, 0, 1));
     });
   });
 

@@ -146,35 +146,27 @@ class DocumentIndexer {
   Future<void> _purgeOrphans(Set<String> citable) async {
     final indexed = await _isar.documentIndexModels.where().findAll();
     for (final row in indexed) {
-      final cached = await _isar.mediaCacheModels
-          .filter()
-          .sha256EqualTo(row.sha256)
-          .findFirst();
+      final cached = await _isar.mediaCacheModels.getBySha256(row.sha256);
       if (cached == null || !citable.contains(row.sha256)) {
         await _purge(row.sha256);
       }
     }
   }
 
+  /// Looks up only the citable files, through the cache's unique index — never
+  /// a scan of every cached blob: images made that thousands of feed photos,
+  /// on a pass that runs after every note write.
   Future<void> _indexPending(Set<String> citable) async {
-    final docs = await _isar.mediaCacheModels
-        .filter()
-        .anyOf(
-          DocumentKind.values,
-          (q, k) => q.mimeStartsWith(k.mime, caseSensitive: false),
-        )
-        .findAll();
-    for (final row in docs) {
-      if (!citable.contains(row.sha256)) continue;
-      final done = await _isar.documentIndexModels
-          .filter()
-          .sha256EqualTo(row.sha256)
-          .findFirst();
-      if (done != null) continue;
-      // Non-null: the filter above admitted exactly these mimes.
-      await _index(row.sha256, row.localPath, DocumentKind.fromMime(row.mime)!);
+    for (final sha in citable) {
+      final row = await _isar.mediaCacheModels.getBySha256(sha);
+      if (row == null) continue; // attached but never downloaded
+      final kind = DocumentKind.fromMime(row.mime);
+      if (kind == null) continue; // a video or other non-document attachment
+      if (await _isar.documentIndexModels.getBySha256(sha) != null) continue;
+      await _index(sha, row.localPath, kind);
     }
   }
+
 
   Future<void> _index(String sha, String path, DocumentKind kind) async {
     // Indexing is silent otherwise, and can take minutes while the LLM holds

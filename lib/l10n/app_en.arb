@@ -1796,6 +1796,22 @@
   "@shivSourcesDocxOpen": {
     "description": "Tooltip on a Word (.docx) source tile in Shiv's Sources sheet"
   },
+  "shivSourcesImageText": "Text in image",
+  "@shivSourcesImageText": {
+    "description": "Location line on an image source tile in Shiv's Sources sheet: the answer drew on text read from the picture by OCR"
+  },
+  "shivSourcesImageUntitled": "Image",
+  "@shivSourcesImageUntitled": {
+    "description": "Title of an image source tile when the attaching note gave the image no file name"
+  },
+  "shivSourcesImageOpen": "Open image",
+  "@shivSourcesImageOpen": {
+    "description": "Tooltip on an image source tile in Shiv's Sources sheet"
+  },
+  "shivSourcesImageGone": "This image is no longer on this device",
+  "@shivSourcesImageGone": {
+    "description": "Shown when the user taps an image source whose cached file was removed since the answer was given"
+  },
   "shivSourcesEmpty": "No sources for this reply",
   "@shivSourcesEmpty": {
     "description": "Empty state when the source notes for a Shiv reply can't be resolved"

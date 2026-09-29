@@ -194,18 +194,20 @@
                                                             
 ---
 
-## Documents (PDF, DOCX)
+## Documents and images (PDF, DOCX, images)
 
-A PDF or Word (`.docx`) file attached to a note has its text extracted, chunked
-and embedded, so Shiv can answer from it and cite where it came from — the
-**page** of a PDF, the **heading** of a DOCX section. Designs:
+A PDF, a Word (`.docx`) file or an **image** attached to a note has its text
+extracted, chunked and embedded, so Shiv can answer from it and cite where it
+came from — the **page** of a PDF, the **heading** of a DOCX section, or the
+**image itself**, whose text is read by on-device OCR. Designs:
 `docs/superpowers/specs/2026-09-19-pdf-rag-design.md` (PDF) and
 `docs/superpowers/specs/2026-09-26-docx-rag-design.md` (DOCX).
 
 `DocumentKind` (`lib/core/enum/document_kind.dart`) is the single answer to
 "which mimes are documents": the indexer's filter, the vector search and the
-citation resolver all ask it. Legacy `.doc` and `.odt` are not documents — they
-attach and open, and are never read.
+citation resolver all ask it. `image` matches every `image/*` mime by prefix.
+Legacy `.doc` and `.odt` are not documents — they attach and open, and are
+never read.
 
 ### How a document becomes searchable
 
@@ -360,7 +362,7 @@ index row, document not cached or no longer
 | Document attached to | Indexed |
 |---|---|
 | one of your own **feed notes** (kind 1) | yes |
-| a **saved note** — any kind, including a saved DM or group message | yes, **whether or not you opened it**: saving downloads its PDF/DOCX (`SaveNoteUseCase`) |
+| a **saved note** — any kind, including a saved DM or group message | yes, **whether or not you opened it**: saving downloads its PDF/DOCX and images (`SaveNoteUseCase`) |
 | someone else's feed note, a group, or a DM, merely opened | no — opening a file is not asking Shiv to learn it; saving is |
 | your own DM or group message | no |
 
@@ -385,6 +387,52 @@ Sources sheet, which resolves them on open via `DocumentSourceRepository`.
 
 A Manas-scoped chat never searches documents: it scopes by note membership, and
 a document blob has none (#236).
+
+### Images — the text inside them
+
+An image is read with **on-device OCR** (`MlKitOcrTextSource`,
+`lib/data/datasources/ocr/`, ML Kit Text Recognition v2) and its text goes
+through the same chunker, embedder, store and citation path as a document. No
+LLM is involved at index time.
+
+- **Two recognisers, both bundled:** Latin and Devanagari, ~4 MB each per CPU
+  architecture (so ~8 MB per install from the Play Store). ML Kit's Flutter
+  plugin bundles only Latin and declares the rest `compileOnly`, so the app
+  adds `text-recognition-devanagari` in `android/app/build.gradle.kts` and
+  `GoogleMLKit/TextRecognitionDevanagari` in `ios/Podfile`.
+- **Both run on every image, independently.** Whether the Devanagari model
+  also reads Latin text is undocumented, so its result is used only when
+  Devanagari is a real part of it — at least three Devanagari letters and a
+  tenth of all letters (`isMostlyDevanagari`), so one misread glyph cannot flip
+  an English page — and the Latin result otherwise. Each pass has its own
+  failure handling: a missing or failing Devanagari recogniser still leaves
+  English readable. The recognisers load once and live for the app's lifetime.
+  On a device the Devanagari recogniser also reads Latin: a rendered mixed
+  Hindi/English notice came back with both languages intact (the device test
+  requires it).
+- **Label** `''` — an image has no pages or headings. The prompt marks the
+  passage `• (image) …` so the model does not present OCR text as something the
+  user wrote. The Sources tile shows a **thumbnail** and "Text in image", and
+  tapping opens the in-app image viewer (`AppRoutes.mediaDetail`) — or says
+  the image is no longer on the device, since that viewer waits forever for a
+  cache row that is gone. The thumbnail decodes at tile size, not the photo's.
+- **A gate, with a much lower floor than PDFs:** at least
+  `kMinImageTextChars` (16) characters and the usual 15 % letters. A sign, a
+  receipt or a chat caption is short and genuine, and the PDF floor of 200
+  would bury it for good; the letter ratio still rejects OCR noise. A photo
+  without text is recorded `notSearchable` once, never re-read. Such a photo is still found through its note's text, which is
+  embedded like any note.
+- **Same scope as documents:** only images on the user's own feed notes and on
+  saved notes; saving a note downloads its images for this.
+- **The first launch after upgrading works through a backlog:** every image
+  already on the user's own and saved notes is read and embedded, one at a
+  time, in the background. The indexer looks up only citable files through the
+  cache's unique index, never a scan of every cached image.
+- ML Kit runs only on Android and iOS — never under `flutter test`. CI covers
+  images through `FakeOcrTextSource`; `integration_test/` runs real OCR.
+
+Not built: labels for photos without text (ML Kit Image Labeling, a possible
+follow-up), CLIP-style image embeddings.
 
 **Indexing is not instant, and says so in the log.** Each chunk is embedded on
 device, competing with the LLM for the phone: a 17-chunk DOCX took ~4 minutes on
@@ -446,10 +494,10 @@ alike as a library grows, and is not specific to documents.
 
 | Tier | Where | Real | Faked |
 |---|---|---|---|
-| Unit | `test/features/shiv/rag/extraction/`, `test/domain/entities/shiv/`, `test/core/enum/` | chunker, gate, extraction dispatch, chunk ids, `DocumentKind` | PDF/DOCX sources |
+| Unit | `test/features/shiv/rag/extraction/`, `test/domain/entities/shiv/`, `test/core/enum/` | chunker, gate, extraction dispatch, chunk ids, `DocumentKind` | PDF/DOCX/OCR sources |
 | Component | `test/features/shiv/rag/indexing/`, `test/data/...` | real PDFium + the committed PDF, the real DOCX reader + committed Word/LibreOffice files, real Isar, real ToStore | embedder |
-| Pipeline | `test/integration/document_rag_flow_test.dart` | everything above, assembled, PDF and DOCX | embedder |
-| Device | `integration_test/document_rag_e2e_test.dart` | **everything, incl. the real Gecko embedder** | nothing |
+| Pipeline | `test/integration/document_rag_flow_test.dart` | everything above, assembled, PDF, DOCX and images | embedder, OCR |
+| Device | `integration_test/document_rag_e2e_test.dart` | **everything, incl. the real Gecko embedder and real ML Kit OCR** | nothing |
 
 The device tier exists because the embedder loads a 145 MB Git-LFS asset that
 CI does not check out, and `EmbeddingService.embed` returns `[]` instead of

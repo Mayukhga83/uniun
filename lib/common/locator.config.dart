@@ -37,6 +37,7 @@ import 'package:uniun/data/datasources/llm/local_llm_runner.dart' as _i937;
 import 'package:uniun/data/datasources/llm/remote_llm_data_source.dart'
     as _i141;
 import 'package:uniun/data/datasources/media_cache_data_source.dart' as _i366;
+import 'package:uniun/data/datasources/ocr/ocr_text_source.dart' as _i787;
 import 'package:uniun/data/datasources/pdf/pdf_text_source.dart' as _i623;
 import 'package:uniun/data/datasources/surrounding_read_state_store.dart'
     as _i156;
@@ -307,6 +308,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i168.MarmotMlsService>(() => _i168.MarmotMlsService());
     gh.lazySingleton<_i207.PromptBuilder>(() => const _i207.PromptBuilder());
+    gh.lazySingleton<_i787.OcrTextSource>(() => _i787.MlKitOcrTextSource());
     gh.lazySingleton<_i739.VectorRepository>(
       () => _i831.TostoreVectorRepositoryImpl(
         gh<_i789.ToStore>(),
@@ -435,12 +437,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i978.ResolveSourceLabelsUseCase>(
       () => _i978.ResolveSourceLabelsUseCase(gh<_i633.SourceLabelRepository>()),
     );
-    gh.lazySingleton<_i139.DocumentExtractionService>(
-      () => _i139.DocumentExtractionService(
-        gh<_i623.PdfTextSource>(),
-        gh<_i729.DocxTextSource>(),
-      ),
-    );
     gh.factory<_i331.MemoryRepository>(
       () => _i849.MemoryRepositoryImpl(isar: gh<_i214.Isar>()),
     );
@@ -555,6 +551,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1055.GetPrivateGroupJoinRequestsUsecase>(
       () => _i1055.GetPrivateGroupJoinRequestsUsecase(
         gh<_i635.E2EEGroupRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i139.DocumentExtractionService>(
+      () => _i139.DocumentExtractionService(
+        gh<_i623.PdfTextSource>(),
+        gh<_i729.DocxTextSource>(),
+        gh<_i787.OcrTextSource>(),
       ),
     );
     gh.lazySingleton<_i58.GetStorageStatsUseCase>(
