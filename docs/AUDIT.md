@@ -29,6 +29,20 @@ Service: falling back to a garbled layer when OCR finds nothing, not deleting re
 
 Three checks that survived their sabotage were removed rather than kept untested: PDFium's "generated character" flag (the whitespace filter already drops those), the `TargetMode="External"` check (a linked picture's URL names no zip entry) and the empty-section and blank-line cleanup in the service (the chunker already does both). A PNG/JPEG-only rule for DOCX pictures was dropped too — it rested on nothing measured; anything the decoder can size is read.
 
+### Real-document retrieval on a phone found the search index, not OCR, was the limit
+
+Two real phone-scanned sale-deed bundles (18 and 20 pages; both read by OCR at ~3 s a page, English text exact against the page images) were indexed with the real Gecko embedder (42 and 41 chunks) and asked 15 messy user-style questions. Result: every top-3 hit came from the first file; the second file's chunks never came back. A **self-retrieval check** — each stored chunk searching for its own text — found only **20 of 83 (24 %)** reachable. ToStore's approximate index cannot reach most vectors once it holds a few dozen, so stored chunks were invisible to every question, whatever the wording or language.
+
+- **Fix:** vectors now live on `DocumentChunkModel` (`List<float>`, 4 KB a chunk) and search is an exact cosine scan (`IsarDocumentVectorRepositoryImpl`), 400 rows a step. The document ToStore, its module entry and its tests are gone. The indexer writes the chunk row first and attaches the vector second, so a row with no vector is never returned and a purge removes vectors with rows (no orphans). The feature was unreleased, so nothing migrates.
+- Tests: exact-search unit tests (200 chunks each find themselves; >1 read batch; ordering; dimension mismatch; purge), a flow test that every chunk of the 20-chunk NIST PDF is retrievable by its own text. Sabotage: first-batch-only scan, no sort, no `minScore`, no dimension guard, null vectors counted, no kind guard, upsert writing nothing — each red (two were initially green and the tests were strengthened).
+- **Measured after (same phone, screen on, clean store, 3 documents = 93 chunks):** 91 of 93 chunks (98 %) find themselves (was 24 % of 83); the 2019 deed 5/6 questions in the top 3, the Aranya PDF 12/13 answerable ones in the top 3 (11 first), all 29 questions: right page first 17, answer text in the top 3 for 20. The second (Hindi-heavy) deed now appears in results at all; its Hindi/Hinglish questions still mostly miss (Gecko is English-centred; Devanagari OCR is noisier) — 2/6 first.
+- **Speed trap:** with the phone's screen off, Android ran the app on the slow cores and embedding took 65 s a chunk instead of 12 s (`tool/rag_docs_e2e.sh` now wakes and unlocks the phone and keeps it awake while plugged in). Indexing: 42 chunks in 549 s, 41 in 532 s, 10 in 123 s.
+- Interrupted device runs leave stale documents that answer alongside the fresh one (every hit duplicated, self-retrieval 0/10); the test now clears `e2e*` rows first.
+- Next candidate: hybrid search — add exact-keyword matching (BM25) to the vector score, since identifiers (`1800-233-0421`, registration numbers, names) are what messy questions ask for and what embeddings blur.
+- **Notes still use ToStore** and very likely have the same limit past a few dozen notes. Not changed here; worth its own issue.
+- Trap-question finding: scores for a question not answered anywhere (0.72) sit inside the band of real answers (0.65–0.79), so no score cutoff separates "the document doesn't say".
+- Hindi digits from the Devanagari recogniser can come out as Bengali-style look-alikes (`০.০০` for `0.00`), and form rows lose label/value pairing.
+
 ### Still open
 
 - **Not yet run on a device.** The device group (`--plain-name 'selective OCR'`) builds scanned, mixed and pasted-photo PDFs and a DOCX with a pasted notice on the phone and runs real PDFium + ML Kit + Gecko; `--dart-define=OCR_TIMING_PDF=…` prints each page's plan with render and OCR time for a real circular. Speed must be measured before the thresholds are trusted.

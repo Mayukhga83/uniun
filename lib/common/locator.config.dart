@@ -73,6 +73,8 @@ import 'package:uniun/data/repositories/graph_repository_impl.dart' as _i250;
 import 'package:uniun/data/repositories/group_message_repository_impl.dart'
     as _i828;
 import 'package:uniun/data/repositories/group_repository_impl.dart' as _i632;
+import 'package:uniun/data/repositories/isar_document_vector_repository_impl.dart'
+    as _i362;
 import 'package:uniun/data/repositories/llm_repository_impl.dart' as _i19;
 import 'package:uniun/data/repositories/manas_repository_impl.dart' as _i395;
 import 'package:uniun/data/repositories/media_repository_impl.dart' as _i980;
@@ -101,8 +103,6 @@ import 'package:uniun/data/repositories/source_label_repository_impl.dart'
 import 'package:uniun/data/repositories/storage_repository_impl.dart' as _i209;
 import 'package:uniun/data/repositories/surrounding_note_repository_impl.dart'
     as _i670;
-import 'package:uniun/data/repositories/tostore_document_vector_repository_impl.dart'
-    as _i943;
 import 'package:uniun/data/repositories/tostore_vector_repository_impl.dart'
     as _i831;
 import 'package:uniun/data/repositories/uniun_repository_impl.dart' as _i307;
@@ -310,6 +310,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i168.MarmotMlsService>(() => _i168.MarmotMlsService());
     gh.lazySingleton<_i207.PromptBuilder>(() => const _i207.PromptBuilder());
+    gh.lazySingleton<_i179.DocumentVectorRepository>(
+      () => _i362.IsarDocumentVectorRepositoryImpl(gh<_i214.Isar>()),
+    );
     gh.lazySingleton<_i787.OcrTextSource>(() => _i787.MlKitOcrTextSource());
     gh.lazySingleton<_i739.VectorRepository>(
       () => _i831.TostoreVectorRepositoryImpl(
@@ -320,20 +323,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i733.DrawerDataSource>(
       () => _i733.DrawerDataSource(gh<_i214.Isar>()),
     );
-    await gh.singletonAsync<_i789.ToStore>(
-      () => tostoreModule.createDocumentTostore(),
-      instanceName: 'documentTostore',
-      preResolve: true,
+    gh.lazySingleton<_i756.SearchDocumentChunksUseCase>(
+      () => _i756.SearchDocumentChunksUseCase(
+        gh<_i179.DocumentVectorRepository>(),
+      ),
     );
     gh.lazySingleton<_i35.ImageLabelSource>(() => _i35.MlKitImageLabelSource());
     gh.factory<_i93.FlutterGemmaGateway>(() => _i93.FlutterGemmaGatewayImpl());
     gh.lazySingleton<_i623.PdfTextSource>(() => _i623.PdfrxTextSource());
-    gh.lazySingleton<_i179.DocumentVectorRepository>(
-      () => _i943.TostoreDocumentVectorRepositoryImpl(
-        gh<_i789.ToStore>(instanceName: 'documentTostore'),
-        gh<_i214.Isar>(),
-      ),
-    );
     gh.factory<_i266.ShivRepository>(
       () => _i412.ShivRepositoryImpl(gh<_i214.Isar>()),
     );
@@ -540,11 +537,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i899.GanaRepositoryImpl(
         isar: gh<_i214.Isar>(),
         signer: gh<_i558.MeshEventSigner>(),
-      ),
-    );
-    gh.lazySingleton<_i756.SearchDocumentChunksUseCase>(
-      () => _i756.SearchDocumentChunksUseCase(
-        gh<_i179.DocumentVectorRepository>(),
       ),
     );
     gh.lazySingleton<_i1055.GetPrivateGroupsUsecase>(

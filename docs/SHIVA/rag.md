@@ -245,9 +245,9 @@ never read.
  │            Gecko embedder → vector                       │
  │            (embedding only — no LLM call)                │
  ├──────────────────────────────────────────────────────────┤
- │ 5. STORE   text   → Isar    DocumentChunkModel           │
- │            vector → ToStore document store               │
- │            both keyed  "<sha256>:<ordinal>"              │
+ │ 5. STORE   text + vector → Isar DocumentChunkModel       │
+ │            (row first, then the vector is attached)      │
+ │            keyed  "<sha256>:<ordinal>"                   │
  ├──────────────────────────────────────────────────────────┤
  │ 6. MARK    DocumentIndexModel = indexed   ← written LAST │
  │            so a crash retries rather than lying          │
@@ -265,13 +265,13 @@ ties the vector store to the text, and the text to the page:
                        │                    └── which chunk
                        └── which document
 
- ┌── the same id addresses BOTH stores ──────────────────────────┐
- │  ToStore (vectors)            Isar DocumentChunkModel         │
- │  ───────────────────          ──────────────────────          │
- │  id  : "a3f9…:12"             sha256  : "a3f9…"               │
- │  vec : [0.02, -0.11, …]       ordinal : 12                    │
- │                               label   : "5"   ← THE PAGE      │
- │                               text    : "Expense Reimburse…"  │
+ ┌── one Isar row holds everything ──────────────────────────────┐
+ │  DocumentChunkModel                                           │
+ │  ──────────────────                                           │
+ │  sha256  : "a3f9…"     ordinal : 12                           │
+ │  label   : "5"   ← THE PAGE                                   │
+ │  text    : "Expense Reimbursement…"                           │
+ │  vector  : [0.02, -0.11, …]   (1024 float32)                  │
  └───────────────────────────────────────────────────────────────┘
 
  "what is the deadline for expense claims?"
@@ -280,7 +280,7 @@ ties the vector store to the text, and the text to the page:
    embed the question → query vector
             │
             ▼
-   ToStore nearest-neighbour  →  id "a3f9…:12"
+   exact cosine scan of every chunk vector  →  "a3f9…:12"
             │
             ▼
    parseChunkId()  →  (sha256 "a3f9…", ordinal 12)
@@ -381,8 +381,9 @@ places, one of them `CleanupManager` in the Gateway isolate, which deletes cache
 rows directly. A crash mid-index is retried because the index row is written
 **last**.
 
-Vectors live in a **separate** ToStore at `tostore_docs_1024d`, never the note
-store. Embedding goes through `EmbeddingQueue`, bounding concurrency at 2.
+Vectors live on the chunk rows themselves (`DocumentChunkModel.vector`, 4 KB
+each), never in the note ToStore. Embedding goes through `EmbeddingQueue`,
+bounding concurrency at 2.
 
 **Retrieval** — unscoped chat only. `RagPipeline` searches notes and chunks
 independently (chunk top-K = `max(1, topK ~/ 2)`); chunks skip memory and graph
@@ -541,16 +542,17 @@ smallest local model 1024 tokens total and `buildUserMessage` drops any section
 that would overshoot. A page-sized chunk would make the document silently vanish
 from the prompt.
 
-**Vectors are never deleted.** ToStore 3.1.0 destroys a table's *entire* vector
-index on any row delete — measured: delete 1 of 3 rows and `vectorSearch`
-returns nothing, and it does not recover across a close/reopen. So Isar owns
-chunk existence: purging deletes the Isar rows, search skips hits it cannot
-resolve, and `search` over-fetches to absorb the orphans. Enough
-equally-similar orphans can still crowd out a real chunk; the fix is a rebuild
-(wipe the store, re-embed from the surviving rows), which is not implemented.
-tostore 3.5.1 fixes the delete bug but silently reads back an empty index from a
-store written by 3.1.0 — upgrading needs a version-bumped store path so the data
-re-embeds instead of disappearing.
+**Search is an exact scan, not an index.** `IsarDocumentVectorRepositoryImpl`
+compares the question with every chunk's vector (read 400 rows at a time,
+keeping the best K). ToStore's approximate index was tried first and dropped:
+on a phone only **20 of 83 chunks** (24 %) found themselves as their own top
+hit, so a stored chunk could never come back for any question — every hit came
+from the first file indexed and none from the second. A scan is exact, and at a
+few thousand 1024-dim vectors it costs milliseconds. Purging a document deletes
+its chunk rows, and its vectors with them — so there are no orphaned vectors.
+The document feature had not shipped, so no stored data needed migrating. If a
+library ever reaches hundreds of thousands of chunks, revisit an index — an
+exact-recall one.
 
 **ToStore is pinned to 3.1.2.** 3.1.0 declares `struct statvfs` as 88 bytes where
 glibc and 64-bit bionic use 112, so each disk-space check wrote 24 bytes past a
@@ -559,19 +561,18 @@ this way), with Android on the same code path. 3.1.2 fixes the struct and reads
 3.1.0 stores unchanged (verified: 25/25 rows and vectors). 3.1.1 and 3.1.3 are
 retracted.
 
-**ToStore's vector index cannot reach every stored vector.** Measured on 3.1.0
-and 3.1.2 alike, querying each stored vector with itself: it is its own top hit
-for 100% of 10 vectors, 80% of 25 and 33% of 60 — and only 55% of 60 even with
-topK = every row, so some nodes are unreachable from the graph's entry point,
-not merely ranked low. This bounds retrieval quality for notes and documents
-alike as a library grows, and is not specific to documents.
+**The notes' vector search has the same limit.** Measured on 3.1.0 and 3.1.2
+alike, querying each stored vector with itself: it is its own top hit for 100 %
+of 10 vectors, 80 % of 25 and 33 % of 60 — and only 55 % of 60 even with topK =
+every row. Note retrieval still uses ToStore, so a library past a few dozen
+notes likely misses some. Not fixed here.
 
 ### Testing
 
 | Tier | Where | Real | Faked |
 |---|---|---|---|
 | Unit | `test/features/shiv/rag/extraction/`, `test/domain/entities/shiv/`, `test/core/enum/` | chunker, gate, extraction dispatch, per-page OCR plans, chunk ids, `DocumentKind` | PDF/DOCX/OCR sources |
-| Component | `test/features/shiv/rag/indexing/`, `test/data/...` | real PDFium + the committed PDFs (page signals and OCR renders too), the real DOCX reader + committed Word/LibreOffice files, real Isar, real ToStore | embedder |
+| Component | `test/features/shiv/rag/indexing/`, `test/data/...` | real PDFium + the committed PDFs (page signals and OCR renders too), the real DOCX reader + committed Word/LibreOffice files, real Isar (vectors on the chunk rows) | embedder |
 | Pipeline | `test/integration/document_rag_flow_test.dart` | everything above, assembled, PDF, DOCX and images | embedder, OCR |
 | Device | `integration_test/document_rag_e2e_test.dart` | **everything, incl. the real Gecko embedder and real ML Kit OCR** | nothing |
 

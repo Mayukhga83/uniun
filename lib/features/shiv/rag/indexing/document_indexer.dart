@@ -167,7 +167,6 @@ class DocumentIndexer {
     }
   }
 
-
   Future<void> _index(String sha, String path, DocumentKind kind) async {
     // Indexing is silent otherwise, and can take minutes while the LLM holds
     // the device — without these a question asked mid-index looks like a
@@ -194,6 +193,20 @@ class DocumentIndexer {
         // cannot leave a half-indexed document with stale chunks.
         await _purgeChunks(sha);
         for (final c in chunks) {
+          // The row first, the vector second: embedding attaches the vector to
+          // this row. A row with no vector is never returned by search.
+          await _isar.writeTxn(
+            () => _isar.documentChunkModels.put(
+              DocumentChunkModel()
+                ..sha256 = sha
+                ..ordinal = c.ordinal
+                ..label = c.label
+                ..text = c.text,
+            ),
+          );
+          debugPrint(
+            '📄 DocumentIndexer: $id chunk ${c.ordinal + 1}/${chunks.length}',
+          );
           final stored = await _embedAndStore.call((
             chunkIdOf(sha, c.ordinal),
             c.text,
@@ -206,15 +219,6 @@ class DocumentIndexer {
             );
             return;
           }
-          await _isar.writeTxn(
-            () => _isar.documentChunkModels.put(
-              DocumentChunkModel()
-                ..sha256 = sha
-                ..ordinal = c.ordinal
-                ..label = c.label
-                ..text = c.text,
-            ),
-          );
         }
         // Written last: chunks and vectors first, so a crash part-way leaves a
         // retriable state rather than a document recorded as done but empty.
@@ -255,9 +259,7 @@ class DocumentIndexer {
     await _isar.writeTxn(() => _isar.documentIndexModels.deleteBySha256(sha));
   }
 
-  /// Drops a document's chunk rows. The vectors stay — ToStore cannot delete
-  /// without destroying the whole index (see [DocumentVectorRepository]) — and
-  /// are filtered out at search time because they no longer resolve to a row.
+  /// Drops a document's chunk rows — and with them their vectors.
   Future<void> _purgeChunks(String sha) => _isar.writeTxn(
     () => _isar.documentChunkModels
         .where()

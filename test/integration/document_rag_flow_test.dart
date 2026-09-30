@@ -1,4 +1,4 @@
-// Every test indexes real files — the 20-chunk NIST PDF, flushing ToStore per
+// Every test indexes real files — the 20-chunk NIST PDF, writing Isar per
 // chunk — so under full-suite contention one can pass the 30 s default (it
 // did, once). Minutes, not seconds, is the honest budget for this file.
 @Timeout(Duration(minutes: 2))
@@ -11,7 +11,6 @@ import 'package:image/image.dart' as img;
 import 'package:isar_community/isar.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:tostore/tostore.dart';
 import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/data/datasources/docx/docx_text_source.dart';
 import 'package:uniun/data/datasources/llm/embedding_queue.dart';
@@ -22,7 +21,7 @@ import 'package:uniun/data/models/media/media_cache_model.dart';
 import 'package:uniun/data/models/notes/note_model.dart';
 import 'package:uniun/data/models/saved_note_model.dart';
 import 'package:uniun/data/repositories/document_source_repository_impl.dart';
-import 'package:uniun/data/repositories/tostore_document_vector_repository_impl.dart';
+import 'package:uniun/data/repositories/isar_document_vector_repository_impl.dart';
 import 'package:uniun/domain/entities/llm/llm_model_info.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
 import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
@@ -57,7 +56,7 @@ import '../_helpers/pdfium_test_lib.dart';
 
 /// End-to-end document RAG flow against real PDF and DOCX files, real PDFium
 /// (including which pages it renders for OCR), the real DOCX reader, real
-/// Isar and a real ToStore — and images through a faked OCR step: cache row → extract → chunk → embed → store → retrieve →
+/// Isar (vectors stored on the chunk rows) — and images through a faked OCR step: cache row → extract → chunk → embed → store → retrieve →
 /// citation. Only the embedder is faked
 /// (deterministic vectors) — it needs flutter_gemma, which is device-only;
 /// `integration_test/` covers the real one.
@@ -65,10 +64,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Isar isar;
-  late ToStore store;
-  late Directory tmp;
   late DocumentIndexer indexer;
-  late TostoreDocumentVectorRepositoryImpl vectors;
+  late IsarDocumentVectorRepositoryImpl vectors;
   late DocumentSourceRepositoryImpl sources;
   late _StubEmbedding embedding;
   late ResolveDocumentCitationsUseCase resolveCitations;
@@ -83,12 +80,8 @@ void main() {
   /// Leaves only DOCX in the cache, so retrieval runs against the DOCX's own
   /// handful of vectors.
   ///
-  /// Needed for search, not for correctness of the pipeline: ToStore 3.1.x's
-  /// vector index cannot reach every stored vector once it holds a few dozen
-  /// (measured: a stored vector is its own top hit for only 80% of 25 and 33%
-  /// of 60, even with topK = every row). With the PDF's ~20 chunks alongside,
-  /// a DOCX chunk can be unreachable, and these tests are about DOCX wiring,
-  /// not that limit.
+  /// Keeps these tests about DOCX wiring rather than about which of many
+  /// chunks ranks first.
   Future<void> dropPdf() =>
       isar.writeTxn(() => isar.mediaCacheModels.deleteBySha256(sha));
 
@@ -141,12 +134,7 @@ void main() {
 
   setUp(() async {
     isar = await openTestIsar();
-    tmp = await Directory.systemTemp.createTemp('pdf_rag_flow');
-    store = await ToStore.open(
-      dbPath: tmp.path,
-      schemas: [documentChunkEmbeddingsSchema],
-    );
-    vectors = TostoreDocumentVectorRepositoryImpl(store, isar);
+    vectors = IsarDocumentVectorRepositoryImpl(isar);
     sources = DocumentSourceRepositoryImpl(isar);
     embedding = _StubEmbedding();
     // Real use cases and service on top of the real repositories — only the
@@ -190,8 +178,6 @@ void main() {
 
   tearDown(() async {
     await indexer.dispose();
-    await store.close();
-    await tmp.delete(recursive: true);
     await isar.close(deleteFromDisk: true);
   });
 
@@ -238,6 +224,25 @@ void main() {
     expect(citations, hasLength(1));
     expect(citations.single.localPath, endsWith('nist_sp800-145.pdf'));
     expect(citations.single.label, target.label);
+  });
+
+  test('every indexed chunk is retrievable by its own text', () async {
+    await indexer.reconcile();
+    final chunks = await chunksOf(sha);
+    expect(chunks.length, greaterThan(15));
+
+    final missed = <int>[];
+    for (final c in chunks) {
+      final top = (await vectors.search(
+        embedding.vectorFor(c.text),
+        topK: 1,
+      )).single;
+      if (top.chunkId != chunkIdOf(sha, c.ordinal)) missed.add(c.ordinal);
+    }
+
+    // An approximate index reached only 24 % of chunks on a phone; an exact
+    // scan must reach all of them.
+    expect(missed, isEmpty);
   });
 
   test('the attaching note names the document in its citation', () async {
@@ -289,9 +294,7 @@ void main() {
     expect(
       await vectors.search(query, topK: 3),
       isEmpty,
-      reason:
-          'purged chunks must stop surfacing even though the vector '
-          'cannot be deleted from the store',
+      reason: 'purging a document removes its vectors with its chunk rows',
     );
     expect((await sources.resolve([id])).getOrElse(() => []), isEmpty);
     expect(await isar.documentIndexModels.count(), 0);
@@ -1024,11 +1027,7 @@ class _MockManasLoader extends Mock implements ManasContextLoader {}
 /// Identical text embeds identically (cosine 1), and texts sharing words sit
 /// closer than texts that do not — a crude but real similarity structure, like
 /// a real embedder's. Real semantic behaviour is the device test's job.
-///
-/// Not one-hot or random: both make every vector near-equidistant, which leaves
-/// ToStore's approximate-nearest-neighbour graph nothing to navigate by. Measured
-/// with one-hot vectors and ~25 chunks: a small topK returned score-0 neighbours
-/// and the exact match only surfaced at topK 40.
+
 class _StubEmbedding implements EmbeddingService {
   List<double> vectorFor(String text) {
     final v = List<double>.filled(embeddingsDimensions, 0);

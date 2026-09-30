@@ -71,6 +71,7 @@ import 'package:uniun/data/models/media/media_cache_model.dart';
 import 'package:uniun/data/models/saved_note_model.dart';
 import 'package:uniun/data/models/notes/media_attachment.dart';
 import 'package:uniun/core/enum/note_type.dart';
+import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
 import 'package:uniun/domain/repositories/document_vector_repository.dart';
 import 'package:uniun/features/shiv/rag/embedding/embedding_service.dart';
 import 'package:uniun/features/shiv/rag/indexing/document_indexer.dart';
@@ -536,6 +537,146 @@ void main() {
       timeout: const Timeout(Duration(minutes: 5)),
     );
 
+    // PDFs plus their questions: the committed fixture and, optionally, the
+    // caller's own private documents. A folder on the phone holds the .pdf
+    // files and queries.json (see tool/rag_docs_e2e.sh).
+    const realDir = String.fromEnvironment('RAG_DOCS_DIR');
+    test(
+      'documents answer messy user questions',
+      () async {
+        await expectModelLoaded();
+        // A run that was interrupted leaves its documents behind; a stale copy
+        // would answer every question alongside the fresh one.
+        await isar.writeTxn(() async {
+          await isar.documentChunkModels
+              .filter()
+              .sha256StartsWith('e2e')
+              .deleteAll();
+          await isar.documentIndexModels
+              .filter()
+              .sha256StartsWith('e2e')
+              .deleteAll();
+          await isar.mediaCacheModels
+              .filter()
+              .sha256StartsWith('e2e')
+              .deleteAll();
+          await isar.savedNoteModels
+              .filter()
+              .eventIdStartsWith('e2e-saved-')
+              .deleteAll();
+        });
+        final dir = Directory(realDir);
+        final shaByDoc = <String, String>{};
+        final pdfs =
+            dir
+                .listSync()
+                .whereType<File>()
+                .where((f) => f.path.endsWith('.pdf'))
+                .toList()
+              ..sort((x, y) => x.path.compareTo(y.path));
+        expect(pdfs, isNotEmpty, reason: 'no .pdf in RAG_DOCS_DIR');
+        for (final f in pdfs) {
+          final name = f.uri.pathSegments.last.replaceAll(
+            RegExp(r'\.pdf$'),
+            '',
+          );
+          final watch = Stopwatch()..start();
+          shaByDoc[name] = await index(f.path, DocumentKind.pdf);
+          final n = (await chunksOf(shaByDoc[name]!)).length;
+          // ignore: avoid_print
+          print(
+            'REAL indexed $name: $n chunks in ${watch.elapsed.inSeconds} s',
+          );
+        }
+        // Can the vector index reach each stored chunk at all? A chunk that
+        // does not find itself cannot be found by any question.
+        var stored = 0;
+        var selfFound = 0;
+        for (final sha in shaByDoc.values) {
+          for (final c in await chunksOf(sha)) {
+            stored++;
+            final self = await vectors.search(
+              await embedding.embed(c.text),
+              topK: 1,
+              minScore: 0.0,
+            );
+            if (self.isNotEmpty &&
+                self.first.chunkId == chunkIdOf(sha, c.ordinal)) {
+              selfFound++;
+            }
+          }
+        }
+        // ignore: avoid_print
+        print('REAL self-retrieval: $selfFound/$stored chunks find themselves');
+        final queries =
+            (jsonDecode(File('$realDir/queries.json').readAsStringSync())
+                    as List)
+                .cast<Map<String, dynamic>>();
+        var right = 0;
+        var found = 0;
+        for (final c in queries) {
+          final hits = await vectors.search(
+            await embedding.embed(c['q'] as String),
+            topK: 3,
+            minScore: 0.0,
+          );
+          final want = c['doc'] as String;
+          final pages = (c['pages'] as List).cast<String>();
+          final phrases = (c['phrases'] as List).cast<String>();
+          bool docOk(h) =>
+              want == 'any' || want == 'none' || h.sha256 == shaByDoc[want];
+          final top = hits.isEmpty ? null : hits.first;
+          final topOk =
+              top != null &&
+              want != 'none' &&
+              docOk(top) &&
+              (pages.isEmpty || pages.contains(top.label));
+          final anyPhrase =
+              phrases.isEmpty ||
+              hits.any(
+                (h) => phrases.any(
+                  (p) => h.content.toLowerCase().contains(p.toLowerCase()),
+                ),
+              );
+          final anyRight = hits.any(
+            (h) => docOk(h) && (pages.isEmpty || pages.contains(h.label)),
+          );
+          if (want != 'none') {
+            if (topOk) right++;
+            if (anyRight && anyPhrase) found++;
+          }
+          final shown = hits
+              .map(
+                (h) =>
+                    '${shaByDoc.entries.where((e) => e.value == h.sha256).map((e) => e.key).firstOrNull ?? '?'}:p${h.label}(${h.score.toStringAsFixed(2)})',
+              )
+              .join(' ');
+          // ignore: avoid_print
+          print(
+            'REAL ${want == 'none'
+                ? 'TRAP'
+                : topOk
+                ? 'TOP1'
+                : anyRight && anyPhrase
+                ? 'TOP3'
+                : 'MISS'} '
+            '"${c['q']}" → $shown phraseInTop3=$anyPhrase',
+          );
+        }
+        final asked = queries.where((c) => c['doc'] != 'none').length;
+        // ignore: avoid_print
+        print(
+          'REAL summary: top1 right $right/$asked, answer in top3 $found/$asked',
+        );
+        for (final sha in shaByDoc.values) {
+          await purge(sha);
+        }
+        expect(dir.existsSync(), isTrue);
+      },
+      skip: realDir.isEmpty ? 'pass --dart-define=RAG_DOCS_DIR' : false,
+      timeout: const Timeout(Duration(hours: 4)),
+    );
+
     const timingPdf = String.fromEnvironment('OCR_TIMING_PDF');
     test(
       'timings on a real PDF, page by page',
@@ -572,7 +713,13 @@ void main() {
             final text = await ocr.imageText(png) ?? '';
             line +=
                 ' render=${renderMs}ms ocr=${watch.elapsedMilliseconds}ms '
-                'read=${text.length} chars';
+                'read=${text.length} chars '
+                'letters=${RegExp(r'\p{L}', unicode: true).allMatches(text).length} '
+                'devanagari=${RegExp(r'[ऀ-ॿ]').allMatches(text).length}';
+            if (const bool.fromEnvironment('DUMP_OCR')) {
+              // ignore: avoid_print
+              print('OCRTEXT p.${i + 1}: ${text.replaceAll('\n', ' ⏎ ')}');
+            }
             await File(png).delete();
           }
           // ignore: avoid_print

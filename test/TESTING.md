@@ -132,6 +132,16 @@ Never call `Isar.initializeIsarCore(download: true)` yourself — under
 parallel `flutter test` it races and under `TestWidgetsFlutterBinding` its
 download can never succeed (mocked HTTP 400).
 
+### Device retrieval test with your own documents
+
+`tool/rag_docs_e2e.sh <device-id> [extra-dir]` pushes the committed Aranya PDF and
+its messy-question file to the phone, indexes it with the real Gecko embedder,
+runs a self-retrieval check (every stored chunk must find itself) and asks each
+question, printing whether the right page came first, in the top 3, or missed.
+`[extra-dir]` may hold your own `*.pdf` and a `queries.json` (same format; `doc`
+is the file name without `.pdf`) — keep private documents out of the repo.
+Indexing costs about 13 s a chunk.
+
 ### Binary fixtures — `test/_helpers/fixtures/`
 
 Real-world binaries a test needs, with a `PROVENANCE.md` per directory recording

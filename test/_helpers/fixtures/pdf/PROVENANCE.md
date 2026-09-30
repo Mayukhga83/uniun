@@ -91,3 +91,17 @@ Measured while building: at 10 × 12.5 cm the pasted notice covered only ~20 % o
 the page — under the 25 % region threshold, so it would have been left unread.
 That threshold is unmeasured on real documents (#242: measure on a device
 first); the fixture uses the larger size to exercise the region path.
+
+## Aranya land-records review (device retrieval test)
+
+`aranya_land_records_review_q2_2026.pdf` — a fictional 8-page government review
+(state "Aranya", invented figures) built for `integration_test/document_rag_e2e_test.dart`
+by `aranya_land_records_review_q2_2026.build.py` (LibreOffice for the typed pages,
+Pillow for the skewed scan, the phone-photo notice and the Hindi/English scan,
+matplotlib for the chart; `pdfunite` joins them). One page type each: typed,
+typed + photographed notice, scanned order, logo/signature + Hindi, chart,
+blank scan, Hindi/English scan, table. 385 KB — over the 300 KB guideline
+because three fonts and a photo are embedded; scans are downsampled to keep it
+there. No real person or record. `aranya_land_records_review_q2_2026.queries.json`
+holds 16 messy user-style questions (typos, Hinglish, Hindi script, fragments)
+with the page each answer is on. Run with `tool/rag_docs_e2e.sh <device-id>`.
