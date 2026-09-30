@@ -9,6 +9,7 @@
 # aranya_land_records_review_q2_2026.queries.json ("doc" = the pdf's file name
 # without .pdf); its PDFs and questions are added. Keep private documents out
 # of the repo. Indexing costs ~13 s per chunk, so allow time.
+# SKIP_SELF_CHECK=1 skips the every-chunk-finds-itself check (one embedding per chunk).
 set -euo pipefail
 dev="${1:?usage: $0 <adb-device-id> [extra-dir]}"
 extra="${2:-}"
@@ -42,13 +43,24 @@ adb -s "$dev" shell "rm -rf $dest" 2>/dev/null || true
 log="${TMPDIR:-/tmp}/rag_docs_e2e.log"
 ( cd "$root" && flutter test integration_test/document_rag_e2e_test.dart -d "$dev" \
     --plain-name 'documents answer messy user questions' \
-    --dart-define=RAG_DOCS_DIR="$dest" > "$log" 2>&1 ) &
+    --dart-define=RAG_DOCS_DIR="$dest" ${SKIP_SELF_CHECK:+--dart-define=SKIP_SELF_CHECK=true} \
+    > "$log" 2>&1 ) &
 pid=$!
 for _ in $(seq 1 120); do
   adb -s "$dev" shell "mkdir -p $dest" 2>/dev/null || true
   for f in "$stage"/*; do adb -s "$dev" push "$f" "$dest/" >/dev/null 2>&1 || true; done
   grep -q "documents answer messy user questions" "$log" 2>/dev/null && break
   sleep 3
+done
+# The test dumps every chunk and question vector so ranking variants can be
+# tried offline (tool/eval_retrieval.dart). Pull it before the run ends: the
+# app is uninstalled afterwards. It holds document text - keep it out of the repo.
+dump="${TMPDIR:-/tmp}/rag_dump.json"
+while kill -0 "$pid" 2>/dev/null; do
+  if grep -q "REAL dump written" "$log" 2>/dev/null; then
+    adb -s "$dev" pull "$dest/dump.json" "$dump" >/dev/null 2>&1 && { echo "dump: $dump"; break; }
+  fi
+  sleep 5
 done
 wait "$pid" || true
 grep -E "REAL|DocumentIndexer|Some tests|All tests|Expected|Actual|did not complete|\[E\]" "$log" || true

@@ -17,8 +17,14 @@ abstract class DocumentVectorRepository {
 
   /// Up to [topK] chunks whose cosine similarity to [queryVector] is at least
   /// [minScore], best first, with their text and page label resolved from Isar.
+  ///
+  /// With [queryText], the ranking also weighs exact words (BM25): a chunk that
+  /// contains the question's rare words — a number, a name — rises even when
+  /// its meaning-based score is modest. Without it, ranking is by meaning
+  /// alone. [ScoredChunk.score] is always the cosine similarity.
   Future<List<ScoredChunk>> search(
     List<double> queryVector, {
+    String? queryText,
     int topK = 3,
     double minScore = 0.3,
   });

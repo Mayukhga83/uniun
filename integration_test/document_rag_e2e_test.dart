@@ -72,6 +72,8 @@ import 'package:uniun/data/models/saved_note_model.dart';
 import 'package:uniun/data/models/notes/media_attachment.dart';
 import 'package:uniun/core/enum/note_type.dart';
 import 'package:uniun/domain/entities/shiv/scored_chunk.dart';
+import 'package:uniun/core/text/hybrid_ranker.dart';
+import 'package:uniun/data/repositories/isar_document_vector_repository_impl.dart';
 import 'package:uniun/domain/repositories/document_vector_repository.dart';
 import 'package:uniun/features/shiv/rag/embedding/embedding_service.dart';
 import 'package:uniun/features/shiv/rag/indexing/document_indexer.dart';
@@ -545,26 +547,28 @@ void main() {
       'documents answer messy user questions',
       () async {
         await expectModelLoaded();
-        // A run that was interrupted leaves its documents behind; a stale copy
-        // would answer every question alongside the fresh one.
-        await isar.writeTxn(() async {
-          await isar.documentChunkModels
-              .filter()
-              .sha256StartsWith('e2e')
-              .deleteAll();
-          await isar.documentIndexModels
-              .filter()
-              .sha256StartsWith('e2e')
-              .deleteAll();
-          await isar.mediaCacheModels
-              .filter()
-              .sha256StartsWith('e2e')
-              .deleteAll();
-          await isar.savedNoteModels
-              .filter()
-              .eventIdStartsWith('e2e-saved-')
-              .deleteAll();
-        });
+        {
+          // An interrupted run leaves its documents behind; a stale copy would
+          // answer every question alongside the fresh one.
+          await isar.writeTxn(() async {
+            await isar.documentChunkModels
+                .filter()
+                .sha256StartsWith('e2e')
+                .deleteAll();
+            await isar.documentIndexModels
+                .filter()
+                .sha256StartsWith('e2e')
+                .deleteAll();
+            await isar.mediaCacheModels
+                .filter()
+                .sha256StartsWith('e2e')
+                .deleteAll();
+            await isar.savedNoteModels
+                .filter()
+                .eventIdStartsWith('e2e-saved-')
+                .deleteAll();
+          });
+        }
         final dir = Directory(realDir);
         final shaByDoc = <String, String>{};
         final pdfs =
@@ -588,86 +592,146 @@ void main() {
             'REAL indexed $name: $n chunks in ${watch.elapsed.inSeconds} s',
           );
         }
-        // Can the vector index reach each stored chunk at all? A chunk that
-        // does not find itself cannot be found by any question.
-        var stored = 0;
-        var selfFound = 0;
-        for (final sha in shaByDoc.values) {
-          for (final c in await chunksOf(sha)) {
-            stored++;
-            final self = await vectors.search(
-              await embedding.embed(c.text),
-              topK: 1,
-              minScore: 0.0,
-            );
-            if (self.isNotEmpty &&
-                self.first.chunkId == chunkIdOf(sha, c.ordinal)) {
-              selfFound++;
+        if (!const bool.fromEnvironment('SKIP_SELF_CHECK')) {
+          // Can the search reach each stored chunk at all? A chunk that does
+          // not find itself cannot be found by any question.
+          var stored = 0;
+          var selfFound = 0;
+          for (final sha in shaByDoc.values) {
+            for (final c in await chunksOf(sha)) {
+              stored++;
+              final self = await vectors.search(
+                await embedding.embed(c.text),
+                topK: 1,
+                minScore: 0.0,
+              );
+              if (self.isNotEmpty &&
+                  self.first.chunkId == chunkIdOf(sha, c.ordinal)) {
+                selfFound++;
+              }
             }
           }
+          // ignore: avoid_print
+          print(
+            'REAL self-retrieval: $selfFound/$stored chunks find themselves',
+          );
         }
-        // ignore: avoid_print
-        print('REAL self-retrieval: $selfFound/$stored chunks find themselves');
         final queries =
             (jsonDecode(File('$realDir/queries.json').readAsStringSync())
                     as List)
                 .cast<Map<String, dynamic>>();
-        var right = 0;
-        var found = 0;
+
+        // Each question is embedded once; the same vectors are ranked by
+        // meaning alone and with keyword evidence, so the two are compared on
+        // identical inputs.
+        final vectors_ = <String, List<double>>{};
         for (final c in queries) {
-          final hits = await vectors.search(
-            await embedding.embed(c['q'] as String),
-            topK: 3,
-            minScore: 0.0,
-          );
+          vectors_[c['q'] as String] = await embedding.embed(c['q'] as String);
+        }
+
+        // Everything a ranking experiment needs, so variants can be tried
+        // offline in seconds instead of re-indexing on the phone.
+        final dump = {
+          'chunks': [
+            for (final e in shaByDoc.entries)
+              for (final c in await chunksOf(e.value))
+                {
+                  'doc': e.key,
+                  'sha': e.value,
+                  'ordinal': c.ordinal,
+                  'label': c.label,
+                  'text': c.text,
+                  'vector': [
+                    for (final v in c.vector ?? const <double>[])
+                      double.parse(v.toStringAsFixed(5)),
+                  ],
+                },
+          ],
+          'queries': [
+            for (final c in queries)
+              {
+                ...c,
+                'vector': [
+                  for (final v in vectors_[c['q']]!)
+                    double.parse(v.toStringAsFixed(5)),
+                ],
+              },
+          ],
+        };
+        File('$realDir/dump.json').writeAsStringSync(jsonEncode(dump));
+        // ignore: avoid_print
+        print('REAL dump written: $realDir/dump.json');
+
+        final modes = {
+          'meaning': IsarDocumentVectorRepositoryImpl.tuned(
+            isar,
+            HybridConfig.off,
+          ),
+          'hybrid': IsarDocumentVectorRepositoryImpl.tuned(
+            isar,
+            const HybridConfig(),
+          ),
+        };
+        final recall = {
+          for (final m in modes.keys) m: {1: 0, 3: 0, 5: 0},
+        };
+        final reciprocal = {for (final m in modes.keys) m: 0.0};
+        String docName(String sha) =>
+            shaByDoc.entries
+                .where((e) => e.value == sha)
+                .map((e) => e.key.length > 3 ? e.key.substring(0, 3) : e.key)
+                .firstOrNull ??
+            '?';
+        var answerable = 0;
+        for (final c in queries) {
+          final q = c['q'] as String;
           final want = c['doc'] as String;
+          if (want == 'none') continue;
+          answerable++;
           final pages = (c['pages'] as List).cast<String>();
           final phrases = (c['phrases'] as List).cast<String>();
-          bool docOk(h) =>
-              want == 'any' || want == 'none' || h.sha256 == shaByDoc[want];
-          final top = hits.isEmpty ? null : hits.first;
-          final topOk =
-              top != null &&
-              want != 'none' &&
-              docOk(top) &&
-              (pages.isEmpty || pages.contains(top.label));
-          final anyPhrase =
-              phrases.isEmpty ||
-              hits.any(
-                (h) => phrases.any(
-                  (p) => h.content.toLowerCase().contains(p.toLowerCase()),
-                ),
-              );
-          final anyRight = hits.any(
-            (h) => docOk(h) && (pages.isEmpty || pages.contains(h.label)),
-          );
-          if (want != 'none') {
-            if (topOk) right++;
-            if (anyRight && anyPhrase) found++;
+          // Relevant: right document, and either the right page or the answer
+          // text itself (OCR can move a fact to a neighbouring page).
+          bool relevant(ScoredChunk h) =>
+              (want == 'any' || h.sha256 == shaByDoc[want]) &&
+              (pages.contains(h.label) ||
+                  phrases.any(
+                    (p) => h.content.toLowerCase().contains(p.toLowerCase()),
+                  ));
+          final row = StringBuffer();
+          for (final m in modes.entries) {
+            final hits = await m.value.search(
+              vectors_[q]!,
+              queryText: q,
+              topK: 5,
+              minScore: 0.0,
+            );
+            final rank = hits.indexWhere(relevant) + 1; // 0 = not in top 5
+            for (final k in [1, 3, 5]) {
+              if (rank > 0 && rank <= k) {
+                recall[m.key]![k] = recall[m.key]![k]! + 1;
+              }
+            }
+            if (rank > 0) {
+              reciprocal[m.key] = reciprocal[m.key]! + 1 / rank;
+            }
+            row.write(
+              ' ${m.key}:${rank == 0 ? 'miss' : '#$rank'}'
+              '(${hits.take(3).map((h) => '${docName(h.sha256)}p${h.label}').join(',')})',
+            );
           }
-          final shown = hits
-              .map(
-                (h) =>
-                    '${shaByDoc.entries.where((e) => e.value == h.sha256).map((e) => e.key).firstOrNull ?? '?'}:p${h.label}(${h.score.toStringAsFixed(2)})',
-              )
-              .join(' ');
+          // ignore: avoid_print
+          print('REAL "$q" →$row');
+        }
+        for (final m in modes.keys) {
           // ignore: avoid_print
           print(
-            'REAL ${want == 'none'
-                ? 'TRAP'
-                : topOk
-                ? 'TOP1'
-                : anyRight && anyPhrase
-                ? 'TOP3'
-                : 'MISS'} '
-            '"${c['q']}" → $shown phraseInTop3=$anyPhrase',
+            'REAL $m: Recall@1 ${recall[m]![1]}/$answerable '
+            'Recall@3 ${recall[m]![3]}/$answerable '
+            'Recall@5 ${recall[m]![5]}/$answerable '
+            'MRR ${(reciprocal[m]! / answerable).toStringAsFixed(3)}',
           );
         }
-        final asked = queries.where((c) => c['doc'] != 'none').length;
-        // ignore: avoid_print
-        print(
-          'REAL summary: top1 right $right/$asked, answer in top3 $found/$asked',
-        );
         for (final sha in shaByDoc.values) {
           await purge(sha);
         }

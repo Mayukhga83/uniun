@@ -140,7 +140,12 @@ runs a self-retrieval check (every stored chunk must find itself) and asks each
 question, printing whether the right page came first, in the top 3, or missed.
 `[extra-dir]` may hold your own `*.pdf` and a `queries.json` (same format; `doc`
 is the file name without `.pdf`) — keep private documents out of the repo.
-Indexing costs about 13 s a chunk.
+Indexing costs about 13 s a chunk, provided the phone's screen stays on (the
+script wakes it): with the screen off Android runs the app on the slow cores and
+it takes ~5x longer. It also prints Recall@1/3/5 and MRR for meaning-only against
+hybrid ranking, and pulls a dump of all vectors to `/tmp/rag_dump.json` (holds
+document text — keep it out of the repo); `flutter pub run
+tool/eval_retrieval.dart` re-ranks that dump for a grid of settings offline.
 
 ### Binary fixtures — `test/_helpers/fixtures/`
 

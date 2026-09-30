@@ -561,6 +561,39 @@ this way), with Android on the same code path. 3.1.2 fixes the struct and reads
 3.1.0 stores unchanged (verified: 25/25 rows and vectors). 3.1.1 and 3.1.3 are
 retracted.
 
+**Ranking is meaning plus keywords (hybrid).** Meaning-only search blurs exact
+things — a helpline number, a registration number, a name — because such tokens
+look alike to an embedder. `HybridRanker` (`lib/core/text/hybrid_ranker.dart`)
+adds keyword evidence to each chunk's cosine similarity: BM25
+(`lib/core/text/bm25.dart`) over the question's words, with
+
+- **stopwords dropped** (English, Hinglish and Hindi function words — and, or,
+  the, kya, hai, है — `lib/core/text/stopwords.dart`),
+- **identifiers boosted** (a word of 3+ characters with a digit counts double),
+- **a saturating bonus**: `weight × s / (s + 2)` for a chunk with BM25 score `s`,
+  so a weak match on a common word adds little and a strong match on rare words
+  nearly the full `weight` (0.3). The returned `ScoredChunk.score` stays the
+  cosine.
+
+Only the question's words are scored, in the same pass that computes cosines.
+Chosen on a phone-indexed set of 3 documents, 93 chunks and 49 answerable
+questions (typos, Hinglish, Hindi script, fragments), scored by Recall@1/3/5 and
+MRR where a chunk is relevant if it is from the right document and on the right
+page **or** contains the answer text:
+
+| | R@1 | R@3 | R@5 | MRR |
+|---|---|---|---|---|
+| meaning only | 28/49 | 38/49 | 42/49 | 0.677 |
+| hybrid (default) | 34/49 | 42/49 | 46/49 | 0.773 |
+
+The gain is not one lucky setting: any keyword weight from 0.05 to 1.0 scores
+34–35/49 at Recall@1, and dropping stopwords is worth ~2 more right-first
+answers. Try variants without a phone: the device run dumps every chunk and
+question vector, and `flutter pub run tool/eval_retrieval.dart` ranks them for a
+grid of settings in seconds. Hindi and Hinglish questions still lag — the
+embedder is English-centred and Devanagari OCR is noisy, which no ranking
+change fixes.
+
 **The notes' vector search has the same limit.** Measured on 3.1.0 and 3.1.2
 alike, querying each stored vector with itself: it is its own top hit for 100 %
 of 10 vectors, 80 % of 25 and 33 % of 60 — and only 55 % of 60 even with topK =

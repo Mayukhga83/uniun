@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar_community/isar.dart';
 import 'package:uniun/core/enum/document_kind.dart';
+import 'package:uniun/core/text/hybrid_ranker.dart';
 import 'package:uniun/data/models/documents/document_chunk_model.dart';
 import 'package:uniun/data/models/documents/document_index_model.dart';
 import 'package:uniun/data/models/media/media_cache_model.dart';
@@ -13,7 +16,8 @@ import '../../_helpers/isar_test_harness.dart';
 
 /// Covers: chunk vector upsert onto Isar rows and exact search — text, label
 /// and kind resolution, score ordering and filtering, every stored chunk being
-/// reachable, purging removing vectors, and degenerate input.
+/// reachable, purging removing vectors, hybrid keyword ranking, and degenerate
+/// input.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -228,6 +232,219 @@ void main() {
       await repo.upsert(chunkIdOf('ghost', 0), oneHot(0));
 
       expect(await isar.documentChunkModels.count(), 0);
+    });
+  });
+
+  group('hybrid keyword ranking', () {
+    // A realistic library: a word is rare only against many chunks. The filler
+    // sits far from every query, so it changes idf but never the meaning order.
+    setUp(() async {
+      for (var i = 0; i < 30; i++) {
+        await seedChunk('filler', i, 'unrelated filler paragraph number $i');
+        await repo.upsert(chunkIdOf('filler', i), oneHot(200 + i));
+      }
+    });
+
+    /// A vector at cosine [c] to [oneHot]`(0)`.
+    List<double> at(double c) => List<double>.generate(dims, (i) {
+      if (i == 0) return c;
+      if (i == 1)
+        return c >= 1
+            ? 0.0
+            : (1 - c * c) > 0
+            ? math.sqrt(1 - c * c)
+            : 0.0;
+      return 0.0;
+    });
+
+    test(
+      'a chunk holding the question\'s rare word outranks a closer one',
+      () async {
+        await seedChunk('s', 0, 'general information about the office');
+        await seedChunk('s', 1, 'helpline 1800 233 0421 open on working days');
+        await repo.upsert(chunkIdOf('s', 0), at(0.68));
+        await repo.upsert(chunkIdOf('s', 1), at(0.64));
+
+        final meaningOnly = await repo.search(oneHot(0), topK: 1);
+        final hybrid = await repo.search(
+          oneHot(0),
+          queryText: 'helpline number',
+          topK: 1,
+        );
+
+        expect(meaningOnly.single.chunkId, 's:0');
+        expect(hybrid.single.chunkId, 's:1');
+      },
+    );
+
+    test(
+      'a much closer meaning is not overridden by a keyword match',
+      () async {
+        await seedChunk('s', 0, 'general information about the office');
+        await seedChunk('s', 1, 'helpline mentioned in passing');
+        await repo.upsert(chunkIdOf('s', 0), at(0.9));
+        await repo.upsert(chunkIdOf('s', 1), at(0.5));
+
+        final hit = (await repo.search(
+          oneHot(0),
+          queryText: 'helpline',
+          topK: 1,
+        )).single;
+
+        expect(hit.chunkId, 's:0');
+      },
+    );
+
+    test(
+      'a chunk whose meaning is below minScore is still found by its words',
+      () async {
+        await seedChunk('s', 0, 'general information about the office');
+        await seedChunk('s', 1, 'zebra crossing rules');
+        await repo.upsert(chunkIdOf('s', 0), at(0.6));
+        await repo.upsert(chunkIdOf('s', 1), at(0.2));
+
+        final hits = await repo.search(oneHot(0), queryText: 'zebra', topK: 2);
+
+        expect(hits.map((h) => h.chunkId), containsAll(['s:0', 's:1']));
+      },
+    );
+
+    test('matching many words adds no more than a matching few', () async {
+      await seedChunk('s', 0, 'general information about the office');
+      await seedChunk('s', 1, 'alpha bravo charlie delta echo foxtrot');
+      await repo.upsert(chunkIdOf('s', 0), at(0.9));
+      await repo.upsert(chunkIdOf('s', 1), at(0.5));
+
+      final hit = (await repo.search(
+        oneHot(0),
+        queryText: 'alpha bravo charlie delta echo foxtrot',
+        topK: 1,
+      )).single;
+
+      expect(
+        hit.chunkId,
+        's:0',
+        reason: 'the bonus is capped, however many words match',
+      );
+    });
+
+    test('a keyword weight of zero is meaning-only ranking', () async {
+      final meaningRepo = IsarDocumentVectorRepositoryImpl.tuned(
+        isar,
+        HybridConfig.off,
+      );
+      await seedChunk('s', 0, 'general information');
+      await seedChunk('s', 1, 'helpline number');
+      await repo.upsert(chunkIdOf('s', 0), at(0.68));
+      await repo.upsert(chunkIdOf('s', 1), at(0.64));
+
+      final hit = (await meaningRepo.search(
+        oneHot(0),
+        queryText: 'helpline',
+        topK: 1,
+      )).single;
+
+      expect(hit.chunkId, 's:0');
+    });
+
+    test('the returned score stays the cosine similarity', () async {
+      await seedChunk('s', 0, 'helpline number');
+      await repo.upsert(chunkIdOf('s', 0), at(0.7));
+
+      final hit = (await repo.search(oneHot(0), queryText: 'helpline')).single;
+
+      expect(hit.score, closeTo(0.7, 0.001));
+    });
+
+    test('without query text the order is by meaning alone', () async {
+      await seedChunk('s', 0, 'general information');
+      await seedChunk('s', 1, 'helpline number');
+      await repo.upsert(chunkIdOf('s', 0), at(0.68));
+      await repo.upsert(chunkIdOf('s', 1), at(0.64));
+
+      final hits = await repo.search(oneHot(0), topK: 2);
+
+      expect(hits.map((h) => h.chunkId), ['s:0', 's:1']);
+    });
+
+    test('a query with no words falls back to meaning', () async {
+      await seedChunk('s', 0, 'general information');
+      await seedChunk('s', 1, 'helpline number');
+      await repo.upsert(chunkIdOf('s', 0), at(0.68));
+      await repo.upsert(chunkIdOf('s', 1), at(0.64));
+
+      final hits = await repo.search(oneHot(0), queryText: '?!', topK: 2);
+
+      expect(hits.map((h) => h.chunkId), ['s:0', 's:1']);
+    });
+
+    test('a number in the question finds the chunk that contains it', () async {
+      await seedChunk('s', 0, 'registration number 2541 of year 2019');
+      await seedChunk('s', 1, 'registration number 7788 of year 2018');
+      await repo.upsert(chunkIdOf('s', 0), at(0.6));
+      await repo.upsert(chunkIdOf('s', 1), at(0.62));
+
+      final hit = (await repo.search(
+        oneHot(0),
+        queryText: 'registry no 2541',
+        topK: 1,
+      )).single;
+
+      expect(hit.chunkId, 's:0');
+    });
+
+    test('Devanagari words match exactly', () async {
+      await seedChunk('s', 0, 'हर सोमवार को कार्यालय खुला रहता है');
+      await seedChunk('s', 1, 'हर बुधवार को अभिलेख निरीक्षण होता है');
+      await repo.upsert(chunkIdOf('s', 0), at(0.66));
+      await repo.upsert(chunkIdOf('s', 1), at(0.64));
+
+      final hit = (await repo.search(
+        oneHot(0),
+        queryText: 'निरीक्षण किस दिन होता है',
+        topK: 1,
+      )).single;
+
+      expect(hit.chunkId, 's:1');
+    });
+
+    test(
+      'a keyword match cannot bring back a chunk from a purged document',
+      () async {
+        await seedChunk('s', 0, 'helpline');
+        await repo.upsert(chunkIdOf('s', 0), at(0.7));
+        await isar.writeTxn(() => isar.documentIndexModels.deleteBySha256('s'));
+
+        expect(await repo.search(oneHot(0), queryText: 'helpline'), isEmpty);
+      },
+    );
+
+    test(
+      'a chunk with no vector is not returned even if its words match',
+      () async {
+        await seedChunk('s', 0, 'helpline number, still being embedded');
+
+        final hits = await repo.search(
+          oneHot(0),
+          queryText: 'helpline',
+          minScore: -1,
+          topK: 50,
+        );
+
+        expect(hits.map((h) => h.chunkId), isNot(contains('s:0')));
+      },
+    );
+
+    test('keywords never shrink the result below topK', () async {
+      for (var i = 0; i < 5; i++) {
+        await seedChunk('s', i, i == 3 ? 'helpline' : 'other text $i');
+        await repo.upsert(chunkIdOf('s', i), at(0.8 - i * 0.02));
+      }
+
+      final hits = await repo.search(oneHot(0), queryText: 'helpline', topK: 3);
+
+      expect(hits, hasLength(3));
+      expect(hits.first.chunkId, 's:3');
     });
   });
 
