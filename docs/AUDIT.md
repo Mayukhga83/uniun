@@ -6,6 +6,21 @@ Format: one dated section per audit pass, newest first. Each item states what wa
 
 ---
 
+## 2026-10-01 — in-app jump to the cited page or section (#237) — work in progress
+
+Tapping a PDF source opens pdfrx's viewer on the cited page; a Word source opens an in-app text view scrolled to and tinting the cited heading's section. Both keep an "Open in another app" action. Design and limits: `docs/SHIVA/rag.md` → "Opening a citation".
+
+- **Verified against real PDFium** (not a double): a widget test opens the committed 7-page NIST PDF through the real viewer and reads the controller — it lands on page 5 for a citation on page 5. An out-of-range page ends on a real page.
+- **A clamp I added turned out redundant:** sabotage showed pdfrx corrects an out-of-range start page by itself after it settles, so the clamp was removed rather than kept untested.
+- Sabotage — each turned its tests red: viewer always page 1; non-numeric label not falling back; open-in-other-app shown for a missing file; heading disambiguation by passage; the scroll to the section; the tint on it; the tile routing to the wrong route; the tile skipping the file-exists check.
+- Strings in `app_en.arb` and `app_hi.arb`.
+- **Highlighting built.** The first 12 words of the cited chunk are found in the viewer's text for the cited page and painted. Two traps found by testing against real PDFium: pdfrx's multi-page `PdfTextSearcher` returned no matches here (abandoned for a direct search of the one cited page), and a page's text is empty until the page is loaded (`ensureLoaded`). The painting and its right-page filter are tested on a mock canvas; each break turns a test red.
+- **On the phone (real app viewer):** a generated PDF opens on page 6 with highlights on page 6 only; a generated Word file scrolls to and tints its section; tapping a real Sources tile opens the viewer on the cited page.
+- **Word tables and pictures built.** The Word view draws tables as a grid and large pictures inline, using the existing extraction (` | ` rows and picture markers); no second parser. Pictures are extracted into a temp folder that is removed when the view closes. Device-tested with a real generated .docx holding a table and a picture. Known limit: a prose line with a spaced pipe is indistinguishable from a one-row table.
+- Not done: Word styling and small pictures; iOS check; the full chat-to-citation flow with a live model answer (the tile-to-viewer path and the viewer are each tested; the model step was not driven).
+
+---
+
 ## 2026-09-29 — selective OCR for PDF pages and DOCX pictures (#242) — work in progress
 
 A PDF is now read page by page: the text layer where it is good, OCR where a page is scanned or its text layer is garbled, and OCR of one large pasted picture beside a typed page's text. Large pictures inside a DOCX are OCRed where they sit. Rules, thresholds and costs: `docs/SHIVA/rag.md` → "Scanned pages and pasted pictures".

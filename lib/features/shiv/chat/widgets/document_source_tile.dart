@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:uniun/common/snackbar.dart';
 import 'package:uniun/core/enum/document_kind.dart';
 import 'package:uniun/core/router/app_routes.dart';
@@ -14,10 +13,9 @@ import 'package:uniun/l10n/app_localizations.dart';
 /// (a PDF's page, a DOCX's heading, or "found in image"), and the passage the
 /// answer drew on.
 ///
-/// Tapping opens the file the way an attachment opens elsewhere — a document
-/// in the OS viewer, an image in the app's own viewer. Neither can be told
-/// where to jump, so the location is shown as text: enough for a reader to
-/// find and verify the claim.
+/// Tapping opens the cited place in the app's own viewer: a PDF on its page, a
+/// Word file on its heading's section, an image in the media viewer. The
+/// location is also shown as text, so it can be checked without opening.
 class DocumentSourceTile extends StatelessWidget {
   const DocumentSourceTile({super.key, required this.citation});
 
@@ -123,19 +121,28 @@ class DocumentSourceTile extends StatelessWidget {
   }
 
   void _open(BuildContext context, AppLocalizations l10n) {
-    if (citation.kind != DocumentKind.image) {
-      OpenFilex.open(citation.localPath);
+    // The cache can lose the file between the answer and the tap, and the
+    // viewers wait forever or fail confusingly on one that is gone.
+    if (!File(citation.localPath).existsSync()) {
+      AppSnackbar.error(
+        context,
+        citation.kind == DocumentKind.image
+            ? l10n.shivSourcesImageGone
+            : l10n.documentViewerFileGone,
+      );
       return;
     }
-    // The in-app viewer loads by cache row and waits forever when it is gone —
-    // which a citation resolved earlier can outlive.
-    if (!File(citation.localPath).existsSync()) {
-      AppSnackbar.error(context, l10n.shivSourcesImageGone);
+    if (citation.kind == DocumentKind.image) {
+      context.pushNamed(
+        AppRoutes.mediaDetail,
+        pathParameters: {'sha256': citation.sha256},
+      );
       return;
     }
     context.pushNamed(
-      AppRoutes.mediaDetail,
+      AppRoutes.documentViewer,
       pathParameters: {'sha256': citation.sha256},
+      extra: citation,
     );
   }
 

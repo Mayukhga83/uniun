@@ -535,6 +535,37 @@ flutter test integration_test/document_rag_e2e_test.dart -d <device-id> \
   --dart-define=OCR_TIMING_PDF=/sdcard/Download/circular.pdf
 ```
 
+### Opening a citation (#237)
+
+Tapping a document source opens `DocumentViewerPage`
+(`lib/features/shiv/document_viewer/`) at the cited place, not at the top:
+
+- **PDF** — pdfrx's `PdfViewer` on the cited page (`initialPageNumber`), with the
+  start of the cited passage highlighted on that page. The chunk is the PDF's own
+  extracted text, so its first 12 words are searched in the viewer's text for the
+  cited page only (whitespace-tolerant: the viewer re-flows lines), and the match
+  is painted. A page that was read with OCR has no text layer, so it gets the
+  page but no highlight. Pages are placeholders until loaded, so the page is
+  loaded before its text is read; pdfrx's multi-page `PdfTextSearcher` was tried
+  first and found nothing here, so the single cited page is searched directly.
+- **Word** — no Word renderer exists in the app, so the view is built from what
+  the reader already extracts: one block per heading section, scrolled to the
+  cited section and tinted. Paragraphs are text; a table (extracted as
+  `cell | cell` rows) is drawn as a grid, scrollable sideways; a large picture
+  (the same ones the reader writes out for OCR) is drawn inline. The section is
+  found by heading, and by the start of the cited passage when headings repeat
+  (`locateSection`). Styling, small pictures (logos, signatures) and page layout
+  are not shown, and a note says so. A prose line that uses a spaced ` | ` looks
+  exactly like a table row and is drawn as one.
+- **Both** — an "Open in another app" action hands the file to the OS viewer,
+  which is the better place to *read* rather than check. A file that left the
+  cache since the answer shows a message instead of a blank viewer. Images still
+  open in the media viewer.
+
+The citation travels as the route's `extra` (a path cannot carry the heading); a
+cold deep link has none and is redirected home. iOS rendering through pdfrx is
+unverified (no Mac here).
+
 ### Constraints worth knowing before changing this
 
 **Chunks are capped at 700 characters** because `PromptBudget` gives the
@@ -623,6 +654,6 @@ a plain `flutter test`. `test/_helpers/pdfium_test_lib.dart` downloads it once
 and points pdfrx at it, mirroring what `ensureIsarCore()` already does for
 Isar's native binary.
 
-**Not built:** in-app page-jump viewer (#237), documents in Manas-scoped chat
+**Not built:** documents in Manas-scoped chat
 (#236), a `notSearchable` badge, OCR of pictures inside DOCX text boxes, headers or tables' VML, `.doc`/`.odt`, DOCX headers,
 footers and footnotes.

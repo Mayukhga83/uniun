@@ -11,7 +11,8 @@ import 'package:uniun/l10n/app_localizations.dart';
 
 /// Covers: document source tile title, location (page for PDF, heading for
 /// DOCX, "text in image" for images), snippet, per-kind icon or thumbnail,
-/// untitled fallback, opening an image in-app, and overflow safety.
+/// untitled fallback, opening PDFs, Word files and images in the app's own
+/// viewers, a removed file, and overflow safety.
 void main() {
   Widget host(DocumentCitation c) => MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -246,6 +247,102 @@ void main() {
 
       expect(opened, 'img');
       expect(find.text('viewer'), findsOneWidget);
+    });
+  });
+
+  group('opening a PDF or Word file', () {
+    late Directory dir;
+    late File file;
+
+    setUp(() async {
+      dir = await Directory.systemTemp.createTemp('tile_doc');
+      file = File('${dir.path}/doc.bin')..writeAsBytesSync([0]);
+    });
+
+    tearDown(() => dir.delete(recursive: true));
+
+    DocumentCitation docCitation(
+      DocumentKind kind,
+      String label, {
+      String? path,
+    }) => DocumentCitation(
+      chunkId: 'd:0',
+      sha256: 'dsha',
+      kind: kind,
+      label: label,
+      snippet: 'the cited passage',
+      localPath: path ?? file.path,
+      title: 'Doc',
+    );
+
+    Future<DocumentCitation?> tapAndCapture(
+      WidgetTester t,
+      DocumentCitation c,
+    ) async {
+      DocumentCitation? received;
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => Scaffold(body: DocumentSourceTile(citation: c)),
+          ),
+          GoRoute(
+            name: AppRoutes.documentViewer,
+            path: '/document/:sha256',
+            builder: (_, state) {
+              received = state.extra as DocumentCitation;
+              return const Scaffold(body: Text('viewer'));
+            },
+          ),
+        ],
+      );
+      await t.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
+      );
+      await t.pumpAndSettle();
+      await t.tap(find.byType(DocumentSourceTile));
+      await t.pumpAndSettle();
+      return received;
+    }
+
+    testWidgets('a PDF opens in the in-app viewer with its page', (t) async {
+      final c = docCitation(DocumentKind.pdf, '5');
+
+      final received = await tapAndCapture(t, c);
+
+      expect(received, same(c));
+      expect(find.text('viewer'), findsOneWidget);
+    });
+
+    testWidgets('a Word file opens in the in-app viewer with its heading', (
+      t,
+    ) async {
+      final c = docCitation(DocumentKind.docx, 'Annual Leave');
+
+      final received = await tapAndCapture(t, c);
+
+      expect(received?.label, 'Annual Leave');
+      expect(find.text('viewer'), findsOneWidget);
+    });
+
+    testWidgets('a removed PDF says so instead of opening a viewer', (t) async {
+      final c = docCitation(
+        DocumentKind.pdf,
+        '5',
+        path: '${dir.path}/gone.pdf',
+      );
+
+      final received = await tapAndCapture(t, c);
+
+      expect(received, isNull);
+      expect(
+        find.text('This document is no longer on this device'),
+        findsOneWidget,
+      );
     });
   });
 

@@ -2678,6 +2678,30 @@ abstract class AppLocalizations {
   /// **'Open document'**
   String get shivSourcesDocxOpen;
 
+  /// Action in the in-app document viewer that hands the file to the OS viewer, for reading rather than checking a citation
+  ///
+  /// In en, this message translates to:
+  /// **'Open in another app'**
+  String get documentViewerOpenExternal;
+
+  /// Shown when a cited document's cached file has been removed since the answer
+  ///
+  /// In en, this message translates to:
+  /// **'This document is no longer on this device'**
+  String get documentViewerFileGone;
+
+  /// Shown when the in-app viewer cannot read a cited Word or PDF file
+  ///
+  /// In en, this message translates to:
+  /// **'This document could not be opened here'**
+  String get documentViewerReadError;
+
+  /// Note above the in-app view of a Word document, which shows its text, tables and large pictures but not styling or page layout
+  ///
+  /// In en, this message translates to:
+  /// **'Text, tables and large pictures — open in another app for the full layout'**
+  String get documentViewerTextOnly;
+
   /// Location line on an image source tile in Shiv's Sources sheet: the answer drew on the picture — its text (read by OCR) or what it shows (on-device labels)
   ///
   /// In en, this message translates to:

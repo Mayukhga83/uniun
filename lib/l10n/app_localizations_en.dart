@@ -1459,6 +1459,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shivSourcesDocxOpen => 'Open document';
 
   @override
+  String get documentViewerOpenExternal => 'Open in another app';
+
+  @override
+  String get documentViewerFileGone =>
+      'This document is no longer on this device';
+
+  @override
+  String get documentViewerReadError =>
+      'This document could not be opened here';
+
+  @override
+  String get documentViewerTextOnly =>
+      'Text, tables and large pictures — open in another app for the full layout';
+
+  @override
   String get shivSourcesImageFound => 'Found in image';
 
   @override

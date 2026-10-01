@@ -1475,6 +1475,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shivSourcesDocxOpen => 'दस्तावेज़ खोलें';
 
   @override
+  String get documentViewerOpenExternal => 'दूसरे ऐप में खोलें';
+
+  @override
+  String get documentViewerFileGone => 'यह दस्तावेज़ अब इस डिवाइस पर नहीं है';
+
+  @override
+  String get documentViewerReadError => 'यह दस्तावेज़ यहाँ नहीं खोला जा सका';
+
+  @override
+  String get documentViewerTextOnly =>
+      'पाठ, तालिकाएँ और बड़े चित्र — पूरे लेआउट के लिए दूसरे ऐप में खोलें';
+
+  @override
   String get shivSourcesImageFound => 'छवि में मिला';
 
   @override
