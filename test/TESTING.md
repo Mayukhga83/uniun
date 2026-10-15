@@ -132,6 +132,24 @@ Never call `Isar.initializeIsarCore(download: true)` yourself — under
 parallel `flutter test` it races and under `TestWidgetsFlutterBinding` its
 download can never succeed (mocked HTTP 400).
 
+### Keyword-ranking quality
+
+The committed retrieval regression test reports Recall@1/3/5 and MRR for both
+the existing English Gecko benchmark and the fictional Hindi/Hinglish keyword
+fixture:
+
+```bash
+flutter test test/features/shiv/rag/retrieval/hybrid_ranking_quality_test.dart
+```
+
+`aranya_hindi_hinglish_keyword.retrieval.json` covers Bengali and Devanagari
+OCR digits, nukta, an allow-listed chandrabindu/anusvara spelling variant and a
+Devanagari joiner variant. The production tokenizer normalises the question and
+each chunk only while BM25 scores them;
+the stored text and the text sent to the embedder stay unchanged, so these
+checks never require re-indexing. The device suite additionally exercises the
+same normalisation through `IsarDocumentVectorRepositoryImpl.search`.
+
 ### Device retrieval test with your own documents
 
 `tool/rag_docs_e2e.sh <device-id> [extra-dir]` pushes the committed Aranya PDF and
@@ -347,6 +365,14 @@ libmdbx races otherwise — see SIGBUS prevention in `tests.yml`).
 
 ## 6. Pipeline awareness
 
+`.github/workflows/builds.yml` is separate: it compiles the app for Android
+(`flutter build appbundle --release`), iOS (`flutter build ios --release
+--no-codesign`) and Windows (`flutter build windows --release`) on PRs, pushes
+to `main` and nightly. Android uses a disposable CI signing key; iOS has no
+code signing. No artifacts are uploaded. This catches Gradle, CocoaPods, MSVC
+and native-hook breakage the Linux test shards cannot see. The iOS build uses
+CocoaPods only (`pubspec.yaml`) to avoid duplicate SDWebImage symbols.
+
 The CI workflow (`.github/workflows/tests.yml`) shards tests by top-level
 path:
 
@@ -362,14 +388,76 @@ test/features, test/integration, test/common
 - Adding a NEW top-level test dir requires updating both the matrix and
   `shard-coverage`. Prefer adding under an existing shard.
 
+**Isar inside `testWidgets`.** Isar needs real async, not the widget test's fake
+clock: run every Isar call under `tester.runAsync` (or start it with
+`Zone.root.run` from widget code), and close Isar inside the test body before
+`tearDown`, or the test hangs. `test/integration/unread_flow_test.dart` shows
+the pattern (`io`, `chatTest`).
+
 The root `integration_test/` directory is **not** part of this and never runs in
-CI — it is device-bound (`IntegrationTestWidgetsFlutterBinding`). Tests that need
+CI — it is device-bound (`IntegrationTestWidgetsFlutterBinding`). CI does
+analyze it (`flutter analyze lib/ test/ integration_test/`), so a device test
+that no longer compiles fails the PR. Tests that need
 real flutter_gemma (the chat models, or the bundled Gecko embedder) live there
 because the models are Git-LFS assets CI does not check out. Run them by hand:
 
 ```
 flutter test integration_test/all_tests.dart -d <device-id>
 ```
+
+**Pre-set model (no download per run).** `flutter test` normally uninstalls the
+app after a run, taking a downloaded model with it. So the model is pushed to
+the phone once, to `/data/local/tmp/uniun_test/` (the uninstall does not touch
+it), and tests install it from there with `provisionTestModel(AIModelId.…)`
+from `integration_test/support/test_model.dart`:
+
+For other device targets, place the model in the app documents directory or
+set `--dart-define=UNIUN_TEST_MODEL_DIR=<device-accessible-directory>` when
+running the test. The helper uses that fixture directory before its existing
+default path and registers a model already present in app documents.
+
+```
+# once per model (the catalog URL gives the file name, e.g. gemma-4-E2B-it.litertlm)
+adb shell mkdir -p /data/local/tmp/uniun_test
+adb push gemma-4-E2B-it.litertlm /data/local/tmp/uniun_test/
+
+# every run: keeps the app installed, so its data and the model copy stay
+flutter test --no-uninstall integration_test/<file>.dart
+```
+
+`scripts/device_test.sh push-model <file>` / `run [file]` wraps exactly this and
+also keeps the screen on and unlocked (a sleeping screen runs the app on slow
+cores, several times slower).
+
+The Gana input/output matrix can run on a device without a model or live
+publishing: `scripts/device_test.sh run integration_test/gana_routing_matrix_e2e_test.dart`.
+It covers all five input types against all four output types using isolated
+Isar data and mocked inference/publish calls. It is also included in
+`integration_test/all_tests.dart`.
+
+- **Default model: Gemma 4 E2B** — it reads images and is small enough for most
+  phones, so one model covers chat, Gana, scheduler and image tests. Qwen3 0.6B
+  is enough for tests that only need text.
+- `provisionTestModel` copies the file into the app's own folder once (that is
+  where flutter_gemma restores a model from in every isolate, including the
+  background one), registers it, and marks it active. It needs no DI. It
+  returns `false` when the model was never pushed, so a test can SKIP with a
+  clear message instead of failing.
+- While it works it shows a plain "UNIUN test starting…" screen instead of the
+  splash.
+- Used by `gana_local_engine_e2e_test`, `flutter_gemma_bg_isolate_test`,
+  `scheduler_preemption_test`, `scheduler_model_switch_test` and
+  `chat_image_turn_test`. Use it in any new test that needs a real model.
+- Real generation is slow (~2.5 tokens/s for E2B): keep prompts short, use one
+  `maxTokens` per test (a different value makes flutter_gemma rebuild the whole
+  model), and wait for a first token rather than a fixed delay.
+- `scheduler_model_switch_test`'s second test needs two downloaded models and
+  still skips with one.
+- A debug build skews timing: run timing tests in profile mode with
+  `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/<file>.dart --profile`
+  (`test_driver/integration_test.dart` is the 3-line host side). `embedding_benchmark_test` and
+  `note_save_timing_e2e_test` are the examples; the latter runs unchanged on old and new code, so check
+  out `main`, copy the file in, run it, and compare.
 
 Adding one means adding an import + `main()` call to `integration_test/all_tests.dart`
 — that list is the source of truth. **Never gate a device test on a silent

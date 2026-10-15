@@ -15,6 +15,143 @@ user-facing changelog.
 
 ---
 
+## [3.1.0] — 2026-10-11
+
+Closes milestone [V3.1](https://github.com/basictech01/uniun/milestone/4). **Gujarati and
+Japanese are here, Shiv can look at a photo you attach, chats open where you left off, and
+Ganas get a dashboard and a choice of what they know.**
+
+### Added
+- **Gujarati and Japanese.** Pick either from the language picker; Hindi is now complete too
+  (#203, #227).
+- **Ask Shiv about a photo.** With a vision-capable model (Gemma 4 E2B or E4B) you can attach
+  a picture to a chat message and ask about it (#255).
+- **A dashboard for Ganas.** One screen with totals, the Ganas that need attention, how each
+  one has been doing, and the full reason behind a failed run (#87).
+- **Ganas can use all of Brahma, a single Manas, or no knowledge at all.** Choose "No
+  knowledge" for a Gana that doesn't need your notes. Picking Brahma with a cloud model now
+  warns you that your notes are sent to that model (#262).
+- **Chats open where you left off.** Public groups, private groups and DMs open at the first
+  note you haven't read, under a "New notes" line, and the jump-to-latest button shows how
+  many are waiting (#201).
+- **New replies in a followed note are easy to find.** A reply to a reply now counts, the
+  note shows "New", and the notes above it show "New reply inside" so you can follow the
+  trail down (#201).
+- **A logout option to keep your downloaded AI models** for the next account (#251).
+- **Public and private groups show an unread count in the drawer**, like DMs do (#201).
+
+### Changed
+- **Every note you save now gets embedded, and none is skipped.** A note is put in a queue
+  and embedded one at a time, so closing the app, a crash, or an AI that isn't ready yet no
+  longer loses it: it is picked up again and made searchable later. A question you ask Shiv
+  goes ahead of that queue instead of waiting behind it (#231). Notes saved before this
+  version are not re-embedded automatically.
+- **Notes are found more reliably.** Search over your notes used to miss many of them once
+  you had more than about a hundred; the search index was upgraded and it now finds them
+  (#232). The vector size now matches what the embedding model produces (#234).
+- **The note-search database now runs in its own background isolate**, off the main
+  thread, so saving and searching notes no longer makes scrolling stutter (#232).
+- **A new Gana starts on Brahma**, so you can save one without first creating a Manas (#262).
+
+### Fixed
+- **The notification dot stayed on after you read a chat.** Notes are now marked read as
+  they appear on screen, so reading a few and going back leaves the right count (#201).
+- **Logging out didn't fully reset the account.** Notes, DMs, media, AI choices and sign-ins
+  from the previous account are cleared before the next one signs in (#251).
+- **Creating a Manas from a Gana said "Gana not found"** even though the Manas was created,
+  and lost what you had typed. Your draft is kept now (#262).
+- **The Manas check mark in the graph followed the wrong note** after selecting another one
+  (#261).
+- **The app version in the privacy footer was stale** ("v1.0.0-beta"); it now shows the
+  installed version in every language.
+- **Gana cards overflowed on narrow screens and large text.**
+
+### Under the hood
+- **A new build pipeline checks Android, iOS and Windows.** Every pull request to `main`,
+  every push to `main` and a nightly run now build the real app as a release for all three
+  (Android App Bundle, iOS without code-signing, Windows). They run side by side, so one
+  failing platform doesn't hide the others, and a summary check reports the result. Gradle,
+  CocoaPods and native-library breakage now show up before a release, not on someone's
+  machine (#268).
+- **The test pipeline checks more.** Static analysis now also covers the on-device tests
+  (`integration_test/`), so one that stops compiling fails the pull request, and test
+  coverage is reported on every pull request (#253).
+- **Device tests start from a pre-pushed AI model** instead of downloading one each run, the
+  scheduler device tests that had never really run were fixed, and the device-test script
+  now says clearly that a test is running (#258, #260).
+- **The note vector store is stamped with a format version,** so a future search-index
+  upgrade can never read an old store as empty (#232).
+
+### All 14 issues in milestone [V3.1](https://github.com/basictech01/uniun/milestone/4)
+| # | What it was | Where it landed |
+|---|---|---|
+| #87 | Dashboard for Ganas | Added |
+| #201 | The notification dot took too long to clear | Fixed, plus chats open at the first unread |
+| #203 | Gujarati language | Added |
+| #227 | Japanese language | Added |
+| #231 | Notes with no vector were never embedded later | Changed: every note is queued and embedded |
+| #232 | Version-stamp the vector store path so an upgrade can't read empty | Changed: search index upgrade, own isolate, format version |
+| #233 | Rebuild path for orphaned chunk vectors | Closed, not needed: documents use exact search since 3.0.0 |
+| #234 | Declared embedding size didn't match the model | Changed: now matches (768) |
+| #240 | Images in Shiv's search: the text inside attached images | Shipped in 3.0.0 (tracked in this milestone) |
+| #251 | Logout didn't fully reset the previous account | Fixed, plus the keep-models option |
+| #255 | Attach an image in Shiv chat for vision models | Added |
+| #260 | Scheduler device tests failed only because of how they were written | Under the hood |
+| #261 | Manas check mark followed the wrong note | Fixed |
+| #262 | Creating a Manas from a Gana said "Gana not found"; Brahma scope | Fixed, plus Brahma and no-knowledge scopes |
+
+---
+
+## [3.0.0] — 2026-10-04
+
+The biggest release so far. **Shiv can now read your documents and photos** — PDFs, Word
+files, scans and pictures — and tell you exactly where an answer came from. The knowledge
+graph has been rebuilt to feel like Obsidian's, and any note can now be translated.
+
+### Added
+- **Shiv answers from your PDFs and Word documents.** Attach one to a note (or save the
+  note) and ask Shiv about it. Every answer shows its source: the page of a PDF or the
+  heading of a Word file.
+- **Tap a source to jump straight to it.** A PDF opens on the cited page with the passage
+  highlighted; a Word file opens on the cited section, with its tables and large pictures.
+  "Open in another app" is still one tap away.
+- **Scanned pages and photographed documents are read on the phone.** Shiv reads English and
+  Hindi text in scans, in pictures pasted into a document, and in photos — and only reads
+  the pages that actually need it, so typed documents stay fast.
+- **Photos without text are found by what they show**, such as "a dog on a beach".
+- **Translate any note** into another language with the on-device AI.
+- **Graph search and connection stepper.** Search the graph, fly to a match, and step
+  through a note's connections one by one.
+- **Saving a draft is now the main action when writing a note in Brahma.**
+- **Hindi and Hinglish questions find the right passage more often.** Numbers, names and
+  codes in your question now count alongside meaning, and Hindi spelling and digit
+  variants are treated as the same word. Contributed by Mayukhga83.
+
+### Changed
+- **The graph has been redesigned after Obsidian's.** Clearer, visible links that light up
+  around the note you select; nodes that spread out cleanly instead of tangling; drag any
+  node and its neighbours follow, then settle when you let go; and large graphs open
+  already laid out and fitted to the screen.
+- **Document search is now exact.** Shiv can find a passage anywhere in your documents —
+  previously only a fraction of stored passages could ever be found.
+- **The on-device AI uses the phone's graphics chip on Android**, making the first word of
+  an answer appear about 2.5× sooner on the phone it was measured on. The AI engine was
+  updated to the latest version.
+- **Model downloads keep going in the background on Android**, with a notification.
+
+### Fixed
+- **Replying to a note from the graph's note panel didn't refresh the graph** — it does now.
+- **Reloading the graph while viewing a Manas silently dropped you out of it**, and adding
+  or removing a note from that Manas didn't update the graph. Both fixed.
+- **Some graph nodes could not be tapped.** Taps now land on the node under your finger,
+  even for nodes far from the centre or while the layout is still moving.
+- **Shiv sometimes repeated its own prompt** ("Shiv:" or "/no_think") at the start of an
+  answer.
+- **If the phone's graphics chip couldn't run the AI model, the app retried the same thing
+  instead of falling back to the processor** — it now switches properly.
+
+---
+
 ## [2.3.0] — 2026-08-13
 
 A reliability-focused release for Shiv, Nataraj, and Ganas — plus QR sign-in for the

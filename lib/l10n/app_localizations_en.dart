@@ -9,7 +9,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appVersion => 'UNIUN v1.0.0-beta';
+  String appVersion(String version) {
+    return 'UNIUN v$version';
+  }
 
   @override
   String get appTagline => 'Your notes, your\nnetwork, your identity.';
@@ -570,7 +572,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLogoutBody =>
-      'You\'ll need your private key (nsec) to sign back in. Make sure it\'s backed up before logging out.';
+      'Your notes, chats, and account data on this device will be removed. You\'ll need your private key (nsec) to sign back in. Make sure it\'s backed up.';
+
+  @override
+  String get settingsKeepDownloadedModels =>
+      'Keep downloaded AI models for another login';
+
+  @override
+  String get settingsLoggingOut => 'Logging out…';
 
   @override
   String get settingsLogoutConfirm => 'Log out';
@@ -1946,6 +1955,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modelPickerNoModels => 'No models available.';
 
   @override
+  String get chatInputAttachImageTooltip => 'Attach an image';
+
+  @override
+  String get chatInputRemoveImageTooltip => 'Remove image';
+
+  @override
   String get chatInputPickModelTooltip => 'Pick model';
 
   @override
@@ -2552,13 +2567,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ganaListSubtitle =>
-      'Autonomous agents that watch a surface, reason over a Manas, and publish for you.';
+      'Autonomous agents that watch a surface, use Brahma or a Manas, and publish for you.';
 
   @override
   String get ganaListPaused => 'Paused';
 
   @override
-  String get ganaListScopeAll => 'All notes';
+  String get ganaListScopeAll => 'Brahma';
 
   @override
   String ganaListScopeCount(int count) {
@@ -2570,6 +2585,131 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ganaDashboardTitle => 'Dashboard';
+
+  @override
+  String get ganaDashboardActive => 'Active';
+
+  @override
+  String get ganaDashboardDone => 'Done';
+
+  @override
+  String get ganaDashboardFailed => 'Failed';
+
+  @override
+  String get ganaDashboardSkipped => 'Skipped';
+
+  @override
+  String get ganaDashboardAttentionTitle => 'NEEDS ATTENTION';
+
+  @override
+  String get ganaDashboardGanasTitle => 'YOUR GANAS';
+
+  @override
+  String get ganaDashboardActivityTitle => 'RECENT ACTIVITY';
+
+  @override
+  String get ganaDashboardActivityEmpty =>
+      'No runs yet. They show up here as your Ganas work.';
+
+  @override
+  String ganaDashboardRate(int percent) {
+    return '$percent% succeeded';
+  }
+
+  @override
+  String ganaStatsCounts(int done, int failed, int skipped) {
+    return '$done done · $failed failed · $skipped skipped';
+  }
+
+  @override
+  String get ganaDashboardFootnote =>
+      'Totals count runs since this version. Recent activity keeps the latest 10 runs per Gana.';
+
+  @override
+  String get ganaErrNoIdentityTitle => 'No active identity';
+
+  @override
+  String get ganaErrNoIdentityHint =>
+      'Sign in so the Gana can sign and publish its note.';
+
+  @override
+  String get ganaErrPublishTitle => 'Couldn\'t publish the note';
+
+  @override
+  String get ganaErrPublishHint =>
+      'The Gana wrote a note but sending it failed. It tries again on the next trigger.';
+
+  @override
+  String get ganaErrNetworkTitle => 'Network problem';
+
+  @override
+  String get ganaErrNetworkHint =>
+      'The connection dropped or timed out. Check your internet; it retries on the next trigger.';
+
+  @override
+  String get ganaErrModelTitle => 'The AI model had a problem';
+
+  @override
+  String get ganaErrModelHint =>
+      'The model failed while writing. Check the model in Shiv, then try again.';
+
+  @override
+  String get ganaErrOtherTitle => 'Something went wrong';
+
+  @override
+  String get ganaErrOtherHint => 'The run stopped with an unexpected error.';
+
+  @override
+  String get ganaRunTechnicalDetail => 'Technical detail';
+
+  @override
+  String get ganaRunOutputLabel => 'NOTE IT PUBLISHED';
+
+  @override
+  String get ganaRunOutputMissing => 'This note is no longer on this device.';
+
+  @override
+  String get ganaRunOpenNote => 'Open note';
+
+  @override
+  String ganaRunInputCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Read $count messages',
+      one: 'Read 1 message',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ganaSkipNoActiveModel =>
+      'No AI model is active. Pick one in Shiv.';
+
+  @override
+  String get ganaSkipModelMismatch =>
+      'The active model isn\'t the one this Gana is pinned to.';
+
+  @override
+  String get ganaSkipNoNewInput => 'Nothing new to read.';
+
+  @override
+  String get ganaSkipModelSwapped =>
+      'The model changed mid-run, so this run was cancelled.';
+
+  @override
+  String get ganaSkipNoopReturned => 'The model chose to stay silent.';
+
+  @override
+  String get ganaSkipMaxOutputs =>
+      'It reached its max notes and switched itself off.';
+
+  @override
+  String get ganaSkipCloudUnavailable =>
+      'UNIUN Cloud isn\'t connected, or no cloud model is set.';
 
   @override
   String get ganaDrawerEmptyTitle => 'No Ganas yet';
@@ -2664,14 +2804,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ganaFormManasSectionSubtitle =>
-      'The Manas this Gana reasons over.';
+      'Choose Brahma for all your knowledge, a Manas for one collection, or no knowledge.';
 
   @override
   String get ganaFormManasEmpty =>
-      'No Manases yet. A Gana needs a knowledge base to reason over — create one to continue.';
+      'No Manases yet. You can use Brahma or create a Manas for a focused collection.';
 
   @override
   String get ganaFormManasCreateNew => 'Create Manas';
+
+  @override
+  String get ganaScopeNone => 'No knowledge';
+
+  @override
+  String get ganaFormBrahmaCloudWarning =>
+      'Brahma sends your notes to the cloud model you picked. Choose a Manas or No knowledge to keep them on this device.';
 
   @override
   String get ganaFormModeRecurring => 'Recurring';
@@ -2689,10 +2836,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ganaFormBlockerName => 'Add a name to continue.';
-
-  @override
-  String get ganaFormBlockerManas =>
-      'Pick at least one Manas — a Gana needs knowledge to reason over.';
 
   @override
   String get ganaFormBlockerTask =>
@@ -2999,6 +3142,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveShareNothingToShare => 'Add text or media first';
 
   @override
+  String get threadNewNote => 'New';
+
+  @override
+  String get threadNewReplyInside => 'New reply inside';
+
+  @override
+  String get unreadBadgeOverflow => '99+';
+
+  @override
+  String get newNotesDivider => 'New notes';
+
+  @override
   String get jumpToLatest => 'Jump to latest';
 
   @override
@@ -3057,9 +3212,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get graphEmptyHint =>
       'Save notes to build your knowledge graph.\n\nEdges appear when one note references another.';
-
-  @override
-  String get ganaDetailManasesLabel => 'Manases';
 
   @override
   String get settingsAppearance => 'Appearance';
@@ -3165,4 +3317,54 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get brahmaPublishConfirmBody =>
       'Published notes are permanent. They go out to the relay and cannot be edited or deleted. Keep it as a draft if you\'re still working on it.';
+
+  @override
+  String get errorUnexpected => 'Something went wrong.';
+
+  @override
+  String get savedNoSearchResults => 'No notes match your search.';
+
+  @override
+  String qrScannerInvalidCode(String error) {
+    return 'Invalid QR: $error';
+  }
+
+  @override
+  String get qrScannerInstruction =>
+      'Scan a UNIUN QR — user, public group, or private group';
+
+  @override
+  String qrCopiedToClipboard(String label) {
+    return '$label • copied to clipboard';
+  }
+
+  @override
+  String get privateGroupShareQrTooltip => 'Share QR';
+
+  @override
+  String get privateGroupLeaveAction => 'Leave Group';
+
+  @override
+  String get privateGroupPendingApprovalTitle => 'Pending approval';
+
+  @override
+  String get privateGroupPendingApprovalBody =>
+      'Your request to join has been sent. You\'ll be able to read and send messages once the group admin approves you.';
+
+  @override
+  String get dmShareKeysTooltip => 'Share keys';
+
+  @override
+  String get groupFeedNoMessages => 'No messages yet. Be the first!';
+
+  @override
+  String threadShowMoreReferences(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count more references',
+      one: 'Show 1 more reference',
+    );
+    return '$_temp0';
+  }
 }

@@ -4,12 +4,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nostr_core_dart/nostr.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:uniun/common/atoms/uniun_back_button.dart';
+import 'package:uniun/common/widgets/chat/boundary_chat_list.dart';
+import 'package:uniun/common/widgets/chat/bottom_read_mixin.dart';
+import 'package:uniun/common/widgets/chat/new_notes_divider.dart';
+import 'package:uniun/domain/entities/note/note_entity.dart';
 import 'package:uniun/common/locator.dart';
 import 'package:uniun/common/qr/uniun_qr_button.dart';
 import 'package:uniun/common/widgets/drop_loading_indicator.dart';
 import 'package:uniun/common/qr/uniun_qr_card.dart';
 import 'package:uniun/common/widgets/composer/composer_host.dart';
 import 'package:uniun/common/widgets/jump_to_bottom_button.dart';
+import 'package:uniun/common/widgets/chat/unread_count_cubit.dart';
+import 'package:uniun/domain/usecases/unread_usecases.dart';
 import 'package:uniun/common/widgets/note_card/note_card.dart';
 import 'package:uniun/common/widgets/user_avatar.dart';
 import 'package:uniun/domain/entities/profile/profile_entity.dart';
@@ -31,36 +37,66 @@ class PrivateGroupDetailPage extends StatelessWidget {
           create: (_) => getIt<PrivateGroupDetailBloc>(param1: groupId),
         ),
       ],
-      child: const _PrivateGroupDetailView(),
+      child: _PrivateGroupDetailView(groupId: groupId),
     );
   }
 }
 
 class _PrivateGroupDetailView extends StatefulWidget {
-  const _PrivateGroupDetailView();
+  const _PrivateGroupDetailView({required this.groupId});
+  final String groupId;
 
   @override
-  State<_PrivateGroupDetailView> createState() => _PrivateGroupDetailViewState();
+  State<_PrivateGroupDetailView> createState() =>
+      _PrivateGroupDetailViewState();
 }
 
-class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
+class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView>
+    with BottomReadMixin {
   final _scrollController = ScrollController();
-  final Set<String> _everVisible = <String>{};
+
+  late final UnreadCountCubit _unread;
+
+  @override
+  ScrollController get readScrollController => _scrollController;
+
+  @override
+  void markContainerRead() => context.read<PrivateGroupDetailBloc>().add(
+    MarkAllPrivateGroupSeenEvent(),
+  );
 
   /// Whether the jump-to-latest button is showing (set when scrolled above the
   /// bottom).
   bool _showJumpButton = false;
 
+  /// `created` of the oldest note that was unread when the page opened; null
+  /// when everything was read. Fixed for the life of the page.
+  DateTime? _boundary;
+  bool _boundaryLoaded = false;
+
   @override
   void initState() {
     super.initState();
+    _unread = UnreadCountCubit(
+      getIt<WatchPrivateGroupUnreadCountUseCase>().call(widget.groupId),
+    );
     _scrollController.addListener(_onScroll);
+    getIt<GetPrivateGroupOldestUnreadTimeUseCase>().call(widget.groupId).then((
+      r,
+    ) {
+      if (!mounted) return;
+      setState(() {
+        _boundary = r.getOrElse(() => null);
+        _boundaryLoaded = true;
+      });
+    });
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _unread.close();
     super.dispose();
   }
 
@@ -68,14 +104,9 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
   void _onScroll() {
     if (!mounted || !_scrollController.hasClients) return;
     final pos = _scrollController.position;
-    if (pos.pixels >= pos.maxScrollExtent - 8) {
-      context
-          .read<PrivateGroupDetailBloc>()
-          .add(MarkAllPrivateGroupSeenEvent());
-    }
+    onReadScroll();
 
-    final showJump =
-        pos.maxScrollExtent - pos.pixels > kJumpToBottomTolerance;
+    final showJump = pos.maxScrollExtent - pos.pixels > kJumpToBottomTolerance;
     if (showJump != _showJumpButton) {
       setState(() => _showJumpButton = showJump);
     }
@@ -90,26 +121,56 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
         curve: Curves.easeOut,
       );
     }
-    context
-        .read<PrivateGroupDetailBloc>()
-        .add(MarkAllPrivateGroupSeenEvent());
+    context.read<PrivateGroupDetailBloc>().add(MarkAllPrivateGroupSeenEvent());
   }
 
-  void _onMessageVisibility(String eventId, VisibilityInfo info) {
-    // VisibilityDetector callbacks are scheduler-driven and can fire AFTER
-    // the page is popped — guard against using a defunct State.context.
-    if (!mounted) return;
-    if (info.visibleFraction >= 0.5) {
-      _everVisible.add(eventId);
-    } else if (info.visibleFraction == 0 && _everVisible.contains(eventId)) {
-      context
-          .read<PrivateGroupDetailBloc>()
-          .add(MarkPrivateGroupMessageSeenEvent(eventId));
-    }
+  /// The group, oldest first, opened at the first note that was unread when the
+  /// page opened.
+  Widget _messageList(PrivateGroupDetailState state) {
+    final boundary = _boundary;
+    final index = boundary == null
+        ? state.messages.length
+        : state.messages.indexWhere((m) => !m.created.isBefore(boundary));
+    return BoundaryChatList<NoteEntity>(
+      controller: _scrollController,
+      notes: state.messages,
+      boundaryIndex: index < 0 ? state.messages.length : index,
+      openedAtBoundary: boundary != null,
+      unreadDivider: const NewNotesDivider(),
+      topPadding: 16,
+      bottomPadding: 16,
+      itemBuilder: (context, msg) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        // NoteCard self-loads its author profile.
+        child: VisibilityDetector(
+          key: ValueKey('pc-${msg.id}'),
+          onVisibilityChanged: (info) => _onMessageVisibility(msg.id, info),
+          child: NoteCard(
+            key: ValueKey(msg.id),
+            note: msg,
+            onTap: () => _openThread(context, msg.id),
+          ),
+        ),
+      ),
+    );
   }
+
+  void _onMessageVisibility(String eventId, VisibilityInfo info) =>
+      markIfOnScreen(
+        eventId,
+        info.visibleFraction,
+        (id) => context.read<PrivateGroupDetailBloc>().add(
+          MarkPrivateGroupMessageSeenEvent(id),
+        ),
+      );
 
   void _openThread(BuildContext context, String messageId) {
-    context.pushNamed(AppRoutes.thread, pathParameters: {'noteId': messageId});
+    context
+        .pushNamed(AppRoutes.thread, pathParameters: {'noteId': messageId})
+        .then((_) {
+          // Notes that arrived while the thread covered the chat.
+          if (mounted) scheduleBottomCheck();
+        });
   }
 
   void _showJoinRequests(BuildContext context) {
@@ -123,8 +184,7 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
       builder: (_) {
         return BlocProvider.value(
           value: context.read<PrivateGroupDetailBloc>(),
-          child: BlocBuilder<PrivateGroupDetailBloc,
-              PrivateGroupDetailState>(
+          child: BlocBuilder<PrivateGroupDetailBloc, PrivateGroupDetailState>(
             builder: (ctx, state) {
               return _JoinRequestsSheet(
                 requests: state.joinRequests,
@@ -132,8 +192,8 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
                 isApproving: state.isApproving,
                 onApprove: (keyPackage) {
                   ctx.read<PrivateGroupDetailBloc>().add(
-                        ApproveJoinRequestEvent(keyPackage),
-                      );
+                    ApproveJoinRequestEvent(keyPackage),
+                  );
                 },
               );
             },
@@ -160,6 +220,8 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
         }
       },
       builder: (context, state) {
+        // Nothing is on screen until the unread boundary is known.
+        contentChanged(_boundaryLoaded ? state.messages.length : 0);
         final title = state.group?.name ?? "Private Group";
         final requestsCount = state.joinRequests.length;
 
@@ -169,13 +231,15 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             surfaceTintColor: Colors.transparent,
-            leading: UniunBackButton(
-              onPressed: () => context.popOrHome(),
-            ),
+            leading: UniunBackButton(onPressed: () => context.popOrHome()),
             titleSpacing: 0,
             title: Row(
               children: [
-                Icon(Icons.lock_rounded, size: 16, color: Theme.of(context).colorScheme.outline),
+                Icon(
+                  Icons.lock_rounded,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -232,19 +296,28 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
                       relays: state.group!.relays,
                     ),
                   ),
-                  tooltip: 'Share QR',
+                  tooltip: AppLocalizations.of(
+                    context,
+                  )!.privateGroupShareQrTooltip,
                 ),
               ],
               PopupMenuButton<String>(
                 onSelected: (val) {
                   if (val == 'leave') {
-                    context.read<PrivateGroupDetailBloc>().add(LeavePrivateGroupEvent());
+                    context.read<PrivateGroupDetailBloc>().add(
+                      LeavePrivateGroupEvent(),
+                    );
                   }
                 },
                 itemBuilder: (context) => [
                   PopupMenuItem(
                     value: 'leave',
-                    child: Text('Leave Group', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    child: Text(
+                      AppLocalizations.of(context)!.privateGroupLeaveAction,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -257,41 +330,23 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
                     Expanded(
                       child: Stack(
                         children: [
-                          state.isLoading && state.messages.isEmpty
+                          state.isLoading && state.messages.isEmpty ||
+                                  !_boundaryLoaded
                               ? const Center(child: DropLoadingIndicator())
-                              : ListView.builder(
-                                  controller: _scrollController,
-                                  reverse:
-                                      false, // oldest at top, newest at bottom
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
-                                  ),
-                                  itemCount: state.messages.length,
-                                  itemBuilder: (context, index) {
-                                    final msg = state.messages[index];
-                                    // NoteCard self-loads its author profile.
-                                    return VisibilityDetector(
-                                      key: ValueKey('pc-${msg.id}'),
-                                      onVisibilityChanged: (info) =>
-                                          _onMessageVisibility(msg.id, info),
-                                      child: NoteCard(
-                                        key: ValueKey(msg.id),
-                                        note: msg,
-                                        onTap: () =>
-                                            _openThread(context, msg.id),
-                                      ),
-                                    );
-                                  },
-                                ),
+                              : _messageList(state),
                           Positioned(
                             right: 16,
                             bottom: 12,
-                            child: JumpToBottomButton(
-                              visible: _showJumpButton,
-                              onPressed: _jumpToLatest,
-                              tooltip:
-                                  AppLocalizations.of(context)!.jumpToLatest,
+                            child: BlocBuilder<UnreadCountCubit, int>(
+                              bloc: _unread,
+                              builder: (context, unread) => JumpToBottomButton(
+                                visible: _showJumpButton,
+                                unreadCount: unread,
+                                onPressed: _jumpToLatest,
+                                tooltip: AppLocalizations.of(
+                                  context,
+                                )!.jumpToLatest,
+                              ),
                             ),
                           ),
                         ],
@@ -302,10 +357,12 @@ class _PrivateGroupDetailViewState extends State<_PrivateGroupDetailView> {
                       entityContext: entityContextLines(state.messages),
                       onSend: (text, refs, attachments) =>
                           context.read<PrivateGroupDetailBloc>().add(
-                                SendPrivateGroupMessageEvent(text,
-                                    mentionRefs: refs,
-                                    attachments: attachments),
-                              ),
+                            SendPrivateGroupMessageEvent(
+                              text,
+                              mentionRefs: refs,
+                              attachments: attachments,
+                            ),
+                          ),
                     ),
                   ],
                 ),
@@ -333,7 +390,7 @@ class _PendingApprovalView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "Pending approval",
+              AppLocalizations.of(context)!.privateGroupPendingApprovalTitle,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -342,11 +399,13 @@ class _PendingApprovalView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "Your request to join has been sent. You'll be able to read and send messages once the group admin approves you.",
+              AppLocalizations.of(context)!.privateGroupPendingApprovalBody,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -403,8 +462,11 @@ class _JoinRequestsSheet extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                Icon(Icons.group_add_rounded,
-                    color: Theme.of(context).colorScheme.primary, size: 22),
+                Icon(
+                  Icons.group_add_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 22,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -420,7 +482,9 @@ class _JoinRequestsSheet extends StatelessWidget {
                 if (requests.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primary,
                       borderRadius: BorderRadius.circular(10),
@@ -450,9 +514,13 @@ class _JoinRequestsSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 32),
                 child: Column(
                   children: [
-                    Icon(Icons.inbox_outlined,
-                        size: 36,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
+                    Icon(
+                      Icons.inbox_outlined,
+                      size: 36,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       l10n.pendingRequestsEmpty,
@@ -483,7 +551,9 @@ class _JoinRequestsSheet extends StatelessWidget {
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerLow,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
@@ -505,7 +575,9 @@ class _JoinRequestsSheet extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -514,7 +586,9 @@ class _JoinRequestsSheet extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontFamily: 'monospace',
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -528,11 +602,17 @@ class _JoinRequestsSheet extends StatelessWidget {
                                     onApprove(req.keyPackageB64 as String);
                                   },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
-                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onPrimary,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -543,7 +623,9 @@ class _JoinRequestsSheet extends StatelessWidget {
                                     height: 14,
                                     child: DropLoadingIndicator(
                                       size: 14,
-                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimary,
                                     ),
                                   )
                                 : Text(
@@ -566,4 +648,3 @@ class _JoinRequestsSheet extends StatelessWidget {
     );
   }
 }
-

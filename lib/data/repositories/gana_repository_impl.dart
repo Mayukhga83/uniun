@@ -28,6 +28,7 @@ class GanaRepositoryImpl extends GanaRepository {
         ..ganaId = g.ganaId
         ..name = g.name
         ..manasIds = g.manasIds
+        ..noKnowledge = g.noKnowledge
         ..taskPrompt = g.taskPrompt
         ..inputType = g.inputType
         ..inputRefId = g.inputRefId
@@ -58,6 +59,10 @@ class GanaRepositoryImpl extends GanaRepository {
         model.lastProcessedCreated = g.lastProcessedCreated ??
             existing.lastProcessedCreated;
         model.lastRunAt = g.lastRunAt ?? existing.lastRunAt;
+        // Counters are written only by the engine, never by an edit.
+        model.runsSucceeded = existing.runsSucceeded;
+        model.runsFailed = existing.runsFailed;
+        model.runsSkipped = existing.runsSkipped;
       }
 
       model.signedNostrEvent = await _signer.sign(

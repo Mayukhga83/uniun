@@ -17,6 +17,7 @@ import 'package:uniun/core/l10n/locale_cubit.dart';
 import 'package:uniun/core/router/app_router.dart';
 import 'package:uniun/core/theme/app_theme.dart';
 import 'package:uniun/core/theme/app_theme_mode.dart';
+import 'package:uniun/domain/services/note_embedding_trigger.dart';
 import 'package:uniun/features/shiv/rag/indexing/document_indexer.dart';
 import 'package:uniun/core/theme/theme_cubit.dart';
 import 'package:uniun/common/locator.dart';
@@ -79,6 +80,9 @@ Future<void> main() async {
   // after that it only reacts to new files and saves.
   getIt<DocumentIndexer>().start();
 
+  // Embeds notes still waiting for a vector from a previous run.
+  getIt<NoteEmbeddingTrigger>().nudge();
+
   // Resolve the startup locale synchronously (the AppSettingsStore singleton is
   // already pre-resolved) so the first frame renders in the right language with
   // no flicker. Runtime switches go through LocaleCubit → SetAppLocaleUseCase.
@@ -95,10 +99,9 @@ Future<void> main() async {
   // Remove native splash immediately → SplashPage takes over
   FlutterNativeSplash.remove();
 
-  runApp(UniunApp(
-    initialLocale: initialLocale,
-    initialThemeMode: initialThemeMode,
-  ));
+  runApp(
+    UniunApp(initialLocale: initialLocale, initialThemeMode: initialThemeMode),
+  );
 }
 
 /// `background_downloader` (used by flutter_gemma to fetch models) stores its
@@ -139,10 +142,8 @@ class UniunApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => LocaleCubit(
-            getIt<SetAppLocaleUseCase>(),
-            initial: initialLocale,
-          ),
+          create: (_) =>
+              LocaleCubit(getIt<SetAppLocaleUseCase>(), initial: initialLocale),
         ),
         BlocProvider(
           create: (_) => ThemeCubit(
@@ -164,7 +165,7 @@ class UniunApp extends StatelessWidget {
                   GlobalWidgetsLocalizations.delegate,
                   GlobalCupertinoLocalizations.delegate,
                 ],
-                supportedLocales: const [Locale('en'), Locale('hi')],
+                supportedLocales: AppLocalizations.supportedLocales,
                 locale: locale,
                 theme: AppTheme.light,
                 darkTheme: AppTheme.dark,

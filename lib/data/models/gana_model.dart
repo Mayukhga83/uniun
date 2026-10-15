@@ -27,6 +27,10 @@ class GanaModel {
   /// it as a union so legacy multi-Manas rows keep working.
   List<String> manasIds = const [];
 
+  /// True when the Gana is set to use no knowledge at all. Empty [manasIds]
+  /// then does NOT mean Brahma. False on every row written before this field.
+  bool noKnowledge = false;
+
   /// User-authored instructions injected into every prompt.
   late String taskPrompt;
 
@@ -118,6 +122,17 @@ class GanaModel {
   /// Anchor for interval triggers — prevents double-fires on app relaunch.
   DateTime? lastRunAt;
 
+  // ── Lifetime run counters ────────────────────────────────────────────────
+
+  /// Per-device totals, bumped by `writeGanaRun` when a run finishes. The run
+  /// log keeps only the last 10 per Gana, so these are the only lifetime
+  /// figures. Local state like the cursor — never part of the mesh body.
+  /// Nullable on purpose: Isar reads a field missing from an older row as the
+  /// minimum integer, so a non-nullable counter would start hugely negative.
+  int? runsSucceeded;
+  int? runsFailed;
+  int? runsSkipped;
+
   // ── Metadata ─────────────────────────────────────────────────────────────
 
   late DateTime createdAt;
@@ -139,6 +154,7 @@ extension GanaModelExtension on GanaModel {
         ganaId: ganaId,
         name: name,
         manasIds: manasIds,
+        noKnowledge: noKnowledge,
         taskPrompt: taskPrompt,
         inputType: inputType,
         inputRefId: inputRefId,
@@ -156,6 +172,9 @@ extension GanaModelExtension on GanaModel {
         lastProcessedEventId: lastProcessedEventId,
         lastProcessedCreated: lastProcessedCreated,
         lastRunAt: lastRunAt,
+        runsSucceeded: runsSucceeded ?? 0,
+        runsFailed: runsFailed ?? 0,
+        runsSkipped: runsSkipped ?? 0,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );

@@ -6,7 +6,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_gu.dart';
 import 'app_localizations_hi.dart';
+import 'app_localizations_ja.dart';
 
 // ignore_for_file: type=lint
 
@@ -95,14 +97,16 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
+    Locale('gu'),
     Locale('hi'),
+    Locale('ja'),
   ];
 
-  /// App version string shown in settings / footer
+  /// App name and installed package version shown in the privacy footer
   ///
   /// In en, this message translates to:
-  /// **'UNIUN v1.0.0-beta'**
-  String get appVersion;
+  /// **'UNIUN v{version}'**
+  String appVersion(String version);
 
   /// Hero tagline on the welcome screen
   ///
@@ -1079,8 +1083,20 @@ abstract class AppLocalizations {
   /// Log out confirmation dialog body
   ///
   /// In en, this message translates to:
-  /// **'You\'ll need your private key (nsec) to sign back in. Make sure it\'s backed up before logging out.'**
+  /// **'Your notes, chats, and account data on this device will be removed. You\'ll need your private key (nsec) to sign back in. Make sure it\'s backed up.'**
   String get settingsLogoutBody;
+
+  /// Log out option to preserve reusable on-device model files
+  ///
+  /// In en, this message translates to:
+  /// **'Keep downloaded AI models for another login'**
+  String get settingsKeepDownloadedModels;
+
+  /// Progress label while clearing account data during logout
+  ///
+  /// In en, this message translates to:
+  /// **'Logging out…'**
+  String get settingsLoggingOut;
 
   /// Log out confirmation dialog confirm action
   ///
@@ -3566,6 +3582,18 @@ abstract class AppLocalizations {
   /// **'No models available.'**
   String get modelPickerNoModels;
 
+  /// Tooltip on the button in Shiv's chat input that attaches a photo to the message; shown only when the active AI model can read images
+  ///
+  /// In en, this message translates to:
+  /// **'Attach an image'**
+  String get chatInputAttachImageTooltip;
+
+  /// Tooltip on the button that removes the photo attached to the chat message being written
+  ///
+  /// In en, this message translates to:
+  /// **'Remove image'**
+  String get chatInputRemoveImageTooltip;
+
   /// Tooltip on the + icon in the chat input that opens the model picker
   ///
   /// In en, this message translates to:
@@ -4667,7 +4695,7 @@ abstract class AppLocalizations {
   /// Intro line below the app bar on the Gana list page
   ///
   /// In en, this message translates to:
-  /// **'Autonomous agents that watch a surface, reason over a Manas, and publish for you.'**
+  /// **'Autonomous agents that watch a surface, use Brahma or a Manas, and publish for you.'**
   String get ganaListSubtitle;
 
   /// Status line on a Gana card when the agent is disabled
@@ -4679,7 +4707,7 @@ abstract class AppLocalizations {
   /// Gana card scope label when no Manas is selected (whole library)
   ///
   /// In en, this message translates to:
-  /// **'All notes'**
+  /// **'Brahma'**
   String get ganaListScopeAll;
 
   /// Gana card scope label showing how many Manas the agent reasons over
@@ -4687,6 +4715,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 Manas} other{{count} Manas}}'**
   String ganaListScopeCount(int count);
+
+  /// Title of the Gana dashboard page
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get ganaDashboardTitle;
+
+  /// Dashboard tile label: Ganas currently switched on
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get ganaDashboardActive;
+
+  /// Dashboard tile label: total successful runs
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get ganaDashboardDone;
+
+  /// Dashboard tile label: total failed runs
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get ganaDashboardFailed;
+
+  /// Dashboard tile label: total skipped runs
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get ganaDashboardSkipped;
+
+  /// Section title listing Ganas whose last run failed
+  ///
+  /// In en, this message translates to:
+  /// **'NEEDS ATTENTION'**
+  String get ganaDashboardAttentionTitle;
+
+  /// Section title listing every Gana with its numbers
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR GANAS'**
+  String get ganaDashboardGanasTitle;
+
+  /// Section title for the latest runs across all Ganas
+  ///
+  /// In en, this message translates to:
+  /// **'RECENT ACTIVITY'**
+  String get ganaDashboardActivityTitle;
+
+  /// Empty text of the recent activity section
+  ///
+  /// In en, this message translates to:
+  /// **'No runs yet. They show up here as your Ganas work.'**
+  String get ganaDashboardActivityEmpty;
+
+  /// Success rate of a Gana; {percent} is a whole number
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% succeeded'**
+  String ganaDashboardRate(int percent);
+
+  /// Lifetime run counts of one Gana
+  ///
+  /// In en, this message translates to:
+  /// **'{done} done · {failed} failed · {skipped} skipped'**
+  String ganaStatsCounts(int done, int failed, int skipped);
+
+  /// Footnote explaining what the dashboard numbers cover
+  ///
+  /// In en, this message translates to:
+  /// **'Totals count runs since this version. Recent activity keeps the latest 10 runs per Gana.'**
+  String get ganaDashboardFootnote;
+
+  /// Failed-run title: no signed-in identity
+  ///
+  /// In en, this message translates to:
+  /// **'No active identity'**
+  String get ganaErrNoIdentityTitle;
+
+  /// Failed-run hint: no signed-in identity
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in so the Gana can sign and publish its note.'**
+  String get ganaErrNoIdentityHint;
+
+  /// Failed-run title: publishing failed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t publish the note'**
+  String get ganaErrPublishTitle;
+
+  /// Failed-run hint: publishing failed
+  ///
+  /// In en, this message translates to:
+  /// **'The Gana wrote a note but sending it failed. It tries again on the next trigger.'**
+  String get ganaErrPublishHint;
+
+  /// Failed-run title: connection or timeout error
+  ///
+  /// In en, this message translates to:
+  /// **'Network problem'**
+  String get ganaErrNetworkTitle;
+
+  /// Failed-run hint: connection or timeout error
+  ///
+  /// In en, this message translates to:
+  /// **'The connection dropped or timed out. Check your internet; it retries on the next trigger.'**
+  String get ganaErrNetworkHint;
+
+  /// Failed-run title: model or engine error
+  ///
+  /// In en, this message translates to:
+  /// **'The AI model had a problem'**
+  String get ganaErrModelTitle;
+
+  /// Failed-run hint: model or engine error
+  ///
+  /// In en, this message translates to:
+  /// **'The model failed while writing. Check the model in Shiv, then try again.'**
+  String get ganaErrModelHint;
+
+  /// Failed-run title: unrecognised error
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get ganaErrOtherTitle;
+
+  /// Failed-run hint: unrecognised error
+  ///
+  /// In en, this message translates to:
+  /// **'The run stopped with an unexpected error.'**
+  String get ganaErrOtherHint;
+
+  /// Label above the raw error text of a failed run
+  ///
+  /// In en, this message translates to:
+  /// **'Technical detail'**
+  String get ganaRunTechnicalDetail;
+
+  /// Label above the note a run published
+  ///
+  /// In en, this message translates to:
+  /// **'NOTE IT PUBLISHED'**
+  String get ganaRunOutputLabel;
+
+  /// Shown when a run's published note was cleaned up
+  ///
+  /// In en, this message translates to:
+  /// **'This note is no longer on this device.'**
+  String get ganaRunOutputMissing;
+
+  /// Button that opens the note a run published
+  ///
+  /// In en, this message translates to:
+  /// **'Open note'**
+  String get ganaRunOpenNote;
+
+  /// How many input messages a run read
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Read 1 message} other{Read {count} messages}}'**
+  String ganaRunInputCount(int count);
+
+  /// Skip reason explanation
+  ///
+  /// In en, this message translates to:
+  /// **'No AI model is active. Pick one in Shiv.'**
+  String get ganaSkipNoActiveModel;
+
+  /// Skip reason explanation
+  ///
+  /// In en, this message translates to:
+  /// **'The active model isn\'t the one this Gana is pinned to.'**
+  String get ganaSkipModelMismatch;
+
+  /// Skip reason explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new to read.'**
+  String get ganaSkipNoNewInput;
+
+  /// Skip reason explanation
+  ///
+  /// In en, this message translates to:
+  /// **'The model changed mid-run, so this run was cancelled.'**
+  String get ganaSkipModelSwapped;
+
+  /// Skip reason explanation
+  ///
+  /// In en, this message translates to:
+  /// **'The model chose to stay silent.'**
+  String get ganaSkipNoopReturned;
+
+  /// Skip reason explanation
+  ///
+  /// In en, this message translates to:
+  /// **'It reached its max notes and switched itself off.'**
+  String get ganaSkipMaxOutputs;
+
+  /// Skip reason explanation
+  ///
+  /// In en, this message translates to:
+  /// **'UNIUN Cloud isn\'t connected, or no cloud model is set.'**
+  String get ganaSkipCloudUnavailable;
 
   /// Empty-state title in the Ganas section
   ///
@@ -4835,13 +5067,13 @@ abstract class AppLocalizations {
   /// Helper text under the section title
   ///
   /// In en, this message translates to:
-  /// **'The Manas this Gana reasons over.'**
+  /// **'Choose Brahma for all your knowledge, a Manas for one collection, or no knowledge.'**
   String get ganaFormManasSectionSubtitle;
 
   /// Empty-state when the user has no Manases
   ///
   /// In en, this message translates to:
-  /// **'No Manases yet. A Gana needs a knowledge base to reason over — create one to continue.'**
+  /// **'No Manases yet. You can use Brahma or create a Manas for a focused collection.'**
   String get ganaFormManasEmpty;
 
   /// Inline CTA to open the Manas form from the Gana form
@@ -4849,6 +5081,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create Manas'**
   String get ganaFormManasCreateNew;
+
+  /// Gana scope label and form chip when the agent uses no notes at all
+  ///
+  /// In en, this message translates to:
+  /// **'No knowledge'**
+  String get ganaScopeNone;
+
+  /// Warning under the knowledge scope when a cloud model is pinned and Brahma is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Brahma sends your notes to the cloud model you picked. Choose a Manas or No knowledge to keep them on this device.'**
+  String get ganaFormBrahmaCloudWarning;
 
   /// Cron-job mode label
   ///
@@ -4879,12 +5123,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a name to continue.'**
   String get ganaFormBlockerName;
-
-  /// Save-blocker hint: no Manas selected
-  ///
-  /// In en, this message translates to:
-  /// **'Pick at least one Manas — a Gana needs knowledge to reason over.'**
-  String get ganaFormBlockerManas;
 
   /// Save-blocker hint: empty task prompt
   ///
@@ -5444,6 +5682,30 @@ abstract class AppLocalizations {
   /// **'Add text or media first'**
   String get receiveShareNothingToShare;
 
+  /// Marker above a note in a followed note's thread that has not been opened yet
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get threadNewNote;
+
+  /// Marker above a note in a followed note's thread when an unopened reply sits further down
+  ///
+  /// In en, this message translates to:
+  /// **'New reply inside'**
+  String get threadNewReplyInside;
+
+  /// Shown on the jump-to-latest badge when more than 99 notes are unread
+  ///
+  /// In en, this message translates to:
+  /// **'99+'**
+  String get unreadBadgeOverflow;
+
+  /// Line shown above the first unread note when a chat opens
+  ///
+  /// In en, this message translates to:
+  /// **'New notes'**
+  String get newNotesDivider;
+
   /// Tooltip on the floating button that scrolls a chat to the newest message and marks the surface read
   ///
   /// In en, this message translates to:
@@ -5551,12 +5813,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save notes to build your knowledge graph.\n\nEdges appear when one note references another.'**
   String get graphEmptyHint;
-
-  /// Label on the Gana detail card for the number of Manases the agent draws from
-  ///
-  /// In en, this message translates to:
-  /// **'Manases'**
-  String get ganaDetailManasesLabel;
 
   /// Settings section label for appearance-related options (theme mode)
   ///
@@ -5737,6 +5993,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Published notes are permanent. They go out to the relay and cannot be edited or deleted. Keep it as a draft if you\'re still working on it.'**
   String get brahmaPublishConfirmBody;
+
+  /// Generic error message when a screen has no more specific failure text
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong.'**
+  String get errorUnexpected;
+
+  /// Empty search result on the saved notes page
+  ///
+  /// In en, this message translates to:
+  /// **'No notes match your search.'**
+  String get savedNoSearchResults;
+
+  /// Error shown when a scanned UNIUN QR cannot be decoded
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid QR: {error}'**
+  String qrScannerInvalidCode(String error);
+
+  /// Instruction below the universal QR scanner
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a UNIUN QR — user, public group, or private group'**
+  String get qrScannerInstruction;
+
+  /// Confirmation after copying a QR card's identifier
+  ///
+  /// In en, this message translates to:
+  /// **'{label} • copied to clipboard'**
+  String qrCopiedToClipboard(String label);
+
+  /// Tooltip for sharing a private group's QR code
+  ///
+  /// In en, this message translates to:
+  /// **'Share QR'**
+  String get privateGroupShareQrTooltip;
+
+  /// Menu action for leaving a private group
+  ///
+  /// In en, this message translates to:
+  /// **'Leave Group'**
+  String get privateGroupLeaveAction;
+
+  /// Title while a request to join a private group awaits admin approval
+  ///
+  /// In en, this message translates to:
+  /// **'Pending approval'**
+  String get privateGroupPendingApprovalTitle;
+
+  /// Explanation while a request to join a private group awaits admin approval
+  ///
+  /// In en, this message translates to:
+  /// **'Your request to join has been sent. You\'ll be able to read and send messages once the group admin approves you.'**
+  String get privateGroupPendingApprovalBody;
+
+  /// Tooltip for sharing direct-message identity keys
+  ///
+  /// In en, this message translates to:
+  /// **'Share keys'**
+  String get dmShareKeysTooltip;
+
+  /// Empty state in a public group's message feed
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet. Be the first!'**
+  String get groupFeedNoMessages;
+
+  /// Expands hidden parent references in a thread
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Show 1 more reference} other{Show {count} more references}}'**
+  String threadShowMoreReferences(int count);
 }
 
 class _AppLocalizationsDelegate
@@ -5750,7 +6078,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'hi'].contains(locale.languageCode);
+      <String>['en', 'gu', 'hi', 'ja'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -5761,8 +6089,12 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'gu':
+      return AppLocalizationsGu();
     case 'hi':
       return AppLocalizationsHi();
+    case 'ja':
+      return AppLocalizationsJa();
   }
 
   throw FlutterError(

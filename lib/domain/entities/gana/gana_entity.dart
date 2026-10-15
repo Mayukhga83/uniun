@@ -12,6 +12,10 @@ abstract class GanaEntity with _$GanaEntity {
     required String ganaId,
     required String name,
     @Default(<String>[]) List<String> manasIds,
+
+    /// Run without any knowledge. When false, an empty [manasIds] means the
+    /// whole Brahma knowledge base.
+    @Default(false) bool noKnowledge,
     required String taskPrompt,
 
     // Input
@@ -48,6 +52,11 @@ abstract class GanaEntity with _$GanaEntity {
     String? lastProcessedEventId,
     DateTime? lastProcessedCreated,
     DateTime? lastRunAt,
+
+    // Lifetime run counters (per device)
+    @Default(0) int runsSucceeded,
+    @Default(0) int runsFailed,
+    @Default(0) int runsSkipped,
 
     // Metadata
     required DateTime createdAt,

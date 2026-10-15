@@ -194,6 +194,12 @@
                                                             
 ---
 
+## Notes: how a note gets its vector (#231)
+
+A note is queued in a `PendingEmbedding` table and embedded by `NoteEmbeddingWorker`, one at a time and newest first, with the row deleted only after its vector is stored. Every embed (note, PDF/DOCX chunk, Shiv question) goes through one gate that serves a question first. Full explanation, diagram, rules and measurements: [`embedding.md`](embedding.md).
+
+---
+
 ## Documents and images (PDF, DOCX, images)
 
 A PDF, a Word (`.docx`) file or an **image** attached to a note has its text
@@ -271,7 +277,7 @@ ties the vector store to the text, and the text to the page:
  │  sha256  : "a3f9…"     ordinal : 12                           │
  │  label   : "5"   ← THE PAGE                                   │
  │  text    : "Expense Reimbursement…"                           │
- │  vector  : [0.02, -0.11, …]   (1024 float32)                  │
+ │  vector  : [0.02, -0.11, …]   (768 float32)                   │
  └───────────────────────────────────────────────────────────────┘
 
  "what is the deadline for expense claims?"
@@ -581,18 +587,13 @@ keeping the best K). ToStore's approximate index was tried first and dropped:
 on a phone only **20 of 83 chunks** (24 %) found themselves as their own top
 hit, so a stored chunk could never come back for any question — every hit came
 from the first file indexed and none from the second. A scan is exact, and at a
-few thousand 1024-dim vectors it costs milliseconds. Purging a document deletes
+few thousand 768-dim vectors it costs milliseconds. Purging a document deletes
 its chunk rows, and its vectors with them — so there are no orphaned vectors.
 The document feature had not shipped, so no stored data needed migrating. If a
 library ever reaches hundreds of thousands of chunks, revisit an index — an
 exact-recall one.
 
-**ToStore is pinned to 3.1.2.** 3.1.0 declares `struct statvfs` as 88 bytes where
-glibc and 64-bit bionic use 112, so each disk-space check wrote 24 bytes past a
-heap block — random `malloc`/`free` aborts on Linux (the integration tests died
-this way), with Android on the same code path. 3.1.2 fixes the struct and reads
-3.1.0 stores unchanged (verified: 25/25 rows and vectors). 3.1.1 and 3.1.3 are
-retracted.
+**ToStore is on 3.5.1** (#232). 3.1.0 declared `struct statvfs` as 88 bytes where glibc and 64-bit bionic use 112 (random `malloc`/`free` aborts); 3.1.2 fixed that and was pinned for a while. 3.5.1 also replaces the vector index: see below. 3.5 removed `precision`, `maxDegree` and `efSearch` from the schema (it owns them now), and a store written by 3.1.x opens under 3.5 with every vector present but an empty index, so search finds nothing. So the store path carries a format number (`kNoteVectorStoreFormat`, `tostore_<dim>d_v<N>`): bump it when an upgrade changes the format and the store opens empty at a new path.
 
 **Ranking is meaning plus keywords (hybrid).** Meaning-only search blurs exact
 things — a helpline number, a registration number, a name — because such tokens
@@ -600,6 +601,12 @@ look alike to an embedder. `HybridRanker` (`lib/core/text/hybrid_ranker.dart`)
 adds keyword evidence to each chunk's cosine similarity: BM25
 (`lib/core/text/bm25.dart`) over the question's words, with
 
+- **keyword-only normalisation on both sides of scoring**: lower-casing;
+  Devanagari and Bengali OCR digit look-alikes mapped to ASCII; common
+  Devanagari nukta forms folded; the allow-listed Hindi spelling pairs
+  (`कहाँ`/`कहां`, `आँख`/`आंख`, `माँ`/`मां`, `गाँव`/`गांव`, `चाँद`/`चांद`)
+  unified without a global nasal-mark fold; zero-width joiners removed only
+  between Devanagari characters and kept as token boundaries in other scripts,
 - **stopwords dropped** (English, Hinglish and Hindi function words — and, or,
   the, kya, hai, है — `lib/core/text/stopwords.dart`),
 - **identifiers boosted** (a word of 3+ characters with a digit counts double),
@@ -607,6 +614,11 @@ adds keyword evidence to each chunk's cosine similarity: BM25
   so a weak match on a common word adds little and a strong match on rare words
   nearly the full `weight` (0.3). The returned `ScoredChunk.score` stays the
   cosine.
+
+Normalisation happens only inside the tokenizer, for the question and each
+chunk at ranking time. Stored chunk text and text sent to Gecko are unchanged,
+so enabling or changing this layer does not require re-indexing or re-embedding
+documents.
 
 Only the question's words are scored, in the same pass that computes cosines.
 Chosen on a phone-indexed set of 3 documents, 93 chunks and 49 answerable
@@ -620,18 +632,21 @@ page **or** contains the answer text:
 | hybrid (default) | 34/49 | 42/49 | 46/49 | 0.773 |
 
 The gain is not one lucky setting: any keyword weight from 0.05 to 1.0 scores
-34–35/49 at Recall@1, and dropping stopwords is worth ~2 more right-first
-answers. Try variants without a phone: the device run dumps every chunk and
-question vector, and `flutter pub run tool/eval_retrieval.dart` ranks them for a
-grid of settings in seconds. Hindi and Hinglish questions still lag — the
-embedder is English-centred and Devanagari OCR is noisy, which no ranking
-change fixes.
+34–35/49 at Recall@1, and dropping stopwords is worth about two more right-first
+answers. The committed English Gecko benchmark remains 22/23 at Recall@1 and
+23/23 at Recall@3/5 (MRR 0.978). On the fictional Hindi/Hinglish fixture,
+normalisation raises Recall@1/3/5 from 3/12 to 12/12 and MRR from 0.250 to
+1.000.
 
-**The notes' vector search has the same limit.** Measured on 3.1.0 and 3.1.2
-alike, querying each stored vector with itself: it is its own top hit for 100 %
-of 10 vectors, 80 % of 25 and 33 % of 60 — and only 55 % of 60 even with topK =
-every row. Note retrieval still uses ToStore, so a library past a few dozen
-notes likely misses some. Not fixed here.
+Run the committed regression set with
+`flutter test test/features/shiv/rag/retrieval/hybrid_ranking_quality_test.dart`.
+The device run also dumps every chunk and question vector; use
+`flutter pub run tool/eval_retrieval.dart` to try ranking settings offline in
+seconds without re-indexing.
+
+**The notes' vector search had the same limit on 3.1.x, and 3.5.1 fixes it.** Querying each stored vector with itself, it was its own top hit for 25 % of 80 vectors, 7 % of 300 and 2 % of 1,000 on 3.1.2, against 99-100 % at every size on 3.5.1 (synthetic vectors, laptop; the device figures are in `docs/AUDIT.md`). Notes therefore still use ToStore's index; documents keep the exact scan.
+
+**The note store runs in its own isolate** (`NoteVectorStore`, `lib/data/datasources/note_vector_store.dart`). On the main isolate 600 saves and 600 searches stalled the UI for up to 522 ms (12 stalls over 16 ms); in its own isolate the worst was 13 ms. Exactly one isolate may open the store — ToStore keeps per-isolate state, so a second opener does not see the first one's writes — which is why `TostoreVectorRepositoryImpl` talks to it by message and nothing else opens it. Inside, a delete is flushed (or search keeps returning the id) and saving an id again deletes the old entry first (or the old vector stays in the index).
 
 ### Testing
 

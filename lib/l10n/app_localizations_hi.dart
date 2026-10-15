@@ -9,7 +9,9 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
-  String get appVersion => 'UNIUN v1.0.0-beta';
+  String appVersion(String version) {
+    return 'UNIUN v$version';
+  }
 
   @override
   String get appTagline => 'आपके नोट्स, आपका\nनेटवर्क, आपकी पहचान।';
@@ -571,7 +573,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsLogoutBody =>
-      'वापस साइन इन करने के लिए आपको अपनी प्राइवेट की (nsec) की आवश्यकता होगी। लॉग आउट करने से पहले सुनिश्चित करें कि इसका बैकअप ले लिया गया है।';
+      'इस डिवाइस से आपके नोट्स, चैट और अकाउंट का डेटा हटा दिया जाएगा। दोबारा साइन इन करने के लिए आपको अपनी प्राइवेट की (nsec) चाहिए होगी। उसका बैकअप सुनिश्चित करें।';
+
+  @override
+  String get settingsKeepDownloadedModels =>
+      'अगले लॉगिन के लिए डाउनलोड किए गए AI मॉडल रखें';
+
+  @override
+  String get settingsLoggingOut => 'लॉग आउट हो रहा है…';
 
   @override
   String get settingsLogoutConfirm => 'लॉग आउट';
@@ -1610,16 +1619,16 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get graphSearchPrevMatch => 'Previous match';
+  String get graphSearchPrevMatch => 'पिछला मिलान';
 
   @override
-  String get graphSearchNextMatch => 'Next match';
+  String get graphSearchNextMatch => 'अगला मिलान';
 
   @override
-  String get graphPrevConnection => 'Previous connection';
+  String get graphPrevConnection => 'पिछला संबंध';
 
   @override
-  String get graphNextConnection => 'Next connection';
+  String get graphNextConnection => 'अगला संबंध';
 
   @override
   String get groupEntryTitle => 'दल';
@@ -1868,7 +1877,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get pendingRequestsApprove => 'स्वीकृत करें';
 
   @override
-  String get settingsCloudProvider => 'Cloud AI';
+  String get settingsCloudProvider => 'क्लाउड AI';
 
   @override
   String get cloudProviderTitle => 'UNIUN Cloud';
@@ -1959,6 +1968,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get modelPickerNoModels => 'कोई मॉडल उपलब्ध नहीं।';
+
+  @override
+  String get chatInputAttachImageTooltip => 'छवि जोड़ें';
+
+  @override
+  String get chatInputRemoveImageTooltip => 'छवि हटाएँ';
 
   @override
   String get chatInputPickModelTooltip => 'मॉडल चुनें';
@@ -2570,13 +2585,13 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get ganaListSubtitle =>
-      'स्वायत्त एजेंट जो किसी सतह को देखते हैं, किसी मानस पर तर्क करते हैं, और आपके लिए प्रकाशित करते हैं।';
+      'स्वायत्त एजेंट जो किसी सतह को देखते हैं, ब्रह्मा या मानस का उपयोग करते हैं, और आपके लिए प्रकाशित करते हैं।';
 
   @override
   String get ganaListPaused => 'रुका हुआ';
 
   @override
-  String get ganaListScopeAll => 'सभी नोट्स';
+  String get ganaListScopeAll => 'ब्रह्मा';
 
   @override
   String ganaListScopeCount(int count) {
@@ -2588,6 +2603,131 @@ class AppLocalizationsHi extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ganaDashboardTitle => 'डैशबोर्ड';
+
+  @override
+  String get ganaDashboardActive => 'सक्रिय';
+
+  @override
+  String get ganaDashboardDone => 'पूर्ण';
+
+  @override
+  String get ganaDashboardFailed => 'विफल';
+
+  @override
+  String get ganaDashboardSkipped => 'छोड़े गए';
+
+  @override
+  String get ganaDashboardAttentionTitle => 'ध्यान चाहिए';
+
+  @override
+  String get ganaDashboardGanasTitle => 'आपके गण';
+
+  @override
+  String get ganaDashboardActivityTitle => 'हाल की गतिविधि';
+
+  @override
+  String get ganaDashboardActivityEmpty =>
+      'अभी कोई रन नहीं। आपके गण काम करेंगे तो वे यहाँ दिखेंगे।';
+
+  @override
+  String ganaDashboardRate(int percent) {
+    return '$percent% सफल';
+  }
+
+  @override
+  String ganaStatsCounts(int done, int failed, int skipped) {
+    return '$done पूर्ण · $failed विफल · $skipped छोड़े गए';
+  }
+
+  @override
+  String get ganaDashboardFootnote =>
+      'कुल संख्या इस संस्करण के बाद के रन गिनती है। हाल की गतिविधि में हर गण के पिछले 10 रन रहते हैं।';
+
+  @override
+  String get ganaErrNoIdentityTitle => 'कोई सक्रिय पहचान नहीं';
+
+  @override
+  String get ganaErrNoIdentityHint =>
+      'साइन इन करें ताकि गण अपना नोट हस्ताक्षर करके प्रकाशित कर सके।';
+
+  @override
+  String get ganaErrPublishTitle => 'नोट प्रकाशित नहीं हो सका';
+
+  @override
+  String get ganaErrPublishHint =>
+      'गण ने नोट लिखा पर उसे भेजना विफल रहा। अगले ट्रिगर पर फिर कोशिश होगी।';
+
+  @override
+  String get ganaErrNetworkTitle => 'नेटवर्क की समस्या';
+
+  @override
+  String get ganaErrNetworkHint =>
+      'कनेक्शन टूटा या समय समाप्त हो गया। इंटरनेट जाँचें; अगले ट्रिगर पर फिर कोशिश होगी।';
+
+  @override
+  String get ganaErrModelTitle => 'AI मॉडल में समस्या';
+
+  @override
+  String get ganaErrModelHint =>
+      'लिखते समय मॉडल विफल हुआ। Shiv में मॉडल जाँचें, फिर दोबारा कोशिश करें।';
+
+  @override
+  String get ganaErrOtherTitle => 'कुछ गड़बड़ हो गई';
+
+  @override
+  String get ganaErrOtherHint => 'रन एक अप्रत्याशित त्रुटि के साथ रुक गया।';
+
+  @override
+  String get ganaRunTechnicalDetail => 'तकनीकी विवरण';
+
+  @override
+  String get ganaRunOutputLabel => 'प्रकाशित किया गया नोट';
+
+  @override
+  String get ganaRunOutputMissing => 'यह नोट अब इस डिवाइस पर नहीं है।';
+
+  @override
+  String get ganaRunOpenNote => 'नोट खोलें';
+
+  @override
+  String ganaRunInputCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count संदेश पढ़े',
+      one: '1 संदेश पढ़ा',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ganaSkipNoActiveModel =>
+      'कोई AI मॉडल सक्रिय नहीं है। Shiv में एक चुनें।';
+
+  @override
+  String get ganaSkipModelMismatch =>
+      'सक्रिय मॉडल वह नहीं है जिससे यह गण जुड़ा है।';
+
+  @override
+  String get ganaSkipNoNewInput => 'पढ़ने के लिए कुछ नया नहीं था।';
+
+  @override
+  String get ganaSkipModelSwapped =>
+      'रन के बीच मॉडल बदल गया, इसलिए यह रन रद्द हुआ।';
+
+  @override
+  String get ganaSkipNoopReturned => 'मॉडल ने चुप रहना चुना।';
+
+  @override
+  String get ganaSkipMaxOutputs =>
+      'यह अपने अधिकतम नोट तक पहुँच गया और खुद बंद हो गया।';
+
+  @override
+  String get ganaSkipCloudUnavailable =>
+      'UNIUN Cloud जुड़ा नहीं है, या कोई क्लाउड मॉडल सेट नहीं है।';
 
   @override
   String get ganaDrawerEmptyTitle => 'अभी तक कोई गण नहीं';
@@ -2682,14 +2822,21 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get ganaFormManasSectionSubtitle =>
-      'वह मानस जिस पर यह गण तर्क करता है।';
+      'पूरे ज्ञान के लिए ब्रह्मा, किसी एक संग्रह के लिए मानस, या कोई ज्ञान नहीं चुनें।';
 
   @override
   String get ganaFormManasEmpty =>
-      'अभी तक कोई मानस नहीं। एक गण को तर्क करने के लिए ज्ञान आधार चाहिए — जारी रखने के लिए एक बनाएं।';
+      'अभी कोई मानस नहीं है। आप ब्रह्मा इस्तेमाल कर सकते हैं या खास संग्रह के लिए मानस बना सकते हैं।';
 
   @override
   String get ganaFormManasCreateNew => 'मानस बनाएं';
+
+  @override
+  String get ganaScopeNone => 'कोई ज्ञान नहीं';
+
+  @override
+  String get ganaFormBrahmaCloudWarning =>
+      'ब्रह्मा आपके नोट आपके चुने क्लाउड मॉडल को भेजता है। उन्हें इस डिवाइस पर रखने के लिए मानस या कोई ज्ञान नहीं चुनें।';
 
   @override
   String get ganaFormModeRecurring => 'आवर्ती';
@@ -2707,10 +2854,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get ganaFormBlockerName => 'जारी रखने के लिए एक नाम जोड़ें।';
-
-  @override
-  String get ganaFormBlockerManas =>
-      'कम से कम एक मानस चुनें — एक गण को तर्क करने के लिए ज्ञान चाहिए।';
 
   @override
   String get ganaFormBlockerTask =>
@@ -3016,6 +3159,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get receiveShareNothingToShare => 'पहले टेक्स्ट या मीडिया जोड़ें';
 
   @override
+  String get threadNewNote => 'नया';
+
+  @override
+  String get threadNewReplyInside => 'अंदर नया जवाब';
+
+  @override
+  String get unreadBadgeOverflow => '99+';
+
+  @override
+  String get newNotesDivider => 'नए नोट';
+
+  @override
   String get jumpToLatest => 'नवीनतम पर जाएं';
 
   @override
@@ -3076,9 +3231,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'अपना नॉलेज ग्राफ़ बनाने के लिए नोट्स सहेजें।\n\nजब कोई नोट किसी दूसरे नोट का संदर्भ देता है, तब एजेस दिखाई देते हैं।';
 
   @override
-  String get ganaDetailManasesLabel => 'मानस';
-
-  @override
   String get settingsAppearance => 'दिखावट';
 
   @override
@@ -3097,48 +3249,48 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsThemeDark => 'डार्क';
 
   @override
-  String get settingsNearbySync => 'Nearby Sync';
+  String get settingsNearbySync => 'आसपास के डिवाइस से सिंक';
 
   @override
-  String get meshTitle => 'Sync with nearby devices';
+  String get meshTitle => 'आसपास के डिवाइस से सिंक करें';
 
   @override
   String get meshSubtitle =>
-      'Beta · Sync your notes with your other devices on the same Wi-Fi — no internet needed.';
+      'बीटा · उसी Wi-Fi पर अपने दूसरे डिवाइस के साथ नोट्स सिंक करें — इंटरनेट की ज़रूरत नहीं।';
 
   @override
   String meshConnected(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count peers',
-      one: '1 peer',
-      zero: 'No peers',
+      other: '$count डिवाइस जुड़े हैं',
+      one: '1 डिवाइस जुड़ा है',
+      zero: 'कोई डिवाइस जुड़ा नहीं है',
     );
     return '$_temp0';
   }
 
   @override
-  String get drawerSurrounding => 'Surrounding';
+  String get drawerSurrounding => 'आसपास';
 
   @override
-  String get surroundingTitle => 'Surrounding';
+  String get surroundingTitle => 'आसपास';
 
   @override
-  String get surroundingEmpty => 'Nothing nearby yet';
+  String get surroundingEmpty => 'अभी आसपास कुछ नहीं है';
 
   @override
   String get surroundingEmptySub =>
-      'Notes broadcast by nearby devices on the mesh will appear here. They\'re cleared each day.';
+      'आसपास के डिवाइस से साझा किए गए नोट्स यहाँ दिखाई देंगे। ये हर दिन हटा दिए जाते हैं।';
 
   @override
-  String get surroundingSave => 'Keep';
+  String get surroundingSave => 'रखें';
 
   @override
-  String get surroundingSaved => 'Saved';
+  String get surroundingSaved => 'सहेजा गया';
 
   @override
-  String get surroundingSourceLabel => '📍 Nearby';
+  String get surroundingSourceLabel => '📍 आसपास';
 
   @override
   String get noteCardTranslate => 'अनुवाद करें';
@@ -3183,4 +3335,54 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get brahmaPublishConfirmBody =>
       'प्रकाशित नोट स्थायी होते हैं। वे रिले पर चले जाते हैं और उन्हें संपादित या हटाया नहीं जा सकता। अगर आप अभी भी काम कर रहे हैं तो इसे ड्राफ़्ट में रखें।';
+
+  @override
+  String get errorUnexpected => 'कुछ गड़बड़ हो गई।';
+
+  @override
+  String get savedNoSearchResults => 'आपकी खोज से कोई नोट मेल नहीं खाता।';
+
+  @override
+  String qrScannerInvalidCode(String error) {
+    return 'अमान्य QR कोड: $error';
+  }
+
+  @override
+  String get qrScannerInstruction =>
+      'UNIUN का QR कोड स्कैन करें — उपयोगकर्ता, सार्वजनिक दल या निजी दल';
+
+  @override
+  String qrCopiedToClipboard(String label) {
+    return '$label • क्लिपबोर्ड पर कॉपी किया गया';
+  }
+
+  @override
+  String get privateGroupShareQrTooltip => 'QR कोड साझा करें';
+
+  @override
+  String get privateGroupLeaveAction => 'दल छोड़ें';
+
+  @override
+  String get privateGroupPendingApprovalTitle => 'स्वीकृति बाकी है';
+
+  @override
+  String get privateGroupPendingApprovalBody =>
+      'दल में शामिल होने का आपका अनुरोध भेज दिया गया है। दल का एडमिन स्वीकृति देगा, उसके बाद आप संदेश पढ़ और भेज सकेंगे।';
+
+  @override
+  String get dmShareKeysTooltip => 'कुंजियाँ साझा करें';
+
+  @override
+  String get groupFeedNoMessages => 'अभी तक कोई संदेश नहीं। पहला संदेश भेजें!';
+
+  @override
+  String threadShowMoreReferences(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count और संदर्भ दिखाएँ',
+      one: '1 और संदर्भ दिखाएँ',
+    );
+    return '$_temp0';
+  }
 }
