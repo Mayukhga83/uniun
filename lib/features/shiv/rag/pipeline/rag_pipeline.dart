@@ -130,6 +130,7 @@ class RagPipeline {
       userQuestion,
       topK: budget.topK,
       maxHops: budget.maxHops,
+      minScore: budget.minScore,
       manasIds: manasIds,
     );
     _personalization ??= await _loadPersonalization();
@@ -165,6 +166,7 @@ class RagPipeline {
     String query, {
     int topK = 5,
     int maxHops = 1,
+    double minScore = PromptBudget.defaultMinScore,
     List<String> manasIds = const [],
   }) async {
     try {
@@ -193,17 +195,23 @@ class RagPipeline {
             vec,
             query,
             math.max(1, topK ~/ 2),
+            minScore: minScore,
             allowedSha256: allowedSha256,
           );
         }
       } else {
         final vec = await _embedding.embed(query);
         if (vec.isEmpty) return EnrichedContext.empty;
-        seedNotes = await _vectorSearch.search(queryVector: vec, topK: topK);
+        seedNotes = await _vectorSearch.search(
+          queryVector: vec,
+          topK: topK,
+          minScore: minScore,
+        );
         seedChunks = await _safeChunkSearch(
           vec,
           query,
           math.max(1, topK ~/ 2),
+          minScore: minScore,
         );
       }
       if (seedNotes.isEmpty && seedChunks.isEmpty) return EnrichedContext.empty;
@@ -270,20 +278,15 @@ class RagPipeline {
     List<double> vec,
     String query,
     int topK, {
+    double minScore = PromptBudget.defaultMinScore,
     Set<String>? allowedSha256,
   }) async {
     try {
-      if (allowedSha256 == null) {
-        return await _vectorSearch.searchChunks(
-          queryVector: vec,
-          queryText: query,
-          topK: topK,
-        );
-      }
       return await _vectorSearch.searchChunks(
         queryVector: vec,
         queryText: query,
         topK: topK,
+        minScore: minScore,
         allowedSha256: allowedSha256,
       );
     } catch (_) {

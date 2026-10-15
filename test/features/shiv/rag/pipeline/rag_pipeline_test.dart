@@ -239,6 +239,7 @@ void main() {
         () => vectorSearch.search(
           queryVector: any(named: 'queryVector'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
         ),
       );
     });
@@ -249,6 +250,7 @@ void main() {
         () => vectorSearch.search(
           queryVector: any(named: 'queryVector'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
         ),
       ).thenAnswer((_) async => const []);
 
@@ -265,6 +267,7 @@ void main() {
         () => vectorSearch.search(
           queryVector: any(named: 'queryVector'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
         ),
       ).thenAnswer(
         (_) async => const [
@@ -338,6 +341,7 @@ void main() {
           () => vectorSearch.search(
             queryVector: any(named: 'queryVector'),
             topK: any(named: 'topK'),
+            minScore: any(named: 'minScore'),
           ),
         ).thenAnswer(
           (_) async => const [
@@ -378,6 +382,7 @@ void main() {
         () => vectorSearch.search(
           queryVector: any(named: 'queryVector'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
         ),
       ).thenAnswer(
         (_) async => const [
@@ -448,6 +453,7 @@ void main() {
         () => vectorSearch.search(
           queryVector: any(named: 'queryVector'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
         ),
       ).thenAnswer((_) async => const []);
     });
@@ -457,6 +463,8 @@ void main() {
         queryVector: any(named: 'queryVector'),
         queryText: any(named: 'queryText'),
         topK: any(named: 'topK'),
+        minScore: any(named: 'minScore'),
+        allowedSha256: any(named: 'allowedSha256'),
       ),
     ).thenAnswer((_) async => chunks);
 
@@ -491,6 +499,7 @@ void main() {
         () => vectorSearch.search(
           queryVector: any(named: 'queryVector'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
         ),
       ).thenAnswer(
         (_) async => const [
@@ -518,6 +527,7 @@ void main() {
           () => vectorSearch.search(
             queryVector: any(named: 'queryVector'),
             topK: 3,
+            minScore: PromptBudget.forActiveModel(null).minScore,
           ),
         ).called(1);
         verify(
@@ -525,6 +535,8 @@ void main() {
             queryVector: any(named: 'queryVector'),
             queryText: 'q',
             topK: 1,
+            minScore: PromptBudget.forActiveModel(null).minScore,
+            allowedSha256: any(named: 'allowedSha256'),
           ),
         ).called(1);
       },
@@ -535,6 +547,7 @@ void main() {
         () => vectorSearch.search(
           queryVector: any(named: 'queryVector'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
         ),
       ).thenAnswer(
         (_) async => const [
@@ -546,6 +559,8 @@ void main() {
           queryVector: any(named: 'queryVector'),
           queryText: any(named: 'queryText'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
+          allowedSha256: any(named: 'allowedSha256'),
         ),
       ).thenThrow(Exception('store unavailable'));
 
@@ -625,6 +640,7 @@ void main() {
         () => vectorSearch.search(
           queryVector: any(named: 'queryVector'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
         ),
       );
       verifyNever(
@@ -632,6 +648,8 @@ void main() {
           queryVector: any(named: 'queryVector'),
           queryText: any(named: 'queryText'),
           topK: any(named: 'topK'),
+          minScore: any(named: 'minScore'),
+          allowedSha256: any(named: 'allowedSha256'),
         ),
       );
     });
@@ -706,6 +724,7 @@ void main() {
           queryVector: [1.0],
           queryText: 'q',
           topK: any(named: 'topK'),
+          minScore: PromptBudget.forActiveModel(null).minScore,
           allowedSha256: const {'inside'},
         ),
       ).thenAnswer(
@@ -732,6 +751,7 @@ void main() {
           queryVector: [1.0],
           queryText: 'q',
           topK: any(named: 'topK'),
+          minScore: PromptBudget.forActiveModel(null).minScore,
           allowedSha256: const {'inside'},
         ),
       ).called(1);
