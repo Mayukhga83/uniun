@@ -1,8 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_gemma/flutter_gemma.dart' hide Message;
-import 'package:flutter_gemma/core/message.dart' as gemma_msg;
-import 'package:flutter_gemma_litertlm/flutter_gemma_litertlm.dart';
-import 'package:flutter_gemma_mediapipe/flutter_gemma_mediapipe.dart';
+import 'package:flutter_edge_ai_embeddings/flutter_edge_ai_embeddings.dart' show GemmaEmbeddingTokenizers;
+import 'package:flutter_edge_ai/flutter_edge_ai.dart' hide Message;
+import 'package:flutter_edge_ai/flutter_edge_ai.dart' as gemma_msg;
+import 'package:flutter_edge_ai_litertlm/flutter_edge_ai_litertlm.dart';
+import 'package:flutter_edge_ai_mediapipe/flutter_edge_ai_mediapipe.dart';
 import 'package:isar_community/isar.dart';
 import 'package:nostr/nostr.dart';
 import 'package:path_provider/path_provider.dart';
@@ -16,7 +17,7 @@ import 'package:uniun/core/notes/note_kinds.dart';
 import 'package:uniun/data/datasources/app_settings_store.dart';
 import 'package:uniun/data/datasources/cloud/uniun_gateway_client.dart';
 import 'package:uniun/data/datasources/isar_schemas.dart';
-import 'package:uniun/data/datasources/llm/flutter_gemma_gateway.dart';
+import 'package:uniun/data/datasources/llm/flutter_edge_ai_gateway.dart';
 import 'package:uniun/data/datasources/llm/inference_scheduler.dart';
 import 'package:uniun/data/datasources/llm/llm_preferences_data_source.dart';
 import 'package:uniun/data/datasources/llm/local_llm_runner.dart';
@@ -64,7 +65,7 @@ const Duration kBackgroundInitialDelay = Duration(minutes: 1);
 /// finish reasoning AND emit a 1-3 sentence answer.
 const int kBackgroundMaxTokens = 1024;
 
-/// One Gana per tick. Loading flutter_gemma costs ~9s; doing two would
+/// One Gana per tick. Loading flutter_edge_ai costs ~9s; doing two would
 /// blow the budget. Foreground catches up on the next app open.
 const int kBackgroundMaxGanasPerTick = 1;
 
@@ -75,9 +76,9 @@ const int kBackgroundMaxGanasPerTick = 1;
 ///
 /// 1. Boots BackgroundIsolateBinaryMessenger so plugin groups work.
 /// 2. Opens its own Isar handle at the shared DB path.
-/// 3. Initializes flutter_gemma 1.0.0 with the same engine list as
+/// 3. Initializes flutter_edge_ai (then flutter_edge_ai 1.0.0) with the same engine list as
 ///    `main.dart` — skipped when the one due Gana is cloud-pinned (see 4).
-///    Verified PASS by `integration_test/flutter_gemma_bg_isolate_test.dart`
+///    Verified PASS by `integration_test/flutter_edge_ai_bg_isolate_test.dart`
 ///    (Qwen3 0.6B fresh-load on Android arm64 in 9.2s).
 /// 4. Picks ONE due interval Gana (battery-clamped to ≥30 min). A Gana
 ///    resolves to cloud (see `ganaResolvesToCloud`) when either explicitly
@@ -227,17 +228,17 @@ void ganaWorkManagerDispatcher() {
       _log('step 3b: globalBackend=${globalBackend.name} '
           'globalCloudModelId=$globalCloudModelId');
 
-      // 4. Initialize flutter_gemma (same engine list as main.dart) — only
+      // 4. Initialize flutter_edge_ai (same engine list as main.dart) — only
       //    when at least one due Gana actually needs on-device inference.
       //    A cloud-pinned due Gana skips this entirely (irrelevant ~9s cost).
       final needsLocalModel = due.any(
           (g) => !ganaResolvesToCloud(g, globalBackend: globalBackend));
       if (needsLocalModel) {
-        _log('step 4: FlutterGemma.initialize '
+        _log('step 4: FlutterEdgeAi.initialize '
             '(LiteRtLm + MediaPipe + LiteRtEmbedder)');
         final initStart = DateTime.now();
         try {
-          await FlutterGemma.initialize(
+          await FlutterEdgeAi.initialize(
             inferenceEngines: const [
               LiteRtLmEngine(),
               MediaPipeEngine(),
@@ -245,9 +246,10 @@ void ganaWorkManagerDispatcher() {
             embeddingBackends: const [
               LiteRtEmbeddingBackend(),
             ],
+            embeddingTokenizers: const [GemmaEmbeddingTokenizers()],
           );
         } catch (e, st) {
-          _log('step 4: ABORT — FlutterGemma.initialize threw: $e');
+          _log('step 4: ABORT — FlutterEdgeAi.initialize threw: $e');
           debugPrint('$_logTag stack: $st');
           await isar.close();
           return false;
@@ -255,7 +257,7 @@ void ganaWorkManagerDispatcher() {
         _log('step 4: initialized in '
             '${DateTime.now().difference(initStart).inMilliseconds}ms');
 
-        // 4b. `FlutterGemma.initialize()` only registers engines — it does NOT
+        // 4b. `FlutterEdgeAi.initialize()` only registers engines — it does NOT
         // restore which model is active. In the foreground app that happens
         // lazily the first time a Shiv screen calls
         // `AIModelRepository.getActiveModel()`. This isolate never opens a
@@ -272,7 +274,7 @@ void ganaWorkManagerDispatcher() {
         try {
           final prefs = await SharedPreferences.getInstance();
           final settings = AppSettingsStore(prefs);
-          final gateway = FlutterGemmaGatewayImpl();
+          final gateway = FlutterEdgeAiGatewayImpl();
           await AIModelRepositoryImpl(
             isar,
             settings,
@@ -284,7 +286,7 @@ void ganaWorkManagerDispatcher() {
         }
 
         _log('step 4c: checking hasActiveModel()');
-        if (!FlutterGemma.hasActiveModel()) {
+        if (!FlutterEdgeAi.hasActiveModel()) {
           _log('step 4c: ABORT — no active model installed');
           await isar.close();
           return true;
@@ -475,14 +477,14 @@ Future<void> _runOneGana({
       final backend = preferredLlmBackend;
       InferenceModel model;
       try {
-        model = await FlutterGemma.getActiveModel(
+        model = await FlutterEdgeAi.getActiveModel(
           maxTokens: kBackgroundMaxTokens,
           preferredBackend: backend,
         );
       } catch (e) {
         if (backend == PreferredBackend.cpu) rethrow;
         _log('  GPU open failed ($e) — retrying on CPU');
-        model = await FlutterGemma.getActiveModel(
+        model = await FlutterEdgeAi.getActiveModel(
           maxTokens: kBackgroundMaxTokens,
           preferredBackend: PreferredBackend.cpu,
         );

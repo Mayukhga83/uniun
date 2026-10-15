@@ -1,8 +1,8 @@
-// Phase 6a verification — does flutter_gemma 1.0.0 work in a background
+// Phase 6a verification — does flutter_edge_ai (then flutter_edge_ai 1.0.0) work in a background
 // isolate via RootIsolateToken / BackgroundIsolateBinaryMessenger?
 //
 // PASS path: result starts with `OK:` → green light for true background
-//            (app-killed) Ganas. flutter_gemma can be called from inside
+//            (app-killed) Ganas. flutter_edge_ai can be called from inside
 //            the workmanager dispatcher.
 // SKIP path: result starts with `SKIP:` → preconditions not met (no model
 //            installed yet). Re-run after downloading one in Shiv.
@@ -22,7 +22,7 @@
 //   flutter test integration_test/ -d <device-id>
 //
 // PRECONDITIONS:
-//   1. flutter_gemma ^1.0.0 + the matching engine sub-package present in
+//   1. flutter_edge_ai (then flutter_edge_ai ^1.0.0) + the matching engine sub-package present in
 //      pubspec.yaml (we ship both LiteRtLm and MediaPipe; the test
 //      registers both so whichever the active model needs works).
 //   2. A model is already installed on the device — use the Shiv
@@ -33,10 +33,10 @@
 // WHAT THIS TEST PROBES (in one isolate, in this order):
 //   1. RootIsolateToken is obtainable from the main isolate.
 //   2. BackgroundIsolateBinaryMessenger.ensureInitialized accepts the token.
-//   3. FlutterGemma.initialize() succeeds from the bg isolate (engine
+//   3. FlutterEdgeAi.initialize() succeeds from the bg isolate (engine
 //      registration is the part most likely to fail — engines may be
 //      gated on main-isolate-only platform groups).
-//   4. FlutterGemma.hasActiveModel() returns the same answer as the main
+//   4. FlutterEdgeAi.hasActiveModel() returns the same answer as the main
 //      isolate (shared state via SharedPreferences-equivalent storage).
 //   5. getActiveModel() returns a usable handle.
 //   6. openChat() opens a session.
@@ -49,9 +49,10 @@
 import 'dart:isolate';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_gemma/flutter_gemma.dart';
-import 'package:flutter_gemma_litertlm/flutter_gemma_litertlm.dart';
-import 'package:flutter_gemma_mediapipe/flutter_gemma_mediapipe.dart';
+import 'package:flutter_edge_ai_embeddings/flutter_edge_ai_embeddings.dart' show GemmaEmbeddingTokenizers;
+import 'package:flutter_edge_ai/flutter_edge_ai.dart';
+import 'package:flutter_edge_ai_litertlm/flutter_edge_ai_litertlm.dart';
+import 'package:flutter_edge_ai_mediapipe/flutter_edge_ai_mediapipe.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:uniun/domain/entities/ai_model/ai_model_entity.dart';
@@ -61,7 +62,7 @@ import 'support/test_model.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  test('flutter_gemma 1.0.0 runs inference in a background isolate',
+  test('flutter_edge_ai (then flutter_edge_ai 1.0.0) runs inference in a background isolate',
       () async {
     final token = RootIsolateToken.instance;
     expect(
@@ -98,14 +99,14 @@ void main() {
       // don't fail the build. Re-running after installing a model is the
       // signal-bearing path.
       // ignore: avoid_print
-      print('flutter_gemma bg-isolate test SKIPPED: $verdict');
+      print('flutter_edge_ai bg-isolate test SKIPPED: $verdict');
       return;
     }
     if (!verdict.startsWith('OK:')) {
-      fail('flutter_gemma bg-isolate test failed: $verdict');
+      fail('flutter_edge_ai bg-isolate test failed: $verdict');
     }
     // ignore: avoid_print
-    print('flutter_gemma bg-isolate test PASSED: $verdict');
+    print('flutter_edge_ai bg-isolate test PASSED: $verdict');
   }, timeout: const Timeout(Duration(seconds: 90)));
 }
 
@@ -123,11 +124,11 @@ Future<void> _workerEntry(_WorkerMessage msg) async {
     // 1. Open the platform-group bridge so plugin calls work.
     BackgroundIsolateBinaryMessenger.ensureInitialized(msg.token);
 
-    // 2. Initialize flutter_gemma 1.0.0. Engine registration MAY throw
+    // 2. Initialize flutter_edge_ai (then flutter_edge_ai 1.0.0.) Engine registration MAY throw
     //    on a background isolate if any registered engine touches a
     //    main-isolate-only group during initialize() — that's exactly
     //    what we want to detect.
-    await FlutterGemma.initialize(
+    await FlutterEdgeAi.initialize(
       inferenceEngines: const [
         LiteRtLmEngine(),
         MediaPipeEngine(),
@@ -135,12 +136,13 @@ Future<void> _workerEntry(_WorkerMessage msg) async {
       embeddingBackends: const [
         LiteRtEmbeddingBackend(),
       ],
+      embeddingTokenizers: const [GemmaEmbeddingTokenizers()],
     );
 
     // 3. Active-model state should be shared across isolates because it's
     //    backed by on-disk storage. If the main isolate has an active
     //    model, so should we.
-    if (!FlutterGemma.hasActiveModel()) {
+    if (!FlutterEdgeAi.hasActiveModel()) {
       msg.reply.send(
         'SKIP: no active model installed on this device — open Shiv → '
         'Select AI model → download one, then re-run',
@@ -153,13 +155,13 @@ Future<void> _workerEntry(_WorkerMessage msg) async {
     //
     //    DIAGNOSTIC: time the model open. If this returns in <1s, the
     //    model wasn't actually loaded into THIS isolate's process space —
-    //    flutter_gemma is delegating to the main-isolate native handle
+    //    flutter_edge_ai is delegating to the main-isolate native handle
     //    via the platform group. That works for "app alive, bg isolate
     //    speaking to main" (our current architecture) but does NOT prove
     //    the WorkManager-killed-app case. Annotate the result so we can
     //    tell which path the test actually exercised.
     final openStart = DateTime.now();
-    final model = await FlutterGemma.getActiveModel(maxTokens: 64);
+    final model = await FlutterEdgeAi.getActiveModel(maxTokens: 64);
     final chat = await model.openChat(
       temperature: 0.2,
       topK: 20,

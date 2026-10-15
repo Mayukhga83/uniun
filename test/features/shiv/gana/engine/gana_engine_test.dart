@@ -10,7 +10,7 @@ import 'package:uniun/core/enum/note_type.dart';
 import 'package:uniun/core/error/failures.dart';
 import 'package:uniun/core/notes/note_kinds.dart';
 import 'package:uniun/data/datasources/app_settings_store.dart';
-import 'package:uniun/data/datasources/llm/flutter_gemma_gateway.dart';
+import 'package:uniun/data/datasources/llm/flutter_edge_ai_gateway.dart';
 import 'package:uniun/data/datasources/llm/local_llm_runner.dart';
 import 'package:uniun/data/models/dm/dm_conversation_model.dart';
 import 'package:uniun/data/models/gana_model.dart';
@@ -59,11 +59,11 @@ class _MockIsCloudConnected extends Mock implements IsUniunCloudConnectedUseCase
 
 class _MockGetActiveLlmModel extends Mock implements GetActiveLlmModelUseCase {}
 
-class _MockGateway extends Mock implements FlutterGemmaGateway {}
+class _MockGateway extends Mock implements FlutterEdgeAiGateway {}
 
 /// Covers: [GanaEngine]'s cloud/local dispatch gate (cloud routes through
 /// [GenerateOneShotUseCase] with a backend/model override and skips the
-/// on-device gate; local is unaffected — `FlutterGemma.hasActiveModel()` is
+/// on-device gate; local is unaffected — `FlutterEdgeAi.hasActiveModel()` is
 /// false in this plain-Dart environment, no platform channel needed since
 /// that call reads a static in-memory field); one-shot auto-disable; cloud
 /// output routing through every [GanaOutputType] (feed/group/privateGroup/
@@ -558,7 +558,7 @@ void main({bool routingMatrixOnly = false}) {
       await engine.start();
       final run = await waitForRun('legacy-local-pin');
 
-      // Still resolves local (FlutterGemma.hasActiveModel() is false here),
+      // Still resolves local (FlutterEdgeAi.hasActiveModel() is false here),
       // never even asks whether the global backend is cloud-relevant beyond
       // the initial resolution check — the point is it does NOT silently
       // switch this explicitly-pinned-local Gana over to cloud.

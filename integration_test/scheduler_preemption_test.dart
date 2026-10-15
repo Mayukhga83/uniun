@@ -1,9 +1,9 @@
-// Real-device verification of the InferenceScheduler against flutter_gemma.
+// Real-device verification of the InferenceScheduler against flutter_edge_ai.
 //
 // What it verifies (matches docs/SHIVA/scheduling.md Scenario 1):
 //   While a Nataraj job is mid-stream against a real loaded model, a
 //   chat submission must preempt it within one token boundary
-//   (empirically <500 ms on flutter_gemma 1.1.x). This is the
+//   (empirically <500 ms on flutter_edge_ai (then flutter_edge_ai 1.1.x)). This is the
 //   user-visible #118 fix.
 //
 // PASS path: result starts with `OK:` → scheduler preemption works on
@@ -13,7 +13,7 @@
 //            re-run.
 // FAIL path: assertion fires or result starts with `FAIL:` → either the
 //            scheduler isn't actually calling stopGeneration() on the
-//            real InferenceChat, or flutter_gemma's stopGeneration() has
+//            real InferenceChat, or flutter_edge_ai's stopGeneration() has
 //            regressed.
 //
 // Why this file lives at `integration_test/` (project root, not under
@@ -31,7 +31,7 @@
 
 import 'dart:async';
 
-import 'package:flutter_gemma/flutter_gemma.dart' hide CancelToken;
+import 'package:flutter_edge_ai/flutter_edge_ai.dart' hide CancelToken;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:uniun/data/datasources/llm/inference_scheduler.dart';
@@ -44,9 +44,9 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'chat preempts running nataraj on the real flutter_gemma engine',
+    'chat preempts running nataraj on the real flutter_edge_ai engine',
     (tester) async {
-      if (!FlutterGemma.hasActiveModel() &&
+      if (!FlutterEdgeAi.hasActiveModel() &&
           !await provisionTestModel(AIModelId.gemma4E2b)) {
         // ignore: avoid_print
         print('SKIP: no active model on device — install one via Shiv first');
@@ -65,7 +65,7 @@ void main() {
         CancelToken cancel, {
         int maxTokens = 800,
       }) async {
-        final model = await FlutterGemma.getActiveModel(maxTokens: maxTokens);
+        final model = await FlutterEdgeAi.getActiveModel(maxTokens: maxTokens);
         final chat = await model.openChat(temperature: 0.8, topK: 40);
         try {
           await chat.addQueryChunk(Message.text(text: prompt));
@@ -87,9 +87,9 @@ void main() {
       }
 
       // Load the model first and use one maxTokens everywhere: a different
-      // value makes flutter_gemma rebuild the model, and a cold load takes
+      // value makes flutter_edge_ai rebuild the model, and a cold load takes
       // tens of seconds — both would be measured as "preempt latency".
-      await FlutterGemma.getActiveModel(maxTokens: 800);
+      await FlutterEdgeAi.getActiveModel(maxTokens: 800);
 
       // 1. Submit a long Nataraj-equivalent at T4.
       final natarajFuture = scheduler.run<String?>(
@@ -117,7 +117,7 @@ void main() {
         kind: LlmTaskKind.chat,
         modelId: 'integration_test_model',
         work: (cancel) async {
-          final model = await FlutterGemma.getActiveModel(maxTokens: 800);
+          final model = await FlutterEdgeAi.getActiveModel(maxTokens: 800);
           final chat = await model.openChat(temperature: 0.8, topK: 40);
           try {
             await chat.addQueryChunk(Message.text(text: 'Say hello.'));
